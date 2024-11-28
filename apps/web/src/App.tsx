@@ -1,19 +1,16 @@
-import { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./App.css";
+import { useState } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 
 function App() {
     const [messages, setMessages] = useState<string[]>([]);
-    const [input, setInput] = useState<string>("");
+    const [input, setInput] = useState<string>('');
 
     const handleSend = () => {
         if (!input.length) return;
 
-        setMessages([
-            ...messages,
-            input,
-        ]);
-        setInput("");
+        setMessages([...messages, input]);
+        setInput('');
     };
 
     return (
@@ -23,11 +20,14 @@ function App() {
             </div>
             <div className="card-body d-flex flex-column p-0">
                 <div className="flex-grow-1 overflow-auto p-3 bg-dark">
-                {messages.map((msg, index) => (
-                    <div key={index} className="mb-3 p-2 bg-body-tertiary rounded shadow-sm">
-                    {msg}
-                    </div>
-                ))}
+                    {messages.map((msg, index) => (
+                        <div
+                            key={index}
+                            className="mb-3 p-2 bg-body-tertiary rounded shadow-sm"
+                        >
+                            {msg}
+                        </div>
+                    ))}
                 </div>
                 <div className="card-footer d-flex p-3 bg-body-tertiary  border-top">
                     <input
