@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Header from './components/Header';
@@ -8,6 +9,7 @@ function App() {
     const [messages, setMessages] = useState<string[]>([]);
     const [input, setInput] = useState<string>('');
     const ws = useRef<WebSocket | null>(null);
+    const navigate = useNavigate();
 
     const handleSend = () => {
         if (!input.length) return;
@@ -18,28 +20,51 @@ function App() {
     };
 
     useEffect(() => {
-        const socket = new WebSocket('ws://localhost:8080/ws');
+        async function getWebsocketConnection() {
+            try {
+                const response = await fetch(
+                    import.meta.env.VITE_API_URL + '/api/auth/ws/token',
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                    },
+                );
+                if (response.status === 401 || response.status === 403) {
+                    navigate('/login');
+                    return null;
+                }
+                console.log(response.status);
 
-        socket.addEventListener('open', () => {
-            console.log('Connected to server');
-        });
+                const res = await response.json();
+                return res.token;
+            } catch (error) {
+                console.warn(error);
+                return null;
+            }
+        }
 
-        socket.addEventListener('message', (event) => {
-            setMessages([...messages, event.data]);
-        });
+        async function setUpWebsocketConnection() {
+            const token = await getWebsocketConnection();
+            if (!token) return;
 
-        socket.addEventListener('error', (error) => {
-            console.error('WebSocket error:', error);
-        });
+            ws.current = new WebSocket(
+                import.meta.env.VITE_WS_URL + '/ws?token=' + token,
+            );
 
-        socket.addEventListener('close', (event) => {
-            console.log('WebSocket closed:', event.code);
-        });
+            ws.current.onopen = () => console.log('Connected to websocket');
+            ws.current.onmessage = (event) => {
+                setMessages([...messages, event.data]);
+            };
+            ws.current.onclose = () => {
+                console.log('Disconnected from websocket');
+            };
 
-        ws.current = socket;
-
-        return () => ws.current?.close();
-    }, [messages]);
+            return () => {
+                ws.current?.close();
+            };
+        }
+        setUpWebsocketConnection();
+    }, [messages, navigate]);
 
     return (
         <div className="card vh-100">
