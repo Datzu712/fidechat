@@ -3,7 +3,8 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import { useContext, useState } from 'react';
 import { Row } from 'react-bootstrap';
-import { UserContext } from '../App';
+import { UserContext } from '../contexts/UserContext';
+import { createChannel } from '../services/api';
 
 interface ChannelFormModalProps {
     readonly show: boolean;
@@ -17,7 +18,7 @@ function ChannelFormModal({ show, handleClose }: ChannelFormModalProps) {
     const user = useContext(UserContext);
 
     function handleCreateChannel(name: string, description: string) {
-        console.log(`Creating channel: ${name} - ${description}`);
+        createChannel({ name, description, ownerId: user.id });
     }
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

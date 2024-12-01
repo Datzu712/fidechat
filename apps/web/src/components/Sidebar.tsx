@@ -1,11 +1,12 @@
 import { useContext, useState } from 'react';
 import ChannelFormModal from './ChannelFormModal';
-import { UserContext } from '../App';
+import { UserContext } from '../contexts/UserContext';
+import type { IChannel } from '../interfaces/channel';
 
 interface SidebarProps {
-    readonly channels: string[];
-    readonly selectedChannel: string;
-    readonly setSelectedChannel: (channel: string) => void;
+    readonly channels: IChannel[];
+    readonly selectedChannel: IChannel | null;
+    readonly setSelectedChannel: (channel: IChannel) => void;
 }
 
 function Sidebar({
@@ -27,7 +28,7 @@ function Sidebar({
                     {channels.map((channel, index) => (
                         <li key={index} className="mb-2">
                             <button
-                                className={`p-2 w-100 text-left ${selectedChannel === channel ? 'bg-primary' : 'bg-dark-subtle'}`}
+                                className={`p-2 w-100 text-left ${selectedChannel?.id === channel.id ? 'bg-primary' : 'bg-dark-subtle'}`}
                                 onClick={() => setSelectedChannel(channel)}
                                 onKeyUp={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -35,7 +36,7 @@ function Sidebar({
                                     }
                                 }}
                             >
-                                {channel}
+                                {channel.name}
                             </button>
                         </li>
                     ))}

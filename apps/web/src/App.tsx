@@ -1,4 +1,4 @@
-import { createContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
@@ -6,44 +6,26 @@ import Message from './components/Message';
 import Sidebar from './components/Sidebar';
 import type { IMessage } from './interfaces/message';
 import { IUser } from './interfaces/user';
-
-async function createMessage(message: Omit<IMessage, 'id'>) {
-    try {
-        const response = await fetch(
-            import.meta.env.VITE_API_URL + '/api/messages',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(message),
-                credentials: 'include',
-            },
-        );
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        }
-    } catch (error) {
-        console.warn(error);
-    }
-}
-
-export const UserContext = createContext<IUser>(null as unknown as IUser);
+import { IWebsocketEvent } from './interfaces/websocketEvent';
+import { IChannel } from './interfaces/channel';
+import {
+    createMessage,
+    getChannels,
+    getWebsocketConnection,
+} from './services/api';
+import { UserContext } from './contexts/UserContext';
 
 function App() {
-    const [currentUser, setUser] = useState<IUser>(
+    const [currentUser] = useState<IUser>(
         JSON.parse(localStorage.getItem('data')!) as IUser,
     );
 
     const [messages, setMessages] = useState<IMessage[]>([]);
     const [input, setInput] = useState<string>('');
-    const [channels, setChannels] = useState<string[]>([
-        'general',
-        'random',
-        'help',
-    ]);
-    const [selectedChannel, setSelectedChannel] = useState<string>('general');
+    const [channels, setChannels] = useState<IChannel[]>([]);
+    const [selectedChannel, setSelectedChannel] = useState<IChannel | null>(
+        null,
+    );
     const ws = useRef<WebSocket | null>(null);
     const navigate = useNavigate();
 
@@ -53,7 +35,7 @@ function App() {
         try {
             const newMessage: Omit<IMessage, 'id'> = {
                 content: input,
-                channel_id: selectedChannel,
+                channel_id: selectedChannel!.id,
                 author_id: currentUser.id,
             };
 
@@ -70,32 +52,13 @@ function App() {
     };
 
     useEffect(() => {
-        async function getWebsocketConnection() {
-            try {
-                const response = await fetch(
-                    import.meta.env.VITE_API_URL + '/api/auth/ws/token',
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                    },
-                );
-                if (response.status === 401 || response.status === 403) {
-                    navigate('/login');
-                    return null;
-                }
-                console.log(response.status);
-
-                const res = await response.json();
-                return res.token;
-            } catch (error) {
-                console.warn(error);
-                return null;
-            }
-        }
-
         async function setUpWebsocketConnection() {
-            const token = await getWebsocketConnection();
+            const token = await getWebsocketConnection(navigate);
             if (!token) return;
+
+            const channels = await getChannels();
+            console.log(channels);
+            setChannels(channels);
 
             ws.current = new WebSocket(
                 import.meta.env.VITE_WS_URL + '/ws?token=' + token,
@@ -103,8 +66,13 @@ function App() {
 
             ws.current.onopen = () => console.log('Connected to websocket');
             ws.current.onmessage = (event) => {
-                // const message = JSON.parse(event.data);
-                // setMessages((prevMessages) => [...prevMessages, message]);
+                const eventData = JSON.parse(event.data) as IWebsocketEvent;
+
+                if (eventData.type === 'MESSAGE_CREATE') {
+                    setMessages([...messages, eventData.payload]);
+                } else if (eventData.type === 'CHANNEL_CREATE') {
+                    setChannels([...channels, eventData.payload]);
+                }
             };
             ws.current.onclose = () => {
                 console.log('Disconnected from websocket');
@@ -115,7 +83,7 @@ function App() {
             };
         }
         setUpWebsocketConnection();
-    }, [navigate]);
+    }, [currentUser, messages, navigate]);
 
     return (
         <div className="d-flex vh-100">
@@ -131,13 +99,15 @@ function App() {
                         <div className="flex-grow-1 overflow-auto p-3 bg-dark">
                             {messages
                                 .filter(
-                                    (msg) => msg.channel_id === selectedChannel,
+                                    (msg) =>
+                                        msg.channel_id === selectedChannel?.id,
                                 )
                                 .map((msg) => (
                                     <Message
                                         key={msg.id}
                                         id={msg.id}
                                         content={msg.content}
+                                        userName={msg.author_id}
                                     />
                                 ))}
                         </div>
