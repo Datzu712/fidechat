@@ -17,8 +17,8 @@ function Login() {
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('token', data.token);
+            const { data } = await response.json();
+            localStorage.setItem('data', JSON.stringify(data));
             navigate('/');
         } else {
             alert('Login failed');

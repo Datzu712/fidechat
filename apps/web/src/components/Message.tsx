@@ -1,5 +1,5 @@
 export interface MessageProps {
-    readonly id: number;
+    readonly id: string;
     readonly content: string;
 }
 
