@@ -1,12 +1,12 @@
 import { useContext, useState } from 'react';
 import ChannelFormModal from './ChannelFormModal';
-import type { IChannel } from '../interfaces/channel';
+import type { IChannel, IExtendedChannel } from '../interfaces/channel';
 import { GlobalContext } from '../contexts/GlobalContext';
 
 interface SidebarProps {
-    readonly channels: IChannel[];
+    readonly channels: IExtendedChannel[];
     readonly selectedChannel: IChannel | null;
-    readonly setSelectedChannel: (channel: IChannel | null) => void;
+    readonly setSelectedChannel: (channel: IExtendedChannel | null) => void;
 }
 
 function Sidebar({
@@ -20,7 +20,7 @@ function Sidebar({
     return (
         <>
             <div
-                className="bg-dark text-white d-flex flex-column p-3"
+                className="bg-dark text-white d-flex flex-column p-3 flex-shrink-0 sidebar"
                 style={{ width: '250px' }}
             >
                 <h5>Channels</h5>
@@ -56,9 +56,9 @@ function Sidebar({
                 <div className="mt-auto">
                     <hr className="bg-light" />
                     <div className="text-center">
-                        <p className="mb-1">{currentUser.name}</p>
+                        <p className="mb-1">{currentUser?.name}</p>
                         <small className="text-muted">
-                            {currentUser.email}
+                            {currentUser?.email}
                         </small>
                     </div>
                 </div>

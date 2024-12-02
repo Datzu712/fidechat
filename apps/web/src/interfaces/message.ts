@@ -1,6 +1,6 @@
 export interface IMessage {
     id: string;
-    author_id: string;
+    authorId: string;
     content: string;
-    channel_id: string;
+    channelId: string;
 }

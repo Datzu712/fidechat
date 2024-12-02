@@ -4,7 +4,7 @@ WORKDIR /web
 
 COPY . .
 
-RUN npm install
+RUN yarn install
 
 RUN npm run build
 

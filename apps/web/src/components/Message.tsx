@@ -12,7 +12,7 @@ function Message({ id, content, authorId }: MessageProps): JSX.Element {
 
     let name = '';
 
-    if (currentUser.id === authorId) {
+    if (currentUser?.id === authorId) {
         name = 'You';
     } else {
         const author = users.find((user) => user.id === authorId);

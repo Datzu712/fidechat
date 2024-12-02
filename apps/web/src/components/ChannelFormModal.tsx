@@ -18,7 +18,7 @@ function ChannelFormModal({ show, handleClose }: ChannelFormModalProps) {
     const { currentUser } = useContext(GlobalContext);
 
     function handleCreateChannel(name: string, description: string) {
-        createChannel({ name, description, ownerId: currentUser.id });
+        createChannel({ name, description, ownerId: currentUser!.id });
     }
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

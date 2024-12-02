@@ -1,11 +1,12 @@
-import { IChannel } from '../interfaces/channel';
+import { IChannel, IExtendedChannel } from '../interfaces/channel';
 import type { IMessage } from '../interfaces/message';
 import { useNavigate } from 'react-router-dom';
 
 export async function createMessage(message: Omit<IMessage, 'id'>) {
     try {
         const response = await fetch(
-            import.meta.env.VITE_API_URL + '/api/messages',
+            import.meta.env.VITE_API_URL +
+                `/api/channels/${message.channelId}/messages`,
             {
                 method: 'POST',
                 headers: {
@@ -24,7 +25,7 @@ export async function createMessage(message: Omit<IMessage, 'id'>) {
     }
 }
 
-export async function getChannels() {
+export async function getChannels(): Promise<IExtendedChannel[]> {
     try {
         const response = await fetch(
             `${import.meta.env.VITE_API_URL}/api/channels`,
@@ -121,7 +122,6 @@ export async function getUsers() {
         );
         if (response.ok) {
             const data = await response.json();
-            console.log(data);
             return data;
         }
     } catch (error) {
