@@ -93,3 +93,38 @@ export async function createChannel(
         console.warn(error);
     }
 }
+
+export async function pingDatabase() {
+    try {
+        const response = await fetch(
+            import.meta.env.VITE_API_URL + '/api/ping',
+            {
+                credentials: 'include',
+            },
+        );
+        if (response.ok) {
+            const data = await response.json();
+            return data.ping;
+        }
+    } catch (error) {
+        console.warn(error);
+    }
+}
+
+export async function getUsers() {
+    try {
+        const response = await fetch(
+            import.meta.env.VITE_API_URL + '/api/users',
+            {
+                credentials: 'include',
+            },
+        );
+        if (response.ok) {
+            const data = await response.json();
+            console.log(data);
+            return data;
+        }
+    } catch (error) {
+        console.warn(error);
+    }
+}

@@ -1,12 +1,12 @@
 import { useContext, useState } from 'react';
 import ChannelFormModal from './ChannelFormModal';
-import { UserContext } from '../contexts/UserContext';
 import type { IChannel } from '../interfaces/channel';
+import { GlobalContext } from '../contexts/GlobalContext';
 
 interface SidebarProps {
     readonly channels: IChannel[];
     readonly selectedChannel: IChannel | null;
-    readonly setSelectedChannel: (channel: IChannel) => void;
+    readonly setSelectedChannel: (channel: IChannel | null) => void;
 }
 
 function Sidebar({
@@ -15,7 +15,7 @@ function Sidebar({
     setSelectedChannel,
 }: SidebarProps): JSX.Element {
     const [showModal, setShowModal] = useState(false); // channel create modal
-    const currentUser = useContext(UserContext);
+    const { currentUser } = useContext(GlobalContext);
 
     return (
         <>
@@ -29,7 +29,13 @@ function Sidebar({
                         <li key={index} className="mb-2">
                             <button
                                 className={`p-2 w-100 text-left ${selectedChannel?.id === channel.id ? 'bg-primary' : 'bg-dark-subtle'}`}
-                                onClick={() => setSelectedChannel(channel)}
+                                onClick={() => {
+                                    if (selectedChannel?.id === channel.id) {
+                                        setSelectedChannel(null);
+                                    } else {
+                                        setSelectedChannel(channel);
+                                    }
+                                }}
                                 onKeyUp={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         setSelectedChannel(channel);

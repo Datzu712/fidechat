@@ -3,8 +3,8 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import { useContext, useState } from 'react';
 import { Row } from 'react-bootstrap';
-import { UserContext } from '../contexts/UserContext';
 import { createChannel } from '../services/api';
+import { GlobalContext } from '../contexts/GlobalContext';
 
 interface ChannelFormModalProps {
     readonly show: boolean;
@@ -15,10 +15,10 @@ function ChannelFormModal({ show, handleClose }: ChannelFormModalProps) {
     const [validated, setValidated] = useState(false);
     const [channelName, setChannelName] = useState('');
     const [channelDescription, setChannelDescription] = useState('');
-    const user = useContext(UserContext);
+    const { currentUser } = useContext(GlobalContext);
 
     function handleCreateChannel(name: string, description: string) {
-        createChannel({ name, description, ownerId: user.id });
+        createChannel({ name, description, ownerId: currentUser.id });
     }
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

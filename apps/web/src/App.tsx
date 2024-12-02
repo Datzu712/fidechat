@@ -1,31 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import Message from './components/Message';
 import Sidebar from './components/Sidebar';
 import type { IMessage } from './interfaces/message';
-import { IUser } from './interfaces/user';
 import { IWebsocketEvent } from './interfaces/websocketEvent';
 import { IChannel } from './interfaces/channel';
 import {
     createMessage,
     getChannels,
+    getUsers,
     getWebsocketConnection,
+    pingDatabase,
 } from './services/api';
-import { UserContext } from './contexts/UserContext';
+import { GlobalContext } from './contexts/GlobalContext';
+
+function sortChannels(channels: IChannel[]) {
+    return channels.sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+    });
+}
 
 function App() {
-    const [currentUser] = useState<IUser>(
-        JSON.parse(localStorage.getItem('data')!) as IUser,
-    );
-
-    const [messages, setMessages] = useState<IMessage[]>([]);
+    const {
+        currentUser,
+        users,
+        channels,
+        setChannels,
+        messages,
+        setMessages,
+        selectedChannel,
+        setSelectedChannel,
+        apiPing,
+    } = useContext(GlobalContext)!;
     const [input, setInput] = useState<string>('');
-    const [channels, setChannels] = useState<IChannel[]>([]);
-    const [selectedChannel, setSelectedChannel] = useState<IChannel | null>(
-        null,
-    );
     const ws = useRef<WebSocket | null>(null);
     const navigate = useNavigate();
 
@@ -57,8 +68,7 @@ function App() {
             if (!token) return;
 
             const channels = await getChannels();
-            console.log(channels);
-            setChannels(channels);
+            setChannels(sortChannels(channels));
 
             ws.current = new WebSocket(
                 import.meta.env.VITE_WS_URL + '/ws?token=' + token,
@@ -71,7 +81,7 @@ function App() {
                 if (eventData.type === 'MESSAGE_CREATE') {
                     setMessages([...messages, eventData.payload]);
                 } else if (eventData.type === 'CHANNEL_CREATE') {
-                    setChannels([...channels, eventData.payload]);
+                    setChannels(sortChannels([...channels, eventData.payload]));
                 }
             };
             ws.current.onclose = () => {
@@ -83,16 +93,16 @@ function App() {
             };
         }
         setUpWebsocketConnection();
-    }, [currentUser, messages, navigate]);
+    }, [currentUser, messages, navigate, setChannels, setMessages]);
 
     return (
         <div className="d-flex vh-100">
-            <UserContext.Provider value={currentUser}>
-                <Sidebar
-                    channels={channels}
-                    selectedChannel={selectedChannel}
-                    setSelectedChannel={setSelectedChannel}
-                />
+            <Sidebar
+                channels={channels}
+                selectedChannel={selectedChannel}
+                setSelectedChannel={setSelectedChannel}
+            />
+            {selectedChannel ? (
                 <div className="card flex-grow-1">
                     <Header />
                     <div className="card-body d-flex flex-column p-0">
@@ -107,7 +117,7 @@ function App() {
                                         key={msg.id}
                                         id={msg.id}
                                         content={msg.content}
-                                        userName={msg.author_id}
+                                        authorId={msg.author_id}
                                     />
                                 ))}
                         </div>
@@ -128,7 +138,12 @@ function App() {
                         </div>
                     </div>
                 </div>
-            </UserContext.Provider>
+            ) : (
+                <div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center">
+                    <h1>Welcome to Fidechat</h1>
+                    {apiPing !== null && <h3>API Ping & DB: {apiPing} ms</h3>}
+                </div>
+            )}
         </div>
     );
 }
