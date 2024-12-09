@@ -1,21 +1,13 @@
 import { useContext, useState } from 'react';
 import ChannelFormModal from './ChannelFormModal';
-import type { IChannel, IExtendedChannel } from '../interfaces/channel';
 import { GlobalContext } from '../contexts/GlobalContext';
 
-interface SidebarProps {
-    readonly channels: IExtendedChannel[];
-    readonly selectedChannel: IChannel | null;
-    readonly setSelectedChannel: (channel: IExtendedChannel | null) => void;
-}
+function Sidebar(): JSX.Element {
+    console.log('Sidebar rendered');
 
-function Sidebar({
-    channels,
-    selectedChannel,
-    setSelectedChannel,
-}: SidebarProps): JSX.Element {
-    const [showModal, setShowModal] = useState(false); // channel create modal
-    const { currentUser } = useContext(GlobalContext);
+    const [showModal, setShowModal] = useState(false);
+    const { currentUser, setSelectedChannel, selectedChannel, channels } =
+        useContext(GlobalContext);
 
     return (
         <>

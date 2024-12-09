@@ -19,23 +19,32 @@ interface IGlobalContext {
         React.SetStateAction<IExtendedChannel | null>
     >;
     selectedChannel: IExtendedChannel | null;
+    isAuthenticated: boolean;
+    setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const GlobalContext = createContext<IGlobalContext>(
     {} as IGlobalContext,
 );
 
-export const GlobalProvider = ({ children }: { children: ReactNode }) => {
+export interface IGlobalProviderProps {
+    readonly children: ReactNode;
+}
+
+export function GlobalProvider({ children }: IGlobalProviderProps) {
     const [currentUser] = useState<IUser | null>(
         JSON.parse(localStorage.getItem('data')! ?? null) as IUser,
     );
     const [users, setUsers] = useState<IUser[]>([]);
     const [channels, setChannels] = useState<IExtendedChannel[]>([]);
     const [apiPing, setApiPing] = useState<string | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [selectedChannel, setSelectedChannel] =
         useState<IExtendedChannel | null>(null);
 
     useEffect(() => {
+        if (!isAuthenticated) return;
+
         console.debug('Fetching data...');
 
         const intervalId = setInterval(() => {
@@ -48,8 +57,8 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         getUsers().then(setUsers).catch(console.error);
         getChannels().then(setChannels).catch(console.error);
 
-        return () => clearInterval(intervalId); // Limpia el intervalo cuando el efecto se desmonte o se vuelva a ejecutar
-    }, [selectedChannel]);
+        return () => clearInterval(intervalId);
+    }, [isAuthenticated]);
 
     const contextValue = useMemo(
         () => ({
@@ -60,8 +69,17 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
             setChannels,
             selectedChannel,
             setSelectedChannel,
+            isAuthenticated,
+            setIsAuthenticated,
         }),
-        [currentUser, users, channels, apiPing, selectedChannel],
+        [
+            currentUser,
+            users,
+            channels,
+            apiPing,
+            selectedChannel,
+            isAuthenticated,
+        ],
     );
 
     return (
@@ -69,4 +87,4 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
             {children}
         </GlobalContext.Provider>
     );
-};
+}

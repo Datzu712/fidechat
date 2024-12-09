@@ -1,10 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import App from './App.tsx';
-import Login from './Login.tsx';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { GlobalProvider } from './contexts/GlobalContext';
+
+const App = lazy(() => import('./App.tsx'));
+const Login = lazy(() => import('./Login.tsx'));
 
 const root = createRoot(document.getElementById('root')!);
 
@@ -12,10 +13,12 @@ root.render(
     <StrictMode>
         <GlobalProvider>
             <BrowserRouter>
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/" element={<App />} />
-                </Routes>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/" element={<App />} />
+                    </Routes>
+                </Suspense>
             </BrowserRouter>
         </GlobalProvider>
     </StrictMode>,

@@ -1,6 +1,6 @@
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 import imgUrl from './assets/img/logo.png';
 
@@ -27,14 +27,17 @@ function Login() {
             ]);
             return;
         }
-        const response = await fetch('http://localhost:8080/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        const response = await fetch(
+            import.meta.env.VITE_API_URL + '/api/auth/login',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include',
             },
-            body: JSON.stringify({ email, password }),
-            credentials: 'include',
-        });
+        );
 
         if (response.ok) {
             const { data } = await response.json();
@@ -86,7 +89,6 @@ function Login() {
                                 <form
                                     method="post"
                                     className="needs-validation"
-                                    vali
                                     onSubmit={(e) => handleLogin(e)}
                                     noValidate
                                 >
