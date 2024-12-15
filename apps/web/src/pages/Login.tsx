@@ -1,6 +1,6 @@
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import imgUrl from './assets/img/logo.png';
 
@@ -173,12 +173,12 @@ function Login() {
                                         <div className="col-12">
                                             <p className="m-0 text-secondary text-center">
                                                 Don&apos;t have an account?{' '}
-                                                <a
-                                                    href="/signup"
+                                                <Link
                                                     className="link-primary text-decoration-none"
+                                                    to="/register"
                                                 >
                                                     Sign up
-                                                </a>
+                                                </Link>
                                             </p>
                                         </div>
                                     </div>
