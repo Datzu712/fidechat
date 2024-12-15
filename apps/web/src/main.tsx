@@ -7,7 +7,7 @@ import { GlobalProvider } from './contexts/GlobalContext';
 const App = lazy(() => import('./App.tsx'));
 const Login = lazy(() => import('./Login.tsx'));
 
-const root = createRoot(document.getElementById('root')!);
+const root = createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
     <StrictMode>

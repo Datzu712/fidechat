@@ -7,6 +7,15 @@ export interface MessageProps {
     readonly authorId: string;
 }
 
+/**
+ * Component to display a message.
+ *
+ * @param { MessageProps } props - The properties for the Message component.
+ * @param { string } props.id - The unique identifier for the message.
+ * @param { string } props.content - The content of the message.
+ * @param { string } props.authorId - The unique identifier of the author of the message.
+ * @returns {JSX.Element } The rendered Message component.
+ */
 function Message({ id, content, authorId }: MessageProps): JSX.Element {
     const { users, currentUser } = useContext(GlobalContext);
 

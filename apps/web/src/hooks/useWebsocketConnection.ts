@@ -90,6 +90,7 @@ function useWebsocketConnection({
 
                 newWs.onopen = () => console.log('Connected to websocket');
                 newWs.onmessage = handleWebSocketMessage;
+                newWs.onerror = (error) => console.error(error);
                 newWs.onclose = () =>
                     console.log('Disconnected from websocket');
 
