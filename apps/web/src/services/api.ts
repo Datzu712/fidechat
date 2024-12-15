@@ -24,7 +24,9 @@ export class ApiError extends Error {
     }
 }
 
-export async function createMessage(message: Omit<IMessage, 'id'>) {
+export async function createMessage(
+    message: Omit<IMessage, 'id' | 'createdAt'>,
+) {
     const response = await fetch(
         import.meta.env.VITE_API_URL +
             `/api/channels/${message.channelId}/messages`,

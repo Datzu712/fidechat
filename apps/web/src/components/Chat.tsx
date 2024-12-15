@@ -18,6 +18,7 @@ function Chat() {
                 content: inputValue,
                 channelId: selectedChannel!.id,
                 authorId: currentUser!.id,
+                createdAt: new Date().toISOString(),
             };
 
             createMessage(newMessage);
@@ -34,20 +35,21 @@ function Chat() {
     };
 
     return (
-        <div className="card-body d-flex flex-column p-0">
+        <section className="card-body d-flex flex-column p-0 mt-5">
             <div className="flex-grow-1 overflow-auto p-3 bg-dark">
                 {selectedChannel?.messages
                     .filter((msg) => msg.channelId === selectedChannel?.id)
                     .map((msg) => (
                         <Message
                             key={msg.id}
-                            id={msg.id}
                             content={msg.content}
                             authorId={msg.authorId}
+                            createdAt={new Date(msg.createdAt)}
                         />
                     ))}
             </div>
-            <div className="card-footer d-flex p-3 bg-body-tertiary border-top">
+
+            <footer className="card-footer d-flex p-3 bg-body-tertiary border-top sticky-bottom">
                 <input
                     type="text"
                     className="form-control me-2"
@@ -59,8 +61,8 @@ function Chat() {
                 <button className="btn btn-primary" onClick={handleSend}>
                     Send
                 </button>
-            </div>
-        </div>
+            </footer>
+        </section>
     );
 }
 

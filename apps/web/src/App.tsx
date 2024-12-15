@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router';
 import './App.css';
-import Header from './components/Header';
+import ChannelHeader from './components/ChannelHeader';
 import Sidebar from './components/Sidebar';
 import { GlobalContext } from './contexts/GlobalContext';
 import Chat from './components/Chat';
@@ -25,7 +25,7 @@ function App() {
             <Sidebar />
             {selectedChannel ? (
                 <div className="card flex-grow-1 main-content">
-                    <Header />
+                    <ChannelHeader />
                     <Chat />
                 </div>
             ) : (

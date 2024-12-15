@@ -1,10 +1,11 @@
 import { useContext } from 'react';
 import { GlobalContext } from '../contexts/GlobalContext';
+import AvatarURL from '../assets/avatar.png';
 
 export interface MessageProps {
-    readonly id: string;
     readonly content: string;
     readonly authorId: string;
+    readonly createdAt: Date;
 }
 
 /**
@@ -16,7 +17,7 @@ export interface MessageProps {
  * @param { string } props.authorId - The unique identifier of the author of the message.
  * @returns {JSX.Element } The rendered Message component.
  */
-function Message({ id, content, authorId }: MessageProps): JSX.Element {
+function Message({ content, authorId, createdAt }: MessageProps): JSX.Element {
     const { users, currentUser } = useContext(GlobalContext);
 
     let name = '';
@@ -29,10 +30,18 @@ function Message({ id, content, authorId }: MessageProps): JSX.Element {
     }
 
     return (
-        <div key={id} className="mb-3 p-2 bg-body-tertiary rounded shadow-sm">
-            <div className="fw-bold">{name}</div>
-            <div>{content}</div>
-        </div>
+        <article className="mb-3 pt-2 ps-2 rounded shadow bg-body-tertiary d-flex">
+            <img src={AvatarURL} alt={name} className="message-avatar" />
+            <div>
+                <header>
+                    <span className="message-username">{name}</span>
+                    <span className="message-timestamp">
+                        {createdAt.toLocaleTimeString()}
+                    </span>
+                </header>
+                <p className="message-content">{content}</p>
+            </div>
+        </article>
     );
 }
 

@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { type JSX, useContext, useState } from 'react';
 import ChannelFormModal from './ChannelFormModal';
 import { GlobalContext } from '../contexts/GlobalContext';
 
@@ -11,16 +11,14 @@ function Sidebar(): JSX.Element {
 
     return (
         <>
-            <div
-                className="bg-dark text-white d-flex flex-column p-3 flex-shrink-0 sidebar"
-                style={{ width: '250px' }}
-            >
-                <h5>Channels</h5>
-                <ul className="list-unstyled flex-grow-1">
+            <nav className="sidebar p-1">
+                <h2 className="text-center">Fidechat</h2>
+                <h5 className="mt-4 ms-1">Channels</h5>
+                <ul className="list-unstyled flex-grow-1 overflow-auto ms-1">
                     {channels.map((channel, index) => (
                         <li key={index} className="mb-2">
                             <button
-                                className={`p-2 w-100 text-left ${selectedChannel?.id === channel.id ? 'bg-primary' : 'bg-dark-subtle'}`}
+                                className={`p-2 w-100 btn-channel text-left rounded ${selectedChannel?.id === channel.id ? 'bg-secondary selected' : 'bg-body-secondary'}`}
                                 onClick={() => {
                                     if (selectedChannel?.id === channel.id) {
                                         setSelectedChannel(null);
@@ -40,7 +38,7 @@ function Sidebar(): JSX.Element {
                     ))}
                 </ul>
                 <button
-                    className="btn btn-secondary mb-3"
+                    className="btn btn-secondary mb-3 btn-create-channel"
                     onClick={() => setShowModal(true)}
                 >
                     Create Channel
@@ -54,7 +52,7 @@ function Sidebar(): JSX.Element {
                         </small>
                     </div>
                 </div>
-            </div>
+            </nav>
 
             <ChannelFormModal
                 show={showModal}

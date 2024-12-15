@@ -3,4 +3,5 @@ export interface IMessage {
     authorId: string;
     content: string;
     channelId: string;
+    createdAt: string;
 }
