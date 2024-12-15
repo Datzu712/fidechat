@@ -31,6 +31,9 @@
       "@scss/*": [
         "./src/scss/*"
       ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
     }
   },
   "include": [

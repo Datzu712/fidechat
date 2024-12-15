@@ -2,7 +2,7 @@ import { Toast, ToastContainer } from 'react-bootstrap';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
-import imgUrl from './assets/img/logo.png';
+import imgUrl from '@assets/img/logo.png';
 
 function Login() {
     const [email, setEmail] = useState('');

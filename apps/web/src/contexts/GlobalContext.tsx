@@ -33,7 +33,8 @@ export interface IGlobalProviderProps {
 
 export function GlobalProvider({ children }: IGlobalProviderProps) {
     const [currentUser] = useState<IUser | null>(
-        JSON.parse(localStorage.getItem('data')! ?? null) as IUser,
+        () =>
+            JSON.parse(localStorage.getItem('data') ?? 'null') as IUser | null,
     );
     const [users, setUsers] = useState<IUser[]>([]);
     const [channels, setChannels] = useState<IExtendedChannel[]>([]);
