@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { GlobalContext } from '../contexts/GlobalContext';
-import AvatarURL from '../assets/avatar.png';
+import AvatarURL from '@assets/avatar.png';
 
 export interface MessageProps {
     readonly content: string;

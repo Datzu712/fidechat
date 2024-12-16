@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
-import Message from './Message';
-import { GlobalContext } from '../contexts/GlobalContext';
+import Message from '@components/Message';
+import { GlobalContext } from '@contexts/GlobalContext';
 import type { IMessage } from '../interfaces/message';
 import { createMessage } from '../services/api';
 
