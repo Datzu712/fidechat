@@ -97,7 +97,6 @@ function useWebsocketConnection({
             );
 
             newWs.onopen = () => {
-                newWs.send('ping');
                 setIsReconnecting(false);
                 setToastMessages((prev) => [
                     ...prev,

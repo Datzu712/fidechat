@@ -1,17 +1,28 @@
-import { type JSX, useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import {
+    faUser,
+    faUserPlus,
+    faEdit,
+    faDeleteLeft,
+} from '@fortawesome/free-solid-svg-icons';
 import { Dropdown } from 'react-bootstrap';
 
 import ChannelFormModal from '@components/ChannelFormModal';
 import { GlobalContext } from '@contexts/GlobalContext';
-import { ConfirmDialog } from './ConfirmDialong';
+import { ConfirmDialog } from '@components/ConfirmDialong';
+import type { IExtendedChannel } from 'src/interfaces/channel';
 
-function Sidebar(): JSX.Element {
+function Sidebar() {
     const [showModal, setShowModal] = useState(false);
     const [visible, setVisible] = useState(false);
     const { currentUser, setSelectedChannel, selectedChannel, channels } =
         useContext(GlobalContext);
+    const [contextMenu, setContextMenu] = useState<{
+        mouseX: number;
+        mouseY: number;
+        channel: IExtendedChannel;
+    } | null>(null);
 
     const handleLogout = () => {
         fetch(import.meta.env.VITE_API_URL + '/api/auth/logout', {
@@ -27,8 +38,59 @@ function Sidebar(): JSX.Element {
             .catch(console.error);
     };
 
+    const handleContextMenuClose = () => {
+        setContextMenu(null);
+    };
+
     return (
         <>
+            {contextMenu && (
+                <Dropdown.Menu
+                    show
+                    className="position-absolute"
+                    style={{
+                        top: contextMenu.mouseY,
+                        left: contextMenu.mouseX,
+                        zIndex: 1000,
+                    }}
+                    onMouseLeave={handleContextMenuClose}
+                >
+                    <Dropdown.Item
+                        onClick={() => {
+                            /* Acción para opción 1 */
+                            handleContextMenuClose();
+                        }}
+                    >
+                        <FontAwesomeIcon className="me-1" icon={faUserPlus} />{' '}
+                        Invitar personas
+                    </Dropdown.Item>
+                    {contextMenu.channel.ownerId === currentUser?.id && (
+                        <Dropdown.Item
+                            onClick={() => {
+                                /* Acción para opción 2 */
+                                handleContextMenuClose();
+                            }}
+                        >
+                            <FontAwesomeIcon className="me-1" icon={faEdit} />{' '}
+                            Editar canal
+                        </Dropdown.Item>
+                    )}
+                    {contextMenu.channel.ownerId === currentUser?.id && (
+                        <Dropdown.Item
+                            onClick={() => {
+                                /* Acción para opción 2 */
+                                handleContextMenuClose();
+                            }}
+                        >
+                            <FontAwesomeIcon
+                                icon={faDeleteLeft}
+                                className="me-1"
+                            />{' '}
+                            Eliminar canal
+                        </Dropdown.Item>
+                    )}
+                </Dropdown.Menu>
+            )}
             <ConfirmDialog
                 show={visible}
                 title="Log out"
@@ -51,10 +113,13 @@ function Sidebar(): JSX.Element {
                                         setSelectedChannel(channel);
                                     }
                                 }}
-                                onKeyUp={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        setSelectedChannel(channel);
-                                    }
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    setContextMenu({
+                                        mouseX: e.clientX - 2,
+                                        mouseY: e.clientY - 4,
+                                        channel: channel,
+                                    });
                                 }}
                             >
                                 {channel.name}

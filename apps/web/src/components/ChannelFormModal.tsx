@@ -25,7 +25,6 @@ function ChannelFormModal({ show, handleClose }: ChannelFormModalProps) {
         event.preventDefault();
 
         const form = event.currentTarget;
-        console.log(form.checkValidity());
         if (form.checkValidity() === false) {
             event.stopPropagation();
             setValidated(true);
