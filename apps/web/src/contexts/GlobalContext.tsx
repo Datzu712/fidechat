@@ -32,7 +32,7 @@ export interface IGlobalProviderProps {
 }
 
 export function GlobalProvider({ children }: IGlobalProviderProps) {
-    const [currentUser] = useState<IUser | null>(
+    const [currentUser, setCurrentUser] = useState<IUser | null>(
         () =>
             JSON.parse(localStorage.getItem('data') ?? 'null') as IUser | null,
     );
@@ -47,6 +47,10 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
         if (!isAuthenticated) return;
 
         console.debug('Fetching data...');
+
+        setCurrentUser(
+            JSON.parse(localStorage.getItem('data') ?? 'null') as IUser | null,
+        );
 
         const intervalId = setInterval(() => {
             if (!selectedChannel) {

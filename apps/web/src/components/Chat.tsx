@@ -1,14 +1,13 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import Message from '@components/Message';
 import { GlobalContext } from '@contexts/GlobalContext';
 import type { IMessage } from '../interfaces/message';
 import { createMessage } from '../services/api';
 
 function Chat() {
-    console.log('Chat rendered');
-
     const [inputValue, setInputValue] = useState<string>('');
     const { selectedChannel, currentUser } = useContext(GlobalContext);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleSend = async () => {
         if (!inputValue.length) return;
@@ -34,6 +33,15 @@ function Chat() {
         }
     };
 
+    const scrollToBottom = () => {
+        console.log(messagesEndRef.current?.scrollHeight);
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [selectedChannel?.messages]);
+
     return (
         <section className="card-body d-flex flex-column p-0 mt-5">
             <div className="flex-grow-1 overflow-auto p-3 bg-dark">
@@ -47,6 +55,7 @@ function Chat() {
                             createdAt={new Date(msg.createdAt)}
                         />
                     ))}
+                <div ref={messagesEndRef} />
             </div>
 
             <footer className="card-footer d-flex p-3 bg-body-tertiary border-top sticky-bottom">

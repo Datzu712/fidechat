@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import imgUrl from '@assets/img/logo.png';
+import StatusModal from '@components/StatusModal';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<Error[]>([]);
+
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const navigate = useNavigate();
 
@@ -42,14 +45,27 @@ function Login() {
         if (response.ok) {
             const { data } = await response.json();
             localStorage.setItem('data', JSON.stringify(data));
-            navigate('/');
+
+            setShowSuccessModal(true);
         } else {
             setErrors([...errors, new Error('Invalid email or password')]);
         }
     };
 
+    const handleCloseModal = () => {
+        setShowSuccessModal(false);
+        navigate('/');
+    };
+
     return (
         <section>
+            <StatusModal
+                show={showSuccessModal}
+                handleClose={handleCloseModal}
+                title="Login Successful"
+                description="Now you will be redirected to the home page."
+                status={'success'}
+            />
             <ToastContainer position="top-end" className="p-3">
                 {errors.map((error, index) => (
                     <Toast

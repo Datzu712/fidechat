@@ -11,6 +11,18 @@ function Sidebar(): JSX.Element {
     const { currentUser, setSelectedChannel, selectedChannel, channels } =
         useContext(GlobalContext);
 
+    const handleLogout = () => {
+        fetch('/api/logout', {
+            method: 'POST',
+            credentials: 'include',
+        })
+            .then(() => {
+                localStorage.removeItem('data');
+                window.location.href = '/';
+            })
+            .catch(console.error);
+    };
+
     return (
         <>
             <nav className="sidebar p-1">
@@ -40,7 +52,7 @@ function Sidebar(): JSX.Element {
                     ))}
                 </ul>
                 <button
-                    className="btn btn-secondary mb-3 btn-create-channel"
+                    className="btn btn-secondary mb-1 btn-create-channel"
                     onClick={() => setShowModal(true)}
                 >
                     Create Channel
