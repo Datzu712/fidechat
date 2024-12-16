@@ -5,26 +5,37 @@ import { Dropdown } from 'react-bootstrap';
 
 import ChannelFormModal from '@components/ChannelFormModal';
 import { GlobalContext } from '@contexts/GlobalContext';
+import { ConfirmDialog } from './ConfirmDialong';
 
 function Sidebar(): JSX.Element {
     const [showModal, setShowModal] = useState(false);
+    const [visible, setVisible] = useState(false);
     const { currentUser, setSelectedChannel, selectedChannel, channels } =
         useContext(GlobalContext);
 
     const handleLogout = () => {
-        fetch('/api/logout', {
-            method: 'POST',
+        fetch(import.meta.env.VITE_API_URL + '/api/auth/logout', {
+            method: 'GET',
             credentials: 'include',
         })
-            .then(() => {
-                localStorage.removeItem('data');
-                window.location.href = '/';
+            .then((res) => {
+                if (res.ok) {
+                    localStorage.removeItem('data');
+                    window.location.href = '/login';
+                }
             })
             .catch(console.error);
     };
 
     return (
         <>
+            <ConfirmDialog
+                show={visible}
+                title="Log out"
+                message="Are you sure you want to log out? You will be redirected to the login page."
+                onCancel={() => setVisible(false)}
+                onConfirm={handleLogout}
+            />
             <nav className="sidebar p-1">
                 <h2 className="text-center">Fidechat</h2>
                 <h5 className="mt-4 ms-1">Channels</h5>
@@ -74,7 +85,7 @@ function Sidebar(): JSX.Element {
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu>
-                                <Dropdown.Item onClick={() => alert('Logout')}>
+                                <Dropdown.Item onClick={() => setVisible(true)}>
                                     Logout
                                 </Dropdown.Item>
                                 <Dropdown.Item
