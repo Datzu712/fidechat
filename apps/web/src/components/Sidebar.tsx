@@ -1,10 +1,12 @@
 import { type JSX, useContext, useState } from 'react';
-import ChannelFormModal from './ChannelFormModal';
-import { GlobalContext } from '../contexts/GlobalContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { Dropdown } from 'react-bootstrap';
+
+import ChannelFormModal from '@components/ChannelFormModal';
+import { GlobalContext } from '@contexts/GlobalContext';
 
 function Sidebar(): JSX.Element {
-    console.log('Sidebar rendered');
-
     const [showModal, setShowModal] = useState(false);
     const { currentUser, setSelectedChannel, selectedChannel, channels } =
         useContext(GlobalContext);
@@ -46,8 +48,33 @@ function Sidebar(): JSX.Element {
                 <div className="mt-auto">
                     <hr className="bg-light" />
                     <div className="text-center">
-                        <p className="mb-1">{currentUser?.name}</p>
-                        <small className="text-muted">
+                        <Dropdown>
+                            <Dropdown.Toggle
+                                variant="btn-dark"
+                                id="dropdown-basic"
+                                className="border border-light"
+                            >
+                                <FontAwesomeIcon
+                                    icon={faUser}
+                                    className="me-2"
+                                />
+                                {currentUser?.name}
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu>
+                                <Dropdown.Item onClick={() => alert('Logout')}>
+                                    Logout
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                    onClick={() => {
+                                        alert('Settings');
+                                    }}
+                                >
+                                    Settings
+                                </Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>
+                        <small className="text-muted d-block mt-2 fs-6">
                             {currentUser?.email}
                         </small>
                     </div>
