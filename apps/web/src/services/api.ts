@@ -126,3 +126,23 @@ export async function getUsers() {
         return data;
     }
 }
+
+export async function updateChannel(updatedChannel: IExtendedChannel) {
+    const response = await fetch(
+        import.meta.env.VITE_API_URL + `/api/channels/${updatedChannel.id}`,
+        {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedChannel),
+            credentials: 'include',
+        },
+    );
+    if (response.ok) {
+        const data = await response.json();
+        return data;
+    }
+
+    throw new ApiError(response);
+}

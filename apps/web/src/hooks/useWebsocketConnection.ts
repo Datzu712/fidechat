@@ -69,6 +69,21 @@ function useWebsocketConnection({
                 ...channelsRef.current,
                 { ...eventData.payload, messages: [] },
             ]);
+        } else if (eventData.type === 'CHANNEL_UPDATE') {
+            if (eventData.payload.id === selectedChannelRef.current?.id) {
+                setSelectedChannel({
+                    ...selectedChannelRef.current,
+                    ...eventData.payload,
+                });
+            }
+
+            setChannels(
+                channelsRef.current.map((c) =>
+                    c.id === eventData.payload.id
+                        ? { ...c, ...eventData.payload }
+                        : c,
+                ),
+            );
         }
     };
 

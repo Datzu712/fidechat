@@ -15,6 +15,8 @@ import type { IExtendedChannel } from 'src/interfaces/channel';
 
 function Sidebar() {
     const [showModal, setShowModal] = useState(false);
+    const [editingChannel, setEditingChannel] =
+        useState<IExtendedChannel | null>(null);
     const [visible, setVisible] = useState(false);
     const { currentUser, setSelectedChannel, selectedChannel, channels } =
         useContext(GlobalContext);
@@ -62,13 +64,13 @@ function Sidebar() {
                         }}
                     >
                         <FontAwesomeIcon className="me-1" icon={faUserPlus} />{' '}
-                        Invitar personas
+                        Agregar personas
                     </Dropdown.Item>
                     {contextMenu.channel.ownerId === currentUser?.id && (
                         <Dropdown.Item
                             onClick={() => {
-                                /* Acción para opción 2 */
-                                handleContextMenuClose();
+                                setEditingChannel(contextMenu.channel);
+                                setShowModal(true);
                             }}
                         >
                             <FontAwesomeIcon className="me-1" icon={faEdit} />{' '}
@@ -171,7 +173,11 @@ function Sidebar() {
 
             <ChannelFormModal
                 show={showModal}
-                handleClose={() => setShowModal(false)}
+                handleClose={() => {
+                    setShowModal(false);
+                    setEditingChannel(null);
+                }}
+                editingChannel={editingChannel}
             />
         </>
     );

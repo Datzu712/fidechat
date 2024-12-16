@@ -1,4 +1,4 @@
-import type { IChannel } from './channel';
+import type { IChannel, IExtendedChannel } from './channel';
 import type { IMessage } from './message';
 import type { IUser } from './user';
 
@@ -17,7 +17,13 @@ interface IChannelCreateEvent {
     payload: IChannel;
 }
 
+interface IChannelUpdateEvent {
+    type: 'CHANNEL_UPDATE';
+    payload: IExtendedChannel;
+}
+
 export type IWebsocketEvent =
     | IMessageCreateEvent
     | IMemberJoinEvent
-    | IChannelCreateEvent;
+    | IChannelCreateEvent
+    | IChannelUpdateEvent;
