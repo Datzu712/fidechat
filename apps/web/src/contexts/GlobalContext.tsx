@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import type { IUser } from '../interfaces/user';
 import type { IExtendedChannel } from '../interfaces/channel';
-import { getChannels, getUsers, pingDatabase } from '../services/api';
+import { pingDatabase } from '../services/api';
 import { Toast, ToastContainer } from 'react-bootstrap';
 
 type ToastMessage = {
@@ -19,6 +19,7 @@ type ToastMessage = {
 interface IGlobalContext {
     currentUser: IUser | null;
     users: IUser[];
+    setUsers: React.Dispatch<React.SetStateAction<IUser[]>>;
     channels: IExtendedChannel[];
     apiPing: string | null;
     setChannels: React.Dispatch<React.SetStateAction<IExtendedChannel[]>>;
@@ -70,30 +71,30 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
             }
         }, 3000);
 
-        getUsers()
-            .then(setUsers)
-            .catch((e) => {
-                console.error(e);
-                setToastMessages((prev) => [
-                    ...prev,
-                    {
-                        message: 'Failed to fetch users',
-                        bg: 'danger',
-                    },
-                ]);
-            });
-        getChannels()
-            .then(setChannels)
-            .catch((e) => {
-                console.error(e);
-                setToastMessages((prev) => [
-                    ...prev,
-                    {
-                        message: 'Failed to fetch channels',
-                        bg: 'danger',
-                    },
-                ]);
-            });
+        // getUsers()
+        //     .then(setUsers)
+        //     .catch((e) => {
+        //         console.error(e);
+        //         setToastMessages((prev) => [
+        //             ...prev,
+        //             {
+        //                 message: 'Failed to fetch users',
+        //                 bg: 'danger',
+        //             },
+        //         ]);
+        //     });
+        // getChannels()
+        //     .then(setChannels)
+        //     .catch((e) => {
+        //         console.error(e);
+        //         setToastMessages((prev) => [
+        //             ...prev,
+        //             {
+        //                 message: 'Failed to fetch channels',
+        //                 bg: 'danger',
+        //             },
+        //         ]);
+        //     });
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated]);
@@ -111,6 +112,7 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
             setIsAuthenticated,
             toastMessages,
             setToastMessages,
+            setUsers,
         }),
         [
             currentUser,
@@ -139,7 +141,7 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
                         autohide
                     >
                         <Toast.Header>
-                            <strong className="me-auto">Error</strong>
+                            <strong className="me-auto">Info</strong>
                         </Toast.Header>
                         <Toast.Body>{message}</Toast.Body>
                     </Toast>

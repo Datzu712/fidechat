@@ -1,5 +1,10 @@
 import { useContext, useEffect, useRef, useState } from 'react';
-import { ApiError, getWebsocketConnection } from '../services/api';
+import {
+    ApiError,
+    getChannels,
+    getUsers,
+    getWebsocketConnection,
+} from '../services/api';
 import { GlobalContext } from '../contexts/GlobalContext';
 import { IWebsocketEvent } from '../interfaces/websocketEvent';
 import { useNavigate } from 'react-router';
@@ -15,6 +20,7 @@ function useWebsocketConnection({
         channels,
         selectedChannel,
         setToastMessages,
+        setUsers,
     } = useContext(GlobalContext);
 
     const wsRef = useRef<WebSocket | null>(null);
@@ -30,7 +36,6 @@ function useWebsocketConnection({
     }, [channels, selectedChannel]);
 
     const handleWebSocketMessage = (event: MessageEvent) => {
-        console.log(channelsRef.current);
         console.log('Received message:', event.data);
 
         const eventData = JSON.parse(event.data) as IWebsocketEvent;
@@ -84,6 +89,13 @@ function useWebsocketConnection({
                         : c,
                 ),
             );
+        } else if (eventData.type === 'CHANNEL_DELETE') {
+            setChannels(
+                channelsRef.current.filter((c) => c.id !== eventData.payload),
+            );
+            if (selectedChannelRef.current?.id === eventData.payload) {
+                setSelectedChannel(null);
+            }
         }
     };
 
@@ -121,6 +133,30 @@ function useWebsocketConnection({
                         delay: 5000,
                     },
                 ]);
+                getUsers()
+                    .then(setUsers)
+                    .catch((e) => {
+                        console.error(e);
+                        setToastMessages((prev) => [
+                            ...prev,
+                            {
+                                message: 'Failed to fetch users',
+                                bg: 'danger',
+                            },
+                        ]);
+                    });
+                getChannels()
+                    .then(setChannels)
+                    .catch((e) => {
+                        console.error(e);
+                        setToastMessages((prev) => [
+                            ...prev,
+                            {
+                                message: 'Failed to fetch channels',
+                                bg: 'danger',
+                            },
+                        ]);
+                    });
             };
             newWs.onmessage = handleWebSocketMessage;
             newWs.onerror = (error) => {

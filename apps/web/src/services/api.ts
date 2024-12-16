@@ -146,3 +146,18 @@ export async function updateChannel(updatedChannel: IExtendedChannel) {
 
     throw new ApiError(response);
 }
+
+export async function deleteChannel(channelId: string) {
+    const response = await fetch(
+        import.meta.env.VITE_API_URL + `/api/channels/${channelId}`,
+        {
+            method: 'DELETE',
+            credentials: 'include',
+        },
+    );
+    if (response.ok) {
+        return;
+    }
+
+    throw new ApiError(response);
+}

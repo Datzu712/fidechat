@@ -22,8 +22,14 @@ interface IChannelUpdateEvent {
     payload: IExtendedChannel;
 }
 
+interface IChannelDeleteEvent {
+    type: 'CHANNEL_DELETE';
+    payload: string; // channelId
+}
+
 export type IWebsocketEvent =
     | IMessageCreateEvent
     | IMemberJoinEvent
     | IChannelCreateEvent
-    | IChannelUpdateEvent;
+    | IChannelUpdateEvent
+    | IChannelDeleteEvent;

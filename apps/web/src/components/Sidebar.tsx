@@ -12,14 +12,29 @@ import ChannelFormModal from '@components/ChannelFormModal';
 import { GlobalContext } from '@contexts/GlobalContext';
 import { ConfirmDialog } from '@components/ConfirmDialong';
 import type { IExtendedChannel } from 'src/interfaces/channel';
+import { deleteChannel } from 'src/services/api';
+import EmailModal from './EmailModal';
 
 function Sidebar() {
     const [showModal, setShowModal] = useState(false);
     const [editingChannel, setEditingChannel] =
         useState<IExtendedChannel | null>(null);
     const [visible, setVisible] = useState(false);
-    const { currentUser, setSelectedChannel, selectedChannel, channels } =
-        useContext(GlobalContext);
+    const {
+        currentUser,
+        setSelectedChannel,
+        selectedChannel,
+        channels,
+        setToastMessages,
+        toastMessages,
+    } = useContext(GlobalContext);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deletingChannel, setDeletingChannel] =
+        useState<IExtendedChannel | null>(null);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+
+    const [targetChannelId, setTargetChannelId] = useState<string | null>(null);
+
     const [contextMenu, setContextMenu] = useState<{
         mouseX: number;
         mouseY: number;
@@ -44,8 +59,34 @@ function Sidebar() {
         setContextMenu(null);
     };
 
+    const handleDeleteChannel = async () => {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            await deleteChannel(deletingChannel?.id!);
+        } catch (error) {
+            console.error(error);
+            setToastMessages([
+                ...toastMessages,
+                {
+                    bg: 'danger',
+                    message: 'Error deleting channel',
+                    delay: 5000,
+                },
+            ]);
+        }
+        setShowDeleteDialog(false);
+        setDeletingChannel(null);
+    };
+
     return (
         <>
+            <ConfirmDialog
+                show={showDeleteDialog}
+                title={`Are you sure you want to delete ${deletingChannel?.name}?`}
+                message="This action cannot be undone."
+                onConfirm={handleDeleteChannel}
+                onCancel={() => setShowDeleteDialog(false)}
+            />
             {contextMenu && (
                 <Dropdown.Menu
                     show
@@ -59,7 +100,8 @@ function Sidebar() {
                 >
                     <Dropdown.Item
                         onClick={() => {
-                            /* Acción para opción 1 */
+                            setShowEmailModal(true);
+                            setTargetChannelId(contextMenu.channel.id);
                             handleContextMenuClose();
                         }}
                     >
@@ -80,7 +122,8 @@ function Sidebar() {
                     {contextMenu.channel.ownerId === currentUser?.id && (
                         <Dropdown.Item
                             onClick={() => {
-                                /* Acción para opción 2 */
+                                setDeletingChannel(contextMenu.channel);
+                                setShowDeleteDialog(true);
                                 handleContextMenuClose();
                             }}
                         >
@@ -178,6 +221,14 @@ function Sidebar() {
                     setEditingChannel(null);
                 }}
                 editingChannel={editingChannel}
+            />
+            <EmailModal
+                show={showEmailModal}
+                handleClose={() => {
+                    setShowEmailModal(false);
+                    setTargetChannelId(null);
+                }}
+                channelId={targetChannelId}
             />
         </>
     );
