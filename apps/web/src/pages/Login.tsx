@@ -169,7 +169,7 @@ function Login() {
                                                     </label>
                                                 </div>
                                                 <a
-                                                    href="/#"
+                                                    href="#"
                                                     className="link-primary text-decoration-none"
                                                 >
                                                     Forgot password?

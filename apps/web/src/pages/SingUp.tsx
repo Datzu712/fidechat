@@ -3,12 +3,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import imgUrl from '@assets/img/logo.png';
+import StatusModal from '@components/StatusModal';
+import { httpErrorTranslate } from 'src/utils/httpErrorTranslate';
 
 function SignUp() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errors, setErrors] = useState<Error[]>([]);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [username, setUsername] = useState('');
 
     const navigate = useNavigate();
 
@@ -39,7 +43,7 @@ function SignUp() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, name: username }),
                 credentials: 'include',
             },
         );
@@ -47,14 +51,32 @@ function SignUp() {
         if (response.ok) {
             const { data } = await response.json();
             localStorage.setItem('data', JSON.stringify(data));
-            navigate('/');
+
+            setShowSuccessModal(true);
         } else {
-            setErrors([...errors, new Error('Invalid email or password')]);
+            const error =
+                (await response.json().catch(() => undefined)) ??
+                (response.statusText ||
+                    httpErrorTranslate(response.status).description);
+
+            setErrors([...errors, new Error(error)]);
         }
+    };
+
+    const handleCloseModal = () => {
+        setShowSuccessModal(false);
+        navigate('/');
     };
 
     return (
         <section>
+            <StatusModal
+                show={showSuccessModal}
+                handleClose={handleCloseModal}
+                title="Account created"
+                description="Your account has been created successfully. You will be redirected to the login page."
+                status={'success'}
+            />
             <ToastContainer position="top-end" className="p-3">
                 {errors.map((error, index) => (
                     <Toast
@@ -115,6 +137,27 @@ function SignUp() {
                                                 <div className="invalid-feedback">
                                                     Please enter a valid email
                                                     address.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-12">
+                                            <div className="form-floating mb-3">
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    id="username"
+                                                    onChange={(e) =>
+                                                        setUsername(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                <label htmlFor="username">
+                                                    Username
+                                                </label>
+                                                <div className="invalid-feedback">
+                                                    Please enter your username.
                                                 </div>
                                             </div>
                                         </div>

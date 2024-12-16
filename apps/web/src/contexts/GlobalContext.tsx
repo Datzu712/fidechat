@@ -8,6 +8,13 @@ import React, {
 import type { IUser } from '../interfaces/user';
 import type { IExtendedChannel } from '../interfaces/channel';
 import { getChannels, getUsers, pingDatabase } from '../services/api';
+import { Toast, ToastContainer } from 'react-bootstrap';
+
+type ToastMessage = {
+    message: string;
+    bg: string;
+    delay?: number;
+};
 
 interface IGlobalContext {
     currentUser: IUser | null;
@@ -21,6 +28,8 @@ interface IGlobalContext {
     selectedChannel: IExtendedChannel | null;
     isAuthenticated: boolean;
     setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+    toastMessages: ToastMessage[];
+    setToastMessages: React.Dispatch<React.SetStateAction<ToastMessage[]>>;
 }
 
 export const GlobalContext = createContext<IGlobalContext>(
@@ -43,6 +52,8 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
     const [selectedChannel, setSelectedChannel] =
         useState<IExtendedChannel | null>(null);
 
+    const [toastMessages, setToastMessages] = useState<ToastMessage[]>([]);
+
     useEffect(() => {
         if (!isAuthenticated) return;
 
@@ -59,8 +70,30 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
             }
         }, 3000);
 
-        getUsers().then(setUsers).catch(console.error);
-        getChannels().then(setChannels).catch(console.error);
+        getUsers()
+            .then(setUsers)
+            .catch((e) => {
+                console.error(e);
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        message: 'Failed to fetch users',
+                        bg: 'danger',
+                    },
+                ]);
+            });
+        getChannels()
+            .then(setChannels)
+            .catch((e) => {
+                console.error(e);
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        message: 'Failed to fetch channels',
+                        bg: 'danger',
+                    },
+                ]);
+            });
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated]);
@@ -76,6 +109,8 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
             setSelectedChannel,
             isAuthenticated,
             setIsAuthenticated,
+            toastMessages,
+            setToastMessages,
         }),
         [
             currentUser,
@@ -84,11 +119,32 @@ export function GlobalProvider({ children }: IGlobalProviderProps) {
             apiPing,
             selectedChannel,
             isAuthenticated,
+            toastMessages,
         ],
     );
 
     return (
         <GlobalContext.Provider value={contextValue}>
+            <ToastContainer position="top-end" className="p-3">
+                {toastMessages.map(({ bg, message, delay = 10000 }, index) => (
+                    <Toast
+                        key={index}
+                        bg={bg}
+                        onClose={() => {
+                            const newToastMessages = [...toastMessages];
+                            newToastMessages.splice(index, 1);
+                            setToastMessages(newToastMessages);
+                        }}
+                        delay={delay}
+                        autohide
+                    >
+                        <Toast.Header>
+                            <strong className="me-auto">Error</strong>
+                        </Toast.Header>
+                        <Toast.Body>{message}</Toast.Body>
+                    </Toast>
+                ))}
+            </ToastContainer>
             {children}
         </GlobalContext.Provider>
     );

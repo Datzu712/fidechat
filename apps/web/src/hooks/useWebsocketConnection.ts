@@ -9,11 +9,18 @@ function useWebsocketConnection({
 }: {
     isAuthenticated: boolean;
 }) {
-    const [ws, setWs] = useState<WebSocket | null>(null);
-    const navigate = useNavigate();
-    const { setChannels, setSelectedChannel, channels, selectedChannel } =
-        useContext(GlobalContext);
+    const {
+        setChannels,
+        setSelectedChannel,
+        channels,
+        selectedChannel,
+        setToastMessages,
+    } = useContext(GlobalContext);
 
+    const wsRef = useRef<WebSocket | null>(null);
+    const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
+
+    const navigate = useNavigate();
     const channelsRef = useRef(channels);
     const selectedChannelRef = useRef(selectedChannel);
 
@@ -65,52 +72,108 @@ function useWebsocketConnection({
         }
     };
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            if (ws) {
-                ws.close();
-                setWs(null);
-            }
+    const setUpWebsocketConnection = async () => {
+        if (wsRef.current) {
             return;
         }
 
-        const setUpWebsocketConnection = async () => {
-            try {
-                const token = await getWebsocketConnection();
-                if (!token) return;
-
-                if (ws) {
-                    console.error('Websocket connection already exists');
-                    return ws;
-                }
-
-                const newWs = new WebSocket(
-                    import.meta.env.VITE_WS_URL + '/ws?token=' + token,
-                );
-
-                newWs.onopen = () => console.log('Connected to websocket');
-                newWs.onmessage = handleWebSocketMessage;
-                newWs.onerror = (error) => console.error(error);
-                newWs.onclose = () =>
-                    console.log('Disconnected from websocket');
-
-                return newWs;
-            } catch (error) {
-                console.error(error);
-                if (error instanceof ApiError && error.isUnauthorized) {
-                    navigate('/login');
-                }
+        try {
+            const token = await getWebsocketConnection();
+            if (!token) {
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        bg: 'danger',
+                        message:
+                            'Error authenticating your browser to websocket server',
+                        delay: 5000,
+                    },
+                ]);
+                return;
             }
-        };
 
-        const newWs = setUpWebsocketConnection();
+            const newWs = new WebSocket(
+                import.meta.env.VITE_WS_URL + '/ws?token=' + token,
+            );
+
+            newWs.onopen = () => {
+                newWs.send('ping');
+                setIsReconnecting(false);
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        bg: 'success',
+                        message: 'Connected to websocket',
+                        delay: 5000,
+                    },
+                ]);
+            };
+            newWs.onmessage = handleWebSocketMessage;
+            newWs.onerror = (error) => {
+                console.error(error);
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        bg: 'danger',
+                        message: 'Error connecting to websocket',
+                        delay: 5000,
+                    },
+                ]);
+            };
+            newWs.onclose = () => {
+                setToastMessages((prev) => [
+                    ...prev,
+                    {
+                        bg: 'danger',
+                        message: 'Disconnected from websocket. Reconnecting...',
+                        delay: 5000,
+                    },
+                ]);
+                setIsReconnecting(true);
+                wsRef.current = null;
+            };
+
+            wsRef.current = newWs;
+            return newWs;
+        } catch (error) {
+            console.error(error);
+            if (error instanceof ApiError && error.isUnauthorized) {
+                navigate('/login');
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!isReconnecting) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            console.log('Reconnecting to websocket');
+            setUpWebsocketConnection();
+        }, 5000);
 
         return () => {
-            newWs?.then((ws) => ws?.close());
+            clearInterval(interval);
+        };
+    }, [isReconnecting]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+            return;
+        }
+        setUpWebsocketConnection();
+
+        return () => {
+            wsRef.current?.close();
         };
     }, [isAuthenticated]);
 
-    return { ws };
+    return { ws: wsRef.current };
 }
 
 export default useWebsocketConnection;
