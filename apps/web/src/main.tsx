@@ -3,7 +3,8 @@ import '@scss/default.scss';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
-import { GlobalProvider } from './contexts/GlobalContext';
+
+import { GlobalProvider } from '@contexts/GlobalContext';
 
 const App = lazy(() => import('./pages/App.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
