@@ -146,7 +146,7 @@ function useWebsocketConnection({
                         ]);
                     });
                 getChannels()
-                    .then(setChannels)
+                    .then((channels) => setChannels(channels))
                     .catch((e) => {
                         console.error(e);
                         setToastMessages((prev) => [
