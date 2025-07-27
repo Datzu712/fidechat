@@ -9,8 +9,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, LogOut, Plus, Settings } from 'lucide-react';
 import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
+import { useSession } from 'next-auth/react';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
+    const { data } = useSession();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const {
         currentUser,
@@ -91,7 +94,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                     />
                     <div className="flex flex-col">
                         <span className="text-sm font-medium truncate">
-                            {currentUser.username}
+                            {data?.user?.name}
                         </span>
                         <span className="text-xs text-zinc-400 capitalize">
                             {currentUser.status}
