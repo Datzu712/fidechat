@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useMockData } from '@/components/mock-data-provider';
 import { ChatArea } from '@/components/chat-area';
+import { useRouter } from 'next/navigation';
 
 export default function ChannelPage({
     params,
 }: {
     params: { serverId: string; channelId: string };
 }) {
+    const router = useRouter();
     const { currentUser, channels, servers, isUserServerMember } =
         useMockData();
-    const router = useRouter();
 
     useEffect(() => {
         // if (!currentUser) {
@@ -21,7 +21,7 @@ export default function ChannelPage({
         // }
 
         // Check if user is a member of this server
-        if (!isUserServerMember(currentUser.id, params.serverId)) {
+        if (!isUserServerMember(currentUser!.id, params.serverId)) {
             router.push('/channels');
             return;
         }

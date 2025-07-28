@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMockData } from '@/components/mock-data-provider';
 import { ServerSidebar } from '@/components/server-sidebar';
+import { useApiData } from '@/hooks/useApiQuery';
 
 export default function ChannelsLayout({
     children,
@@ -27,6 +28,8 @@ export default function ChannelsLayout({
             </div>
         );
     }
+
+    const test = useApiData('/v1/channels');
 
     return (
         <div className="flex h-screen overflow-hidden">

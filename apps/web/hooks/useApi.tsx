@@ -6,7 +6,7 @@ import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 import { useToast } from './useToast';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export interface ApiRequestOptions<T> extends AxiosRequestConfig<T> {
     displayError?: boolean;

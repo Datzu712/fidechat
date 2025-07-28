@@ -117,88 +117,88 @@ const mockUsers: User[] = [
 ];
 
 const mockServers: Server[] = [
-    {
-        id: 'server-1',
-        name: 'Gaming Community',
-        image_url: null,
-        owner_id: 'user-1',
-        invite_code: 'gaming123',
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: 'server-2',
-        name: 'Study Group',
-        image_url: null,
-        owner_id: 'user-2',
-        invite_code: 'study456',
-        created_at: new Date().toISOString(),
-    },
+    // {
+    //     id: 'server-1',
+    //     name: 'Gaming Community',
+    //     image_url: null,
+    //     owner_id: 'user-1',
+    //     invite_code: 'gaming123',
+    //     created_at: new Date().toISOString(),
+    // },
+    // {
+    //     id: 'server-2',
+    //     name: 'Study Group',
+    //     image_url: null,
+    //     owner_id: 'user-2',
+    //     invite_code: 'study456',
+    //     created_at: new Date().toISOString(),
+    // },
 ];
 
 const mockChannels: Channel[] = [
-    {
-        id: 'channel-1',
-        name: 'general',
-        server_id: 'server-1',
-        type: 'TEXT',
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: 'channel-2',
-        name: 'gaming',
-        server_id: 'server-1',
-        type: 'TEXT',
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: 'channel-3',
-        name: 'general',
-        server_id: 'server-2',
-        type: 'TEXT',
-        created_at: new Date().toISOString(),
-    },
-    {
-        id: 'channel-4',
-        name: 'homework-help',
-        server_id: 'server-2',
-        type: 'TEXT',
-        created_at: new Date().toISOString(),
-    },
+    // {
+    //     id: 'channel-1',
+    //     name: 'general',
+    //     server_id: 'server-1',
+    //     type: 'TEXT',
+    //     created_at: new Date().toISOString(),
+    // },
+    // {
+    //     id: 'channel-2',
+    //     name: 'gaming',
+    //     server_id: 'server-1',
+    //     type: 'TEXT',
+    //     created_at: new Date().toISOString(),
+    // },
+    // {
+    //     id: 'channel-3',
+    //     name: 'general',
+    //     server_id: 'server-2',
+    //     type: 'TEXT',
+    //     created_at: new Date().toISOString(),
+    // },
+    // {
+    //     id: 'channel-4',
+    //     name: 'homework-help',
+    //     server_id: 'server-2',
+    //     type: 'TEXT',
+    //     created_at: new Date().toISOString(),
+    // },
 ];
 
 const mockMessages: Message[] = [
-    {
-        id: 'msg-1',
-        content: 'Welcome to the Gaming Community!',
-        channel_id: 'channel-1',
-        user_id: 'user-1',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        updated_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-        id: 'msg-2',
-        content: 'Hey everyone! Ready for some gaming?',
-        channel_id: 'channel-1',
-        user_id: 'user-2',
-        created_at: new Date(Date.now() - 1800000).toISOString(),
-        updated_at: new Date(Date.now() - 1800000).toISOString(),
-    },
-    {
-        id: 'msg-3',
-        content: 'What games are we playing today?',
-        channel_id: 'channel-2',
-        user_id: 'user-3',
-        created_at: new Date(Date.now() - 900000).toISOString(),
-        updated_at: new Date(Date.now() - 900000).toISOString(),
-    },
-    {
-        id: 'msg-4',
-        content: 'Welcome to our study group!',
-        channel_id: 'channel-3',
-        user_id: 'user-2',
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-        updated_at: new Date(Date.now() - 7200000).toISOString(),
-    },
+    // {
+    //     id: 'msg-1',
+    //     content: 'Welcome to the Gaming Community!',
+    //     channel_id: 'channel-1',
+    //     user_id: 'user-1',
+    //     created_at: new Date(Date.now() - 3600000).toISOString(),
+    //     updated_at: new Date(Date.now() - 3600000).toISOString(),
+    // },
+    // {
+    //     id: 'msg-2',
+    //     content: 'Hey everyone! Ready for some gaming?',
+    //     channel_id: 'channel-1',
+    //     user_id: 'user-2',
+    //     created_at: new Date(Date.now() - 1800000).toISOString(),
+    //     updated_at: new Date(Date.now() - 1800000).toISOString(),
+    // },
+    // {
+    //     id: 'msg-3',
+    //     content: 'What games are we playing today?',
+    //     channel_id: 'channel-2',
+    //     user_id: 'user-3',
+    //     created_at: new Date(Date.now() - 900000).toISOString(),
+    //     updated_at: new Date(Date.now() - 900000).toISOString(),
+    // },
+    // {
+    //     id: 'msg-4',
+    //     content: 'Welcome to our study group!',
+    //     channel_id: 'channel-3',
+    //     user_id: 'user-2',
+    //     created_at: new Date(Date.now() - 7200000).toISOString(),
+    //     updated_at: new Date(Date.now() - 7200000).toISOString(),
+    // },
 ];
 
 const mockServerMembers: ServerMember[] = [
@@ -291,7 +291,7 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const login = async (email: string, password: string): Promise<boolean> => {
+    const login = async (email: string): Promise<boolean> => {
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -307,7 +307,6 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
     const register = async (
         email: string,
         username: string,
-        password: string,
     ): Promise<boolean> => {
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
