@@ -36,7 +36,6 @@ export const useApiData = <K = any,>(
 ) => {
     const { apiRequest } = useApi();
     const { status } = useSession();
-    console.log(status);
 
     return useQuery({
         queryKey: [url, options],

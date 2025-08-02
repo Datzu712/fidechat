@@ -275,7 +275,7 @@ const getServerMembers = (
 
 export function MockDataProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]);
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const [users, setUsers] = useState<User[]>(mockUsers)
     const [servers, setServers] = useState<Server[]>(mockServers);
     const [channels, setChannels] = useState<Channel[]>(mockChannels);
     const [messages, setMessages] = useState<Message[]>(mockMessages);
