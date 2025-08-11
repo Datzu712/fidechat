@@ -1,10 +1,10 @@
 'use client';
 
-import { useMockData } from '@/src/components/mock-data-provider';
-import { ScrollArea } from '@/src/components/ui/scroll-area';
-import { UserAvatar } from '@/src/components/user-avatar';
+import { useMockData } from '@/components/mock-data-provider';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserAvatar } from '@/components/user-avatar';
 import { Crown } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface MembersSidebarProps {
     serverId: string;

@@ -2,8 +2,8 @@
 
 import type React from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { ServerSidebar } from '@/src/components/server-sidebar';
+import { useMockData } from '@/components/mock-data-provider';
+import { ServerSidebar } from '@/components/server-sidebar';
 
 export default function ChannelsLayout({
     children,

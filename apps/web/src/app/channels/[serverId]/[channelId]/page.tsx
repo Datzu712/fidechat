@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { ChatArea } from '@/src/components/chat-area';
+import { useMockData } from '@/components/mock-data-provider';
+import { ChatArea } from '@/components/chat-area';
 import { useRouter } from 'next/navigation';
 
 export default function ChannelPage({

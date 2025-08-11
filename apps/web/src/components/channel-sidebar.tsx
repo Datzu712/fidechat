@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { cn } from '@/src/lib/utils';
-import { Button } from '@/src/components/ui/button';
-import { ScrollArea } from '@/src/components/ui/scroll-area';
+import { useMockData } from '@/components/mock-data-provider';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, LogOut, Plus, Settings } from 'lucide-react';
-import { CreateChannelModal } from '@/src/components/create-channel-modal';
-import { UserAvatar } from '@/src/components/user-avatar';
+import { CreateChannelModal } from '@/components/create-channel-modal';
+import { UserAvatar } from '@/components/user-avatar';
 import { useSession } from 'next-auth/react';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {

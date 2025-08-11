@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { NoServerSelected } from '@/src/components/no-server-selected';
+import { useMockData } from '@/components/mock-data-provider';
+import { NoServerSelected } from '@/components/no-server-selected';
 
 export default function ChannelsPage() {
     const { currentUser, getUserServers } = useMockData();

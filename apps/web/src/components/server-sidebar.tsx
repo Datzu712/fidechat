@@ -2,24 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { cn } from '@/src/lib/utils';
-import { Button } from '@/src/components/ui/button';
+import { useMockData } from '@/components/mock-data-provider';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
     TooltipProvider,
-} from '@/src/components/ui/tooltip';
-import { ScrollArea } from '@/src/components/ui/scroll-area';
-import { Separator } from '@/src/components/ui/separator';
+} from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { PlusCircle } from 'lucide-react';
-import { CreateServerModal } from '@/src/components/create-server-modal';
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from '@/src/components/ui/avatar';
+import { CreateServerModal } from '@/components/create-server-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);

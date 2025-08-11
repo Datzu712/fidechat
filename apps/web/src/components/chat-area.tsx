@@ -3,13 +3,13 @@
 import type React from 'react';
 
 import { useEffect, useRef, useState } from 'react';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { Button } from '@/src/components/ui/button';
-import { Input } from '@/src/components/ui/input';
-import { ScrollArea } from '@/src/components/ui/scroll-area';
+import { useMockData } from '@/components/mock-data-provider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, Send } from 'lucide-react';
-import { UserAvatar } from '@/src/components/user-avatar';
-import { MobileMembersToggle } from '@/src/components/mobile-members-toggle';
+import { UserAvatar } from '@/components/user-avatar';
+import { MobileMembersToggle } from '@/components/mobile-members-toggle';
 
 type Channel = {
     id: string;

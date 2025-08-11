@@ -1,6 +1,6 @@
 'use client';
 
-import federatedLogout from '@/src/lib/federated-logout';
+import federatedLogout from '@/lib/federated-logout';
 import type React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 

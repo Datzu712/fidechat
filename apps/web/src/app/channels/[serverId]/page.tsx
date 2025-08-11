@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
+import { useMockData } from '@/components/mock-data-provider';
 
 export default function ServerPage({
     params,

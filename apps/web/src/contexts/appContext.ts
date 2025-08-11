@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Channel, Guild, AppUser, GuildMember } from '@/src/types';
+import type { Channel, Guild, AppUser, GuildMember } from '@/types';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 export type SyncAppStateResponse = {

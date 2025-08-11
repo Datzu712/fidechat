@@ -3,10 +3,10 @@
 import type React from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { ChannelSidebar } from '@/src/components/channel-sidebar';
+import { useMockData } from '@/components/mock-data-provider';
+import { ChannelSidebar } from '@/components/channel-sidebar';
 // Import the MembersSidebar component
-import { MembersSidebar } from '@/src/components/members-sidebar';
+import { MembersSidebar } from '@/components/members-sidebar';
 
 export default function ServerLayout({
     children,

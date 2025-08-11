@@ -4,8 +4,8 @@ import type React from 'react';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/src/components/mock-data-provider';
-import { useToast } from '@/src/components/ui/use-toast';
+import { useMockData } from '@/components/mock-data-provider';
+import { useToast } from '@/components/ui/use-toast';
 import {
     Dialog,
     DialogContent,
@@ -13,10 +13,10 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/src/components/ui/dialog';
-import { Button } from '@/src/components/ui/button';
-import { Input } from '@/src/components/ui/input';
-import { Label } from '@/src/components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface CreateServerModalProps {
     isOpen: boolean;

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-import useSocket from '@/src/hooks/useSocket';
-import { useApiMutation } from '@/src/lib/hooks/useApiQuery';
-import type { Channel, Guild, AppUser, GuildMember } from '@/src/types';
+import useSocket from '@/hooks/useSocket';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import type { Channel, Guild, AppUser, GuildMember } from '@/types';
 import {
     SyncAppStateResponse,
     AppContextType,

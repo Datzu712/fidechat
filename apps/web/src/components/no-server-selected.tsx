@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from '@/src/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
-import { CreateServerModal } from '@/src/components/create-server-modal';
+import { CreateServerModal } from '@/components/create-server-modal';
 
 export function NoServerSelected() {
     const [isModalOpen, setIsModalOpen] = useState(false);
