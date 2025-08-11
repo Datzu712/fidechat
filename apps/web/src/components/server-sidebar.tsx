@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useMockData } from '@/components/mock-data-provider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,17 +15,22 @@ import { Separator } from '@/components/ui/separator';
 import { PlusCircle } from 'lucide-react';
 import { CreateServerModal } from '@/components/create-server-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import useAppContext from '@/hooks/useAppContext';
+import { useSession } from 'next-auth/react';
 
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { currentUser, getUserServers } = useMockData();
+    const { status } = useSession();
+    const { guilds } = useAppContext();
+
+    useEffect(() => {
+        console.log(guilds);
+    }, [guilds]);
 
     const router = useRouter();
     const pathname = usePathname();
 
-    if (!currentUser) return null;
-
-    const userServers = getUserServers(currentUser.id);
+    if (status !== 'authenticated') return null;
 
     const handleServerClick = (serverId: string) => {
         router.push(`/channels/${serverId}`);
@@ -52,13 +56,13 @@ export function ServerSidebar() {
 
                         <Separator className="h-[2px] w-10 bg-zinc-700 rounded-md my-2" />
 
-                        {userServers.map((server) => (
+                        {guilds.map((server) => (
                             <Tooltip key={server.id}>
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant="ghost"
                                         className={cn(
-                                            'h-12 w-12 rounded-full relative group',
+                                            'h-12 w-12 rounded-full relative group p-0 overflow-hidden',
                                             pathname?.includes(server.id)
                                                 ? 'bg-primary/30 text-white'
                                                 : 'hover:bg-primary/20 text-zinc-400 hover:text-white',
@@ -69,29 +73,29 @@ export function ServerSidebar() {
                                     >
                                         <div
                                             className={cn(
-                                                'absolute left-0 bg-white rounded-r-full transition-all w-1',
+                                                'fixed left-0 bg-white rounded-r-full transition-all w-1 ',
                                                 pathname?.includes(server.id)
                                                     ? 'h-8'
                                                     : 'h-2 group-hover:h-5',
                                             )}
                                         />
-                                        <Avatar className="h-full w-full">
-                                            {server.image_url ? (
-                                                <AvatarImage
-                                                    src={
-                                                        server.image_url ||
-                                                        '/placeholder.svg'
-                                                    }
-                                                    alt={server.name}
-                                                />
-                                            ) : (
-                                                <AvatarFallback className="bg-primary/30">
-                                                    {server.name
-                                                        .substring(0, 2)
-                                                        .toUpperCase()}
-                                                </AvatarFallback>
-                                            )}
-                                        </Avatar>
+                                        <div className="w-full h-full rounded-full overflow-hidden">
+                                            <Avatar className="h-12 w-12">
+                                                {server.iconUrl ? (
+                                                    <AvatarImage
+                                                        src={server.iconUrl}
+                                                        alt={server.name}
+                                                        className="object-cover w-full h-full"
+                                                    />
+                                                ) : (
+                                                    <AvatarFallback className="bg-primary/30 w-full h-full flex items-center justify-center text-sm font-semibold">
+                                                        {server.name
+                                                            .substring(0, 2)
+                                                            .toUpperCase()}
+                                                    </AvatarFallback>
+                                                )}
+                                            </Avatar>
+                                        </div>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="right">

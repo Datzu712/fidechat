@@ -36,17 +36,15 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
         setIsLoading(true);
 
         try {
-            const server = await createServer(serverName);
-
-            toast({
-                title: 'Server created',
-                description: `${serverName} has been created successfully.`,
-            });
-
-            router.push(`/channels/${server.id}`);
-            router.refresh();
-            onClose();
-            setServerName('');
+            // const server = await createServer(serverName);
+            // toast({
+            //     title: 'Server created',
+            //     description: `${serverName} has been created successfully.`,
+            // });
+            // router.push(`/channels/${server.id}`);
+            // router.refresh();
+            // onClose();
+            // setServerName('');
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -78,6 +76,18 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                                 value={serverName}
                                 onChange={(e) => setServerName(e.target.value)}
                                 placeholder="Enter server name"
+                                disabled={isLoading}
+                                required
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Server Icon URL</Label>
+                            <Input
+                                id="iconUrl"
+                                value={serverName}
+                                onChange={(e) => setServerName(e.target.value)}
+                                placeholder="Put your server icon URL here"
                                 disabled={isLoading}
                                 required
                             />
