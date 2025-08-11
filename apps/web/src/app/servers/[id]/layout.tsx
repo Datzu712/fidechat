@@ -3,10 +3,10 @@
 import type React from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/components/mock-data-provider';
 import { ChannelSidebar } from '@/components/channel-sidebar';
 // Import the MembersSidebar component
 import { MembersSidebar } from '@/components/members-sidebar';
+import { useSession } from 'next-auth/react';
 
 export default function ServerLayout({
     children,
@@ -15,22 +15,18 @@ export default function ServerLayout({
     children: React.ReactNode;
     params: { serverId: string };
 }) {
-    const { currentUser, isUserServerMember } = useMockData();
+    const { status } = useSession();
     const router = useRouter();
 
     useEffect(() => {
-        // if (!currentUser) {
-        //   router.push("/login")
-        //   return
+        // // Check if user is a member of this server
+        // if (!isUserServerMember(data?.user?.image, params.serverId)) {
+        //     router.push('/servers');
         // }
+    }, [router, params.serverId]);
 
-        // Check if user is a member of this server
-        if (!isUserServerMember(currentUser.id, params.serverId)) {
-            router.push('/channels');
-        }
-    }, [currentUser, isUserServerMember, params.serverId, router]);
-
-    if (!currentUser || !isUserServerMember(currentUser.id, params.serverId)) {
+    if (status !== 'authenticated') {
+        // || !isUserServerMember(currentUser.id, params.serverId)
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>

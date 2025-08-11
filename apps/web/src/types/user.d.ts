@@ -3,4 +3,5 @@ export interface AppUser {
     username: string;
     email: string;
     isBot: boolean;
+    avatarUrl?: string;
 }

@@ -5,6 +5,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 export type SyncAppStateResponse = {
     guilds: Guild[];
     channels: Channel[];
+    currentUser: AppUser;
 };
 
 export type AppContextType = {
@@ -25,6 +26,7 @@ export type AppContextType = {
     currentChannel: Channel | null;
     setCurrentChannel: React.Dispatch<React.SetStateAction<Channel | null>>;
     syncAppState: UseMutationResult<SyncAppStateResponse, Error, void>;
+    getServerChannels: (serverId: string) => Channel[];
 };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

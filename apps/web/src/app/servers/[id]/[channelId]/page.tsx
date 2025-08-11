@@ -22,7 +22,7 @@ export default function ChannelPage({
 
         // Check if user is a member of this server
         if (!isUserServerMember(currentUser!.id, params.serverId)) {
-            router.push('/channels');
+            router.push('/servers');
             return;
         }
     }, [currentUser, isUserServerMember, router]);

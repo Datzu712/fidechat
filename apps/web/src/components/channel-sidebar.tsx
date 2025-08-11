@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useMockData } from '@/components/mock-data-provider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,18 +9,14 @@ import { Hash, LogOut, Plus, Settings } from 'lucide-react';
 import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
 import { useSession } from 'next-auth/react';
+import useAppContext from '@/hooks/useAppContext';
+import federatedLogout from '@/lib/federated-logout';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
     const { data } = useSession();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const {
-        currentUser,
-        servers,
-        getServerChannels,
-        isUserServerAdmin,
-        logout,
-    } = useMockData();
+    const { currentUser, guilds: servers, getServerChannels } = useAppContext();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -29,16 +24,14 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
 
     const server = servers.find((s) => s.id === serverId);
     const channels = getServerChannels(serverId);
-    const isAdmin = isUserServerAdmin(currentUser.id, serverId);
+    const isAdmin = false; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
         router.push(`/channels/${serverId}/${channelId}`);
     };
 
     const handleLogout = () => {
-        logout();
-        // router.push("/login")
-        // router.refresh()
+        federatedLogout();
     };
 
     return (
@@ -90,14 +83,14 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                 <div className="flex items-center gap-2">
                     <UserAvatar
                         username={currentUser.username}
-                        avatarUrl={currentUser.avatar_url}
+                        avatarUrl={currentUser.avatarUrl}
                     />
                     <div className="flex flex-col">
                         <span className="text-sm font-medium truncate">
                             {data?.user?.name}
                         </span>
                         <span className="text-xs text-zinc-400 capitalize">
-                            {currentUser.status}
+                            {/* {currentUser.status} */} unknown
                         </span>
                     </div>
                     <div className="ml-auto flex gap-1">

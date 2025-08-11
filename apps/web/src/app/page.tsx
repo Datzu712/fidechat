@@ -6,7 +6,7 @@ export default async function Home() {
     const session = await getServerSession(authOptions);
 
     if (session) {
-        redirect('/channels');
+        redirect('/servers');
     } else {
         redirect('/login');
     }

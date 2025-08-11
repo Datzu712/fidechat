@@ -29,7 +29,7 @@ export function ServerSidebar() {
     if (status !== 'authenticated') return null;
 
     const handleServerClick = (serverId: string) => {
-        router.push(`/channels/${serverId}`);
+        router.push(`/servers/${serverId}`);
     };
 
     return (

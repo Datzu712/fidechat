@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSocket from '@/hooks/useSocket';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import type { Channel, Guild, AppUser, GuildMember } from '@/types';
 import {
-    SyncAppStateResponse,
+    type SyncAppStateResponse,
     AppContextType,
     AppContext,
 } from '../appContext';
-import { SocketEvents } from '@/constants/socketEvents';
+import { useSocketEvents } from '@/hooks/useSocketsEvents';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -28,11 +28,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             onSuccess: (data) => {
                 if (!data) return;
 
+                console.log(data.currentUser);
+
                 setGuilds(data.guilds || []);
                 setChannels(data.channels || []);
+                setCurrentUser(data.currentUser || null);
             },
             method: 'GET',
         },
+    );
+
+    const getServerChannels = useCallback(
+        (serverId: string) => {
+            return channels.filter((channel) => channel.guildId === serverId);
+        },
+        [channels],
     );
 
     const { connected, socket } = useSocket();
@@ -43,45 +53,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
     }, [connected]);
 
-    useEffect(() => {
-        const currentSocket = socket.current;
-        if (!connected || !currentSocket) return;
-
-        currentSocket.on(SocketEvents.GUILD_CREATED, (newGuild: Guild) => {
-            console.log('New guild created:', newGuild);
+    useSocketEvents(socket, connected, {
+        onGuildCreated: (newGuild: Guild) => {
             setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
-        });
+        },
+    });
 
-        return () => {
-            if (currentSocket) {
-                console.log('Cleaning up socket listeners');
-
-                for (const event of Object.values(SocketEvents)) {
-                    currentSocket.off(event);
-                }
-            }
-        };
-    }, [socket, connected]);
-
-    const value: AppContextType = {
-        currentUser,
-        users,
-        guilds,
-        channels,
-        messages,
-        serverMembers,
-        setCurrentUser,
-        setUsers,
-        setGuilds,
-        setChannels,
-        setMessages,
-        setServerMembers,
-        currentGuild,
-        setCurrentGuild,
-        currentChannel,
-        setCurrentChannel,
-        syncAppState,
-    };
+    const value = useMemo<AppContextType>(
+        () => ({
+            currentUser,
+            users,
+            guilds,
+            channels,
+            messages,
+            serverMembers,
+            setCurrentUser,
+            setUsers,
+            setGuilds,
+            setChannels,
+            setMessages,
+            setServerMembers,
+            currentGuild,
+            setCurrentGuild,
+            currentChannel,
+            setCurrentChannel,
+            syncAppState,
+            getServerChannels,
+        }),
+        [
+            channels,
+            currentChannel,
+            currentGuild,
+            currentUser,
+            getServerChannels,
+            guilds,
+            messages,
+            serverMembers,
+            syncAppState,
+            users,
+        ],
+    );
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
