@@ -1,29 +1,26 @@
 'use client';
 
 import type React from 'react';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { ChannelSidebar } from '@/components/channel-sidebar';
 // Import the MembersSidebar component
 import { MembersSidebar } from '@/components/members-sidebar';
 import { useSession } from 'next-auth/react';
+import { useParams } from 'next/navigation';
 
 export default function ServerLayout({
     children,
-    params,
 }: {
     children: React.ReactNode;
-    params: { serverId: string };
 }) {
     const { status } = useSession();
-    const router = useRouter();
+    const params = useParams<{ id: string }>();
 
-    useEffect(() => {
-        // // Check if user is a member of this server
-        // if (!isUserServerMember(data?.user?.image, params.serverId)) {
-        //     router.push('/servers');
-        // }
-    }, [router, params.serverId]);
+    //useEffect(() => {
+    // // Check if user is a member of this server
+    // if (!isUserServerMember(data?.user?.image, params.serverId)) {
+    //     router.push('/servers');
+    // }
+    //}, [router, params.serverId]);
 
     if (status !== 'authenticated') {
         // || !isUserServerMember(currentUser.id, params.serverId)
@@ -37,10 +34,10 @@ export default function ServerLayout({
     // Update the return statement to include the MembersSidebar
     return (
         <>
-            <ChannelSidebar serverId={params.serverId} />
+            <ChannelSidebar serverId={params.id} />
             <div className="flex-1 flex min-w-0">{children}</div>
             <MembersSidebar
-                serverId={params.serverId}
+                serverId={params.id}
                 className="hidden lg:flex flex-shrink-0"
             />
         </>

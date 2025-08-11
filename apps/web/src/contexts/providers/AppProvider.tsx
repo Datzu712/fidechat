@@ -40,6 +40,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const getServerChannels = useCallback(
         (serverId: string) => {
+            console.log(channels.map((c) => c.guildId));
+            console.log(serverId);
             return channels.filter((channel) => channel.guildId === serverId);
         },
         [channels],

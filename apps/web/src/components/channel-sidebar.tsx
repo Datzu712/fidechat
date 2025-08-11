@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,23 +13,31 @@ import useAppContext from '@/hooks/useAppContext';
 import federatedLogout from '@/lib/federated-logout';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
-    const { data } = useSession();
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const { currentUser, guilds: servers, getServerChannels } = useAppContext();
     const router = useRouter();
     const pathname = usePathname();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const {
+        currentUser,
+        guilds: servers,
+        getServerChannels,
+        channels: xd,
+    } = useAppContext();
+
+    const { data } = useSession();
+    const channels = getServerChannels(serverId);
+    useEffect(() => {
+        console.log(xd);
+        console.log(channels);
+    }, [channels]);
 
     if (!currentUser) return null;
 
     const server = servers.find((s) => s.id === serverId);
-    const channels = getServerChannels(serverId);
     const isAdmin = false; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
         router.push(`/channels/${serverId}/${channelId}`);
     };
-
     const handleLogout = () => {
         federatedLogout();
     };
