@@ -5,3 +5,5 @@ export interface Guild {
     isPublic: boolean;
     ownerId: string;
 }
+
+export type CreateGuildPayload = Omit<Guild, 'id' | 'ownerId'>;

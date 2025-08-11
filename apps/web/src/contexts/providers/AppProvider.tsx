@@ -10,6 +10,7 @@ import {
     AppContextType,
     AppContext,
 } from '../appContext';
+import { SocketEvents } from '@/constants/socketEvents';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -44,45 +45,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const currentSocket = socket.current;
-        if (!currentSocket) return;
+        if (!connected || !currentSocket) return;
 
-        currentSocket.on('user_updated', (updatedUser: AppUser) => {
-            setUsers((prevUsers) =>
-                prevUsers.map((user) =>
-                    user.id === updatedUser.id ? updatedUser : user,
-                ),
-            );
-        });
-
-        currentSocket.on('guild_updated', (updatedGuild: Guild) => {
-            setGuilds((prevGuilds) =>
-                prevGuilds.map((guild) =>
-                    guild.id === updatedGuild.id ? updatedGuild : guild,
-                ),
-            );
-        });
-
-        currentSocket.on('channel_updated', (updatedChannel: Channel) => {
-            setChannels((prevChannels) =>
-                prevChannels.map((channel) =>
-                    channel.id === updatedChannel.id ? updatedChannel : channel,
-                ),
-            );
-        });
-
-        currentSocket.on('message_received', (newMessage: object) => {
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
+        currentSocket.on(SocketEvents.GUILD_CREATED, (newGuild: Guild) => {
+            console.log('New guild created:', newGuild);
+            setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
         });
 
         return () => {
             if (currentSocket) {
-                currentSocket.off('user_updated');
-                currentSocket.off('guild_updated');
-                currentSocket.off('channel_updated');
-                currentSocket.off('message_received');
+                console.log('Cleaning up socket listeners');
+
+                for (const event of Object.values(SocketEvents)) {
+                    currentSocket.off(event);
+                }
             }
         };
-    }, [socket]);
+    }, [socket, connected]);
 
     const value: AppContextType = {
         currentUser,

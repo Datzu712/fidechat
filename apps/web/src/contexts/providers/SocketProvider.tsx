@@ -34,7 +34,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (process.env.NODE_ENV === 'development') {
             socket.current.onAny((event, ...args) => {
-                console.debug('Socket event received:', event, args);
+                console.debug('[socket] Socket event received:', event, args);
             });
 
             socket.current.onAnyOutgoing((event, ...args) => {

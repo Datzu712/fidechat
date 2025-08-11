@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,6 @@ export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { status } = useSession();
     const { guilds } = useAppContext();
-
-    useEffect(() => {
-        console.log(guilds);
-    }, [guilds]);
 
     const router = useRouter();
     const pathname = usePathname();

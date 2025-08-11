@@ -4,8 +4,6 @@ import type React from 'react';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMockData } from '@/components/mock-data-provider';
-import { useToast } from '@/components/ui/use-toast';
 import {
     Dialog,
     DialogContent,
@@ -17,6 +15,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import type { CreateGuildPayload } from '@/types';
+import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
+import { Checkbox } from './ui/checkbox';
+import { useToast } from '@/hooks/useToast';
 
 interface CreateServerModalProps {
     isOpen: boolean;
@@ -25,10 +28,13 @@ interface CreateServerModalProps {
 
 export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
     const [serverName, setServerName] = useState('');
+    const [serverIconUrl, setServerIconUrl] = useState<string>();
+    const [isPublic, setIsPublic] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { createServer } = useMockData();
     const { toast } = useToast();
     const router = useRouter();
+
+    const { mutate } = useApiMutation<object, CreateGuildPayload>('/guilds');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,6 +42,32 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
         setIsLoading(true);
 
         try {
+            mutate(
+                { name: serverName, iconUrl: serverIconUrl, isPublic },
+                {
+                    onError: (error) => {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Failed to create server',
+                            description: parseAxiosError(
+                                error,
+                                'Something went wrong. Please try again.',
+                            ),
+                        });
+                        console.error(error);
+                    },
+                    onSuccess: () => {
+                        toast({
+                            title: 'Server created',
+                            description: `${serverName} has been created successfully.`,
+                        });
+
+                        onClose();
+                        setServerName('');
+                        setServerIconUrl(undefined);
+                    },
+                },
+            );
             // const server = await createServer(serverName);
             // toast({
             //     title: 'Server created',
@@ -68,9 +100,14 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Server name</Label>
+                    <div className="space-y-6">
+                        <div>
+                            <Label
+                                htmlFor="name"
+                                className="text-sm font-medium"
+                            >
+                                Server Name
+                            </Label>
                             <Input
                                 id="name"
                                 value={serverName}
@@ -78,19 +115,41 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                                 placeholder="Enter server name"
                                 disabled={isLoading}
                                 required
+                                className="mt-2"
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Server Icon URL</Label>
+                        <div>
+                            <Label
+                                htmlFor="iconUrl"
+                                className="text-sm font-medium"
+                            >
+                                Server Icon URL
+                            </Label>
                             <Input
                                 id="iconUrl"
-                                value={serverName}
-                                onChange={(e) => setServerName(e.target.value)}
-                                placeholder="Put your server icon URL here"
+                                value={serverIconUrl}
+                                onChange={(e) =>
+                                    setServerIconUrl(e.target.value)
+                                }
+                                placeholder="Paste your server icon URL here"
                                 disabled={isLoading}
-                                required
+                                className="mt-2"
                             />
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="isPublic"
+                                value={isPublic ? 'true' : 'false'}
+                                onChange={(e) => {
+                                    setIsPublic(e.target.checked);
+                                }}
+                                disabled={isLoading}
+                            />
+                            <Label htmlFor="isPublic" className="text-sm">
+                                Make server public
+                            </Label>
                         </div>
                     </div>
                     <DialogFooter>
