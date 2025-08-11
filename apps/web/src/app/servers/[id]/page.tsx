@@ -12,14 +12,14 @@ export default function ServerPage({
     const { getServerChannels } = useMockData();
     const router = useRouter();
 
-    useEffect(() => {
-        // Get the first channel in the server
-        const channels = getServerChannels(params.serverId);
+    // useEffect(() => {
+    //     // Get the first channel in the server
+    //     const channels = getServerChannels(params.serverId);
 
-        if (channels.length > 0) {
-            router.push(`/channels/${params.serverId}/${channels[0].id}`);
-        }
-    }, [params.serverId, getServerChannels, router]);
+    //     if (channels.length > 0) {
+    //         router.push(`/servers/${params.serverId}/${channels[0].id}`);
+    //     }
+    // }, [params.serverId, getServerChannels, router]);
 
     return (
         <div className="flex flex-col items-center justify-center w-full h-full bg-muted">

@@ -13,7 +13,7 @@ export default function LoginPage() {
         }
 
         if (status === 'authenticated') {
-            redirect('/channels');
+            redirect('/servers');
         }
     }, [status]);
 

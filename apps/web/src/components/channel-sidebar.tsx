@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, LogOut, Plus, Settings } from 'lucide-react';
 import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
-import { useSession } from 'next-auth/react';
 import useAppContext from '@/hooks/useAppContext';
 import federatedLogout from '@/lib/federated-logout';
 
@@ -16,24 +15,15 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     const router = useRouter();
     const pathname = usePathname();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const {
-        currentUser,
-        guilds: servers,
-        getServerChannels,
-        channels: xd,
-    } = useAppContext();
-
-    const { data } = useSession();
-    const channels = getServerChannels(serverId);
-    useEffect(() => {
-        console.log(xd);
-        console.log(channels);
-    }, [channels]);
+    const { currentUser, guilds: servers, getServerChannels } = useAppContext();
 
     if (!currentUser) return null;
 
     const server = servers.find((s) => s.id === serverId);
-    const isAdmin = false; /*isUserServerAdmin(currentUser.id, serverId);*/
+    const channels = getServerChannels(serverId);
+    const isOwner =
+        currentUser.id ===
+        server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
         router.push(`/channels/${serverId}/${channelId}`);
@@ -56,7 +46,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                         <h3 className="text-xs font-semibold text-zinc-400 uppercase">
                             Text Channels
                         </h3>
-                        {isAdmin && (
+                        {isOwner && (
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -95,7 +85,9 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                     />
                     <div className="flex flex-col">
                         <span className="text-sm font-medium truncate">
-                            {data?.user?.name}
+                            {currentUser.username.length > 12
+                                ? `${currentUser.username.slice(0, 12)}...`
+                                : currentUser.username}
                         </span>
                         <span className="text-xs text-zinc-400 capitalize">
                             {/* {currentUser.status} */} unknown

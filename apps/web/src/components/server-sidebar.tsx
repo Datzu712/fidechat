@@ -42,7 +42,7 @@ export function ServerSidebar() {
                                 <Button
                                     variant="ghost"
                                     className="h-12 w-12 rounded-full bg-primary/10 hover:bg-primary/20 transition-all"
-                                    onClick={() => router.push('/channels')}
+                                    onClick={() => router.push('/servers')}
                                 >
                                     <i className="fa-solid fa-home fa-lg" />
                                 </Button>
