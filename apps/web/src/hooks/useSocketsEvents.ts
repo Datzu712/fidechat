@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Socket } from 'socket.io-client';
-import { Guild } from '@/types';
+import { Channel, GuildWithMembers } from '@/types';
 import { SocketEvents } from '@/constants/socketEvents';
 
 type SocketEventHandlers = {
-    onGuildCreated?: (guild: Guild) => void;
+    onGuildCreate?: (guild: GuildWithMembers) => void;
+    onChannelCreate?: (channel: Channel) => void;
 };
 
 export function useSocketEvents(
@@ -16,10 +17,17 @@ export function useSocketEvents(
         const currentSocket = socket.current;
         if (!connected || !currentSocket) return;
 
-        if (handlers.onGuildCreated) {
+        if (handlers.onGuildCreate) {
             currentSocket.on(
                 SocketEvents.GUILD_CREATED,
-                handlers.onGuildCreated,
+                handlers.onGuildCreate,
+            );
+        }
+
+        if (handlers.onChannelCreate) {
+            currentSocket.on(
+                SocketEvents.CHANNEL_CREATED,
+                handlers.onChannelCreate,
             );
         }
 

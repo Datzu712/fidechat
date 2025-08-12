@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSocket from '@/hooks/useSocket';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import type { Channel, Guild, AppUser, GuildMember } from '@/types';
+import type { Channel, AppUser, GuildMember, GuildWithMembers } from '@/types';
 import {
     type SyncAppStateResponse,
     AppContextType,
@@ -14,13 +14,11 @@ import { useSocketEvents } from '@/hooks/useSocketsEvents';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
-    const [users, setUsers] = useState<AppUser[]>([]);
-    const [guilds, setGuilds] = useState<Guild[]>([]);
+    const [users, setUsers] = useState<Omit<AppUser, 'email'>[]>([]);
+    const [guilds, setGuilds] = useState<GuildWithMembers[]>([]);
     const [channels, setChannels] = useState<Channel[]>([]);
     const [messages, setMessages] = useState<object[]>([]);
     const [serverMembers, setServerMembers] = useState<GuildMember[]>([]);
-    const [currentGuild, setCurrentGuild] = useState<Guild | null>(null);
-    const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
 
     const syncAppState = useApiMutation<SyncAppStateResponse, void>(
         '/users/@me/sync',
@@ -28,8 +26,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             onSuccess: (data) => {
                 if (!data) return;
 
-                console.log(data.currentUser);
+                console.log(data);
 
+                setUsers(data.users || []);
                 setGuilds(data.guilds || []);
                 setChannels(data.channels || []);
                 setCurrentUser(data.currentUser || null);
@@ -40,8 +39,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const getServerChannels = useCallback(
         (serverId: string) => {
-            console.log(channels.map((c) => c.guildId));
-            console.log(serverId);
             return channels.filter((channel) => channel.guildId === serverId);
         },
         [channels],
@@ -56,8 +53,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, [connected]);
 
     useSocketEvents(socket, connected, {
-        onGuildCreated: (newGuild: Guild) => {
+        onGuildCreate: (newGuild: GuildWithMembers) => {
             setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
+        },
+        onChannelCreate: (newChannel: Channel) => {
+            setChannels((prevChannels) => [...prevChannels, newChannel]);
         },
     });
 
@@ -75,17 +75,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setChannels,
             setMessages,
             setServerMembers,
-            currentGuild,
-            setCurrentGuild,
-            currentChannel,
-            setCurrentChannel,
             syncAppState,
             getServerChannels,
         }),
         [
             channels,
-            currentChannel,
-            currentGuild,
             currentUser,
             getServerChannels,
             guilds,

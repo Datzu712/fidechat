@@ -5,3 +5,5 @@ export interface Channel {
     position: number;
     guildId: string;
 }
+
+export type CreateChannelPayload = Omit<Channel, 'id', 'guildId'>; // guildId will be provided in the URL

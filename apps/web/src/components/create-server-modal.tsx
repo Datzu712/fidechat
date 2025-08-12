@@ -3,7 +3,6 @@
 import type React from 'react';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
     Dialog,
     DialogContent,
@@ -32,15 +31,13 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
     const [isPublic, setIsPublic] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
-    const router = useRouter();
 
-    const { mutate } = useApiMutation<object, CreateGuildPayload>('/guilds');
+    const { mutate } = useApiMutation<void, CreateGuildPayload>('/guilds');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         setIsLoading(true);
-
         try {
             mutate(
                 { name: serverName, iconUrl: serverIconUrl, isPublic },
@@ -68,21 +65,14 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                     },
                 },
             );
-            // const server = await createServer(serverName);
-            // toast({
-            //     title: 'Server created',
-            //     description: `${serverName} has been created successfully.`,
-            // });
-            // router.push(`/channels/${server.id}`);
-            // router.refresh();
-            // onClose();
-            // setServerName('');
-        } catch (error: any) {
+        } catch (error) {
             toast({
                 variant: 'destructive',
                 title: 'Failed to create server',
-                description:
-                    error.message || 'Something went wrong. Please try again.',
+                description: parseAxiosError(
+                    error,
+                    'Something went wrong. Please try again.',
+                ),
             });
         } finally {
             setIsLoading(false);
@@ -143,7 +133,9 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                                 id="isPublic"
                                 value={isPublic ? 'true' : 'false'}
                                 onChange={(e) => {
-                                    setIsPublic(e.target.checked);
+                                    setIsPublic(
+                                        (e.target as HTMLInputElement).checked,
+                                    );
                                 }}
                                 disabled={isLoading}
                             />

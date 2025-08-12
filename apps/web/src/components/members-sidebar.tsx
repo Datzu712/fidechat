@@ -1,10 +1,11 @@
 'use client';
 
-import { useMockData } from '@/components/mock-data-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserAvatar } from '@/components/user-avatar';
 import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import useAppContext from '@/hooks/useAppContext';
+import { AppUser } from '@/types';
 
 interface MembersSidebarProps {
     serverId: string;
@@ -12,30 +13,45 @@ interface MembersSidebarProps {
 }
 
 export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
-    const { getServerMembers } = useMockData();
+    const { guilds, currentUser, users } = useAppContext();
+    const server = guilds.find((s) => s.id === serverId);
 
-    const members = getServerMembers(serverId);
+    if (!server || !currentUser) return null;
+
+    const members = [
+        ...users.filter((user) =>
+            server.members.some((member) => member.userId === user.id),
+        ),
+    ];
+
+    console.log(members);
 
     // Group members by role
-    const admins = members.filter((member) => member.role === 'ADMIN');
-    const regularMembers = members.filter((member) => member.role === 'MEMBER');
+    //const admins = members.filter((member) => member.role === 'ADMIN');
+    const admins = [currentUser];
+    const regularMembers = users.filter((usr) =>
+        server.members.some((member) => member.userId === usr.id),
+    );
 
     // Group by online status
-    const groupMembersByStatus = (membersList: typeof members) => {
-        return {
-            online: membersList.filter(
-                (member) => member.user.status === 'online',
-            ),
-            away: membersList.filter((member) => member.user.status === 'away'),
-            busy: membersList.filter((member) => member.user.status === 'busy'),
-            offline: membersList.filter(
-                (member) => member.user.status === 'offline',
-            ),
-        };
-    };
+    // const groupMembersByStatus = (membersList: typeof members) => {
+    //     return {
+    //         online: membersList.filter(
+    //             (member) => member.user.status === 'online',
+    //         ),
+    //         away: membersList.filter((member) => member.user.status === 'away'),
+    //         busy: membersList.filter((member) => member.user.status === 'busy'),
+    //         offline: membersList.filter(
+    //             (member) => member.user.status === 'offline',
+    //         ),
+    //     };
+    // };
 
-    const adminsByStatus = groupMembersByStatus(admins);
-    const membersByStatus = groupMembersByStatus(regularMembers);
+    // const adminsByStatus = groupMembersByStatus(admins);
+    // const membersByStatus = groupMembersByStatus(regularMembers);
+
+    // const adminsByStatus = admins;
+    // const membersByStatus = regularMembers;
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -69,7 +85,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
     const renderMemberGroup = (
         title: string,
-        membersList: typeof members,
+        membersList: AppUser[],
         showRole = false,
     ) => {
         if (membersList.length === 0) return null;
@@ -89,31 +105,30 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                         >
                             <div className="relative">
                                 <UserAvatar
-                                    username={
-                                        member.nickname || member.user.username
-                                    }
-                                    avatarUrl={member.user.avatar_url}
+                                    username={member.username}
+                                    avatarUrl={member.avatarUrl}
                                     className="h-8 w-8"
                                 />
                                 <div
                                     className={cn(
                                         'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-800',
-                                        getStatusColor(member.user.status),
+                                        //getStatusColor(member.user.status),
+                                        getStatusColor('online'),
                                     )}
                                 />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1">
                                     <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-white">
-                                        {member.nickname ||
-                                            member.user.username}
+                                        {member.username}
                                     </span>
                                     {showRole && member.role === 'ADMIN' && (
                                         <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
                                     )}
                                 </div>
                                 <div className="text-xs text-zinc-500 truncate">
-                                    {getStatusText(member.user.status)}
+                                    {/* {getStatusText(member.user.status)} */}
+                                    {getStatusText('online')}
                                 </div>
                             </div>
                         </div>
@@ -147,33 +162,35 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
             <ScrollArea className="flex-1 px-2 py-3">
                 <div className="space-y-2">
+                    {renderMemberGroup('Admins', admins, true)}
+                    {renderMemberGroup('Members', regularMembers, true)}
                     {/* Online Members */}
-                    {renderStatusGroup(
+                    {/* {renderStatusGroup(
                         'online',
                         adminsByStatus.online,
                         membersByStatus.online,
-                    )}
+                    )} */}
 
                     {/* Away Members */}
-                    {renderStatusGroup(
+                    {/* {renderStatusGroup(
                         'away',
                         adminsByStatus.away,
                         membersByStatus.away,
-                    )}
+                    )} */}
 
                     {/* Busy Members */}
-                    {renderStatusGroup(
+                    {/* {renderStatusGroup(
                         'busy',
                         adminsByStatus.busy,
                         membersByStatus.busy,
-                    )}
+                    )} */}
 
                     {/* Offline Members */}
-                    {renderStatusGroup(
+                    {/* {renderStatusGroup(
                         'offline',
                         adminsByStatus.offline,
                         membersByStatus.offline,
-                    )}
+                    )} */}
                 </div>
             </ScrollArea>
         </div>

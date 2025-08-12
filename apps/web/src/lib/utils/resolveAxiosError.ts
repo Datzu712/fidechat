@@ -12,5 +12,5 @@ export function parseAxiosError(
         return error.message;
     }
 
-    return defaultStr || 'An error occurred';
+    return defaultStr || 'Something went wrong. Please try again.';
 }

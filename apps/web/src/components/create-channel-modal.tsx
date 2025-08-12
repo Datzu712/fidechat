@@ -1,10 +1,9 @@
 'use client';
 
 import type React from 'react';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMockData } from '@/components/mock-data-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import {
     Dialog,
@@ -14,9 +13,27 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import { CreateChannelPayload } from '@/types';
+
+const formSchema = z.object({
+    name: z.string().min(1, 'Channel name is required').max(100),
+    description: z.string().max(1000).optional(),
+    position: z.number().min(0).default(0),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface CreateChannelModalProps {
     isOpen: boolean;
@@ -29,39 +46,44 @@ export function CreateChannelModal({
     onClose,
     serverId,
 }: CreateChannelModalProps) {
-    const [channelName, setChannelName] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const { createChannel } = useMockData();
     const { toast } = useToast();
-    const router = useRouter();
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: '',
+            description: '',
+            position: 0,
+        },
+    });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        setIsLoading(true);
-
-        try {
-            const channel = await createChannel(channelName, serverId);
-
+    const { mutate, isPending: isLoading } = useApiMutation<
+        void,
+        CreateChannelPayload
+    >(`/guilds/${serverId}/channels`, {
+        onSuccess: (_, variables) => {
             toast({
                 title: 'Channel created',
-                description: `#${channelName} has been created successfully.`,
+                description: `#${variables.name} has been created successfully.`,
             });
-
-            router.push(`/channels/${serverId}/${channel.id}`);
-            router.refresh();
+            form.reset();
             onClose();
-            setChannelName('');
-        } catch (error: any) {
+        },
+        onError: (error) => {
             toast({
                 variant: 'destructive',
                 title: 'Failed to create channel',
-                description:
-                    error.message || 'Something went wrong. Please try again.',
+                description: parseAxiosError(error),
             });
-        } finally {
-            setIsLoading(false);
-        }
+            console.error(error);
+        },
+    });
+
+    const onSubmit = (values: FormValues) => {
+        mutate({
+            name: values.name,
+            position: values.position,
+            description: values.description || undefined,
+        });
     };
 
     return (
@@ -70,41 +92,89 @@ export function CreateChannelModal({
                 <DialogHeader>
                     <DialogTitle>Create a new channel</DialogTitle>
                     <DialogDescription>
-                        Channels are where your members communicate. They're
-                        best organized around topics.
+                        Create a new channel in your server to start chatting.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Channel name</Label>
-                            <Input
-                                id="name"
-                                value={channelName}
-                                onChange={(e) => setChannelName(e.target.value)}
-                                placeholder="new-channel"
+                <Form {...form}>
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-4"
+                    >
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Channel name</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="new-channel"
+                                            disabled={isLoading}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Channel description</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="Enter channel description"
+                                            disabled={isLoading}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="position"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Position</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            placeholder="0"
+                                            disabled={isLoading}
+                                            {...field}
+                                            onChange={(e) =>
+                                                field.onChange(
+                                                    Number(e.target.value),
+                                                )
+                                            }
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onClose}
                                 disabled={isLoading}
-                                required
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onClose}
-                            disabled={isLoading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={isLoading || !channelName.trim()}
-                        >
-                            {isLoading ? 'Creating...' : 'Create'}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? 'Creating...' : 'Create'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     );

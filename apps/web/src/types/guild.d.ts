@@ -6,4 +6,10 @@ export interface Guild {
     ownerId: string;
 }
 
+export type GuildWithMembers = Guild & {
+    members: {
+        userId: string;
+        //role: 'ADMIN' | 'MEMBER';
+    }[];
+};
 export type CreateGuildPayload = Omit<Guild, 'id' | 'ownerId'>;
