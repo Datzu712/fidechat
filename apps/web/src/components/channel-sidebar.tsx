@@ -20,7 +20,9 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     if (!currentUser) return null;
 
     const server = servers.find((s) => s.id === serverId);
-    const channels = getServerChannels(serverId);
+    const channels = getServerChannels(serverId).sort(
+        (a, b) => a.position - b.position,
+    );
     const isOwner =
         currentUser.id ===
         server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/

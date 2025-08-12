@@ -57,6 +57,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
         },
         onChannelCreate: (newChannel: Channel) => {
+            console.log('New channel created:', newChannel);
             setChannels((prevChannels) => [...prevChannels, newChannel]);
         },
     });

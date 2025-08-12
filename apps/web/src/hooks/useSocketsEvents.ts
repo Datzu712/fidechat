@@ -18,15 +18,12 @@ export function useSocketEvents(
         if (!connected || !currentSocket) return;
 
         if (handlers.onGuildCreate) {
-            currentSocket.on(
-                SocketEvents.GUILD_CREATED,
-                handlers.onGuildCreate,
-            );
+            currentSocket.on(SocketEvents.GUILD_CREATE, handlers.onGuildCreate);
         }
 
         if (handlers.onChannelCreate) {
             currentSocket.on(
-                SocketEvents.CHANNEL_CREATED,
+                SocketEvents.CHANNEL_CREATE,
                 handlers.onChannelCreate,
             );
         }

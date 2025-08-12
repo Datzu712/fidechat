@@ -1,6 +1,6 @@
 export enum SocketEvents {
-    GUILD_CREATED = 'guildCreate',
-    CHANNEL_CREATED = 'channelCreate',
+    GUILD_CREATE = 'guildCreate',
+    CHANNEL_CREATE = 'channelCreate',
     // CHANNEL_UPDATED = 'channelUpdate',
     // CHANNEL_DELETED = 'channelDelete',
 }
