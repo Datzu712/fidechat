@@ -20,7 +20,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
     const members = [
         ...users.filter((user) =>
-            server.members.some((member) => member.userId === user.id),
+            server.members?.some((member) => member.userId === user.id),
         ),
     ];
 
@@ -30,7 +30,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
     //const admins = members.filter((member) => member.role === 'ADMIN');
     const admins = [currentUser];
     const regularMembers = users.filter((usr) =>
-        server.members.some((member) => member.userId === usr.id),
+        server.members?.some((member) => member.userId === usr.id),
     );
 
     // Group by online status

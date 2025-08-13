@@ -4,6 +4,7 @@ export interface Guild {
     iconUrl?: string;
     isPublic: boolean;
     ownerId: string;
+    description?: string;
 }
 
 export type GuildWithMembers = Guild & {

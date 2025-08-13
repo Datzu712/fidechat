@@ -28,7 +28,8 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
         server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
-        router.push(`/channels/${serverId}/${channelId}`);
+        console.log(`/servers/${serverId}/channels/${channelId}`);
+        router.push(`/servers/${serverId}/channels/${channelId}`);
     };
     const handleLogout = () => {
         federatedLogout();
@@ -92,7 +93,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                                 : currentUser.username}
                         </span>
                         <span className="text-xs text-zinc-400 capitalize">
-                            {/* {currentUser.status} */} unknown
+                            {/* {currentUser.status} */} online
                         </span>
                     </div>
                     <div className="ml-auto flex gap-1">
