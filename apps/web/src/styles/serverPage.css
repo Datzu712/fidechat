@@ -1,0 +1,128 @@
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes slide-up {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes glow {
+    0% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.2);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
+}
+
+.animate-glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Animaciones personalizadas para la página del servidor */
+
+/* Rotación lenta para el efecto de gradiente */
+@keyframes rotate-slow {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-rotate-slow {
+    animation: rotate-slow 8s linear infinite;
+}
+
+/* Mejora visual para el contenedor del icono */
+.server-icon-container {
+    transform: translateZ(0);
+    /* Activa aceleración por hardware */
+    backface-visibility: hidden;
+    /* Previene parpadeos */
+    will-change: transform;
+    /* Optimiza rendimiento de animaciones */
+    box-shadow:
+        0 0 0 1px rgba(var(--primary), 0.2),
+        0 4px 10px rgba(0, 0, 0, 0.2),
+        0 0 15px rgba(var(--primary), 0.1);
+}
+
+/* Efecto de brillo en hover */
+.server-icon-container:hover::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(45deg,
+            rgba(var(--primary), 0.3) 0%,
+            rgba(var(--primary), 0.1) 25%,
+            transparent 50%,
+            rgba(var(--primary), 0.1) 75%,
+            rgba(var(--primary), 0.3) 100%);
+    border-radius: 50%;
+    z-index: 30;
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: rotate(0) scale(1);
+        opacity: 0.6;
+    }
+
+    50% {
+        transform: rotate(180deg) scale(1.05);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1);
+        opacity: 0.6;
+    }
+}
+
+/* Rebote suave para iconos */
+@keyframes bounce-gentle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-bounce-gentle {
+    animation: bounce-gentle 3s ease-in-out infinite;
+}
