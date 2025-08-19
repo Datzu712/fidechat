@@ -18,10 +18,13 @@ type SocketEventHandlers = {
     [SocketEvents.FORCE_SYNC]?: () => void;
     [SocketEvents.MESSAGE_CREATE]?: (data: Message) => void;
     [SocketEvents.MESSAGE_UPDATE]?: (data: {
-        messageId: string;
+        id: string;
         content: string;
     }) => void;
-    [SocketEvents.MESSAGE_DELETE]?: (messageId: string) => void;
+    [SocketEvents.MESSAGE_DELETE]?: (data: {
+        id: string;
+        channelId: string;
+    }) => void;
 };
 
 export function useSocketEvents(
