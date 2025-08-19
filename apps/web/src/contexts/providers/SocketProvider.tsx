@@ -21,7 +21,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             socket.current.disconnect();
         }
 
-        socket.current = io(process.env.NEXT_PUBLIC_REST_API_URL, {
+        socket.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
             auth: {
                 token: data?.accessToken,
             },

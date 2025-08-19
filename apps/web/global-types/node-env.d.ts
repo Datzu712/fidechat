@@ -7,5 +7,6 @@ declare namespace NodeJS {
         KEYCLOAK_ISSUER: string;
 
         NEXT_PUBLIC_REST_API_URL: string;
+        NEXT_PUBLIC_SOCKET_URL: string;
     }
 }
