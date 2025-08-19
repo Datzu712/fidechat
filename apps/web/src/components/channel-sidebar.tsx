@@ -30,13 +30,13 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     } = useAppContext();
 
     useEffect(() => {
-        if (connected) {
-            socket.current?.emit(
-                SocketEvents.UPDATE_CURRENT_STATUS,
-                userStatus,
-            );
+        if (connected && currentUser) {
+            socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
+                userId: currentUser.id,
+                status: userStatus,
+            });
         }
-    }, [userStatus, connected]);
+    }, [userStatus, connected, currentUser, socket]);
 
     if (!currentUser) return null;
 

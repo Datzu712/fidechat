@@ -210,6 +210,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         [connectedUsers],
     );
 
+    const getUserById = useCallback(
+        (userId: string): Omit<AppUser, 'email'> | undefined => {
+            return users.find((user) => user.id === userId);
+        },
+        [users],
+    );
+
     useEffect(() => {
         if (connected) {
             syncAppState.mutate();
@@ -244,17 +251,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             connectedUsers,
             setConnectedUsers,
             getUserStatus,
+            getUserById,
         }),
         [
-            channels,
-            connectedUsers,
             currentUser,
-            getServerChannels,
+            users,
             guilds,
+            channels,
             serverMembers,
             syncAppState,
-            users,
+            getServerChannels,
+            connectedUsers,
             getUserStatus,
+            getUserById,
         ],
     );
 

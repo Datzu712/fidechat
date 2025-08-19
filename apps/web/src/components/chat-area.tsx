@@ -1,17 +1,23 @@
 'use client';
 
-import type React from 'react';
-
+import React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DeleteMessageDialog } from './delete-message-dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AnimatePresence, motion } from 'framer-motion';
+import useSocket from '@/hooks/useSocket';
+import { SocketEvents } from '@/constants/socketEvents';
 import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
 import { UserAvatar } from '@/components/user-avatar';
 import { MobileMembersToggle } from '@/components/mobile-members-toggle';
 import useAppContext from '@/hooks/useAppContext';
-import type { ChannelWithMessages, MessageCreationAttributes } from '@/types';
+import type {
+    AppUser,
+    ChannelWithMessages,
+    MessageCreationAttributes,
+} from '@/types';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import { useToast } from '@/hooks/useToast';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
@@ -21,7 +27,61 @@ import Picker from '@emoji-mart/react';
 // todo: refactor this component in sub components D:
 export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     const { toast } = useToast();
-    const { users, guilds, currentUser } = useAppContext();
+    const {
+        users,
+        guilds,
+        currentUser,
+        connectedUsers,
+        getUserById,
+        getUserStatus,
+    } = useAppContext();
+    const { socket, connected } = useSocket();
+
+    const typingUsers = connectedUsers
+        .filter((user) => user.isTyping && user.typingInChannel === channel?.id)
+        .map((d) => getUserById(d.userId))
+        .filter((user): user is Omit<AppUser, 'email'> => user !== undefined);
+
+    // Handle typing status
+    const [isTyping, setIsTyping] = useState(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+    const handleTypingStatus = () => {
+        if (!connected || !currentUser || !channel) return;
+
+        if (!isTyping) {
+            setIsTyping(true);
+            socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
+                userId: currentUser.id,
+                isTyping: true,
+                typingInChannel: channel.id,
+            });
+        }
+
+        // Clear existing timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        // Set new timeout
+        typingTimeoutRef.current = setTimeout(() => {
+            setIsTyping(false);
+            socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
+                userId: currentUser.id,
+                isTyping: false,
+                typingInChannel: undefined,
+            });
+        }, 2000);
+    };
+
+    // Cleanup typing timeout
+    useEffect(() => {
+        return () => {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Editing/creating messages stuff
     const [messageContent, setMessageContet] = useState('');
@@ -143,7 +203,20 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                 authorId: currentUser!.id,
             },
             {
-                onSettled: () => setIsLoading(false),
+                onSettled: () => {
+                    setIsLoading(false);
+                    // Clear typing status immediately when sending message
+                    if (typingTimeoutRef.current) {
+                        clearTimeout(typingTimeoutRef.current);
+                    }
+                    setIsTyping(false);
+                    socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
+                        userId: currentUser!.id,
+                        isTyping: false,
+                        typingInChannel: undefined,
+                        status: getUserStatus(currentUser!.id) || 'online',
+                    });
+                },
             },
         );
         setMessageContet('');
@@ -488,6 +561,68 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                     </div>
                 </ScrollArea>
 
+                {/* Typing Indicator */}
+                <AnimatePresence>
+                    {typingUsers.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ duration: 0.2 }}
+                            className="px-4 py-2 text-sm text-zinc-300 bg-zinc-800/80 border-t border-zinc-700/50"
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1">
+                                    <span className="flex gap-1">
+                                        <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                        <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                        <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce" />
+                                    </span>
+                                </span>
+                                <span>
+                                    {typingUsers.length > 5 ? (
+                                        'Several people are typing...'
+                                    ) : typingUsers.length === 1 ? (
+                                        <span>
+                                            <span className="font-medium text-white">
+                                                {typingUsers[0].username}
+                                            </span>{' '}
+                                            is typing...
+                                        </span>
+                                    ) : (
+                                        <span>
+                                            {typingUsers
+                                                .slice(0, -1)
+                                                .map((user, i) => (
+                                                    <React.Fragment
+                                                        key={user.id}
+                                                    >
+                                                        <span className="font-medium text-white">
+                                                            {user.username}
+                                                        </span>
+                                                        {i <
+                                                        typingUsers.length - 2
+                                                            ? ', '
+                                                            : ''}
+                                                    </React.Fragment>
+                                                ))}
+                                            {' and '}
+                                            <span className="font-medium text-white">
+                                                {
+                                                    typingUsers[
+                                                        typingUsers.length - 1
+                                                    ].username
+                                                }
+                                            </span>{' '}
+                                            are typing...
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Message Input */}
                 <div className="p-4">
                     <form
@@ -497,9 +632,10 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                         <div className="flex-1 relative">
                             <Input
                                 value={messageContent}
-                                onChange={(e) =>
-                                    setMessageContet(e.target.value)
-                                }
+                                onChange={(e) => {
+                                    setMessageContet(e.target.value);
+                                    handleTypingStatus();
+                                }}
                                 placeholder={`Message #${channel.name}`}
                                 disabled={isLoading}
                                 className="w-full bg-zinc-700 border-zinc-600 text-white placeholder-zinc-400 pr-10"

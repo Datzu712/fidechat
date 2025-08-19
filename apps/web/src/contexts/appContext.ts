@@ -34,6 +34,7 @@ export type AppContextType = {
     connectedUsers: ConnectedUser[];
     setConnectedUsers: React.Dispatch<React.SetStateAction<ConnectedUser[]>>;
     getUserStatus: (userId: string) => SocketUserStatus | undefined;
+    getUserById: (userId: string) => Omit<AppUser, 'email'> | undefined;
 };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
