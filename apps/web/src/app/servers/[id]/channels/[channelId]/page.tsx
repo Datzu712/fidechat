@@ -11,8 +11,6 @@ export default function ChannelPage() {
         channelId: string;
     }>();
 
-    console.log(params);
-
     const { status } = useSession();
     const { currentUser, channels, guilds } = useAppContext();
 
@@ -46,5 +44,5 @@ export default function ChannelPage() {
         },
     };
 
-    return <ChatArea channel={channelWithServer} userId={currentUser.id} />;
+    return <ChatArea channel={channelWithServer} />;
 }
