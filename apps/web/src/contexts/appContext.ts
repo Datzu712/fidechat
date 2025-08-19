@@ -5,6 +5,8 @@ import type {
     GuildMember,
     GuildWithMembers,
     ChannelWithMessages,
+    ConnectedUser,
+    SocketUserStatus,
 } from '@/types';
 import type { UseMutationResult } from '@tanstack/react-query';
 
@@ -13,6 +15,7 @@ export type SyncAppStateResponse = {
     channels: ChannelWithMessages[];
     currentUser: AppUser;
     users: Omit<AppUser, 'email'>[];
+    connectedUsers: ConnectedUser[];
 };
 
 export type AppContextType = {
@@ -28,6 +31,9 @@ export type AppContextType = {
     setServerMembers: React.Dispatch<React.SetStateAction<GuildMember[]>>;
     syncAppState: UseMutationResult<SyncAppStateResponse, Error, void>;
     getServerChannels: (serverId: string) => Channel[];
+    connectedUsers: ConnectedUser[];
+    setConnectedUsers: React.Dispatch<React.SetStateAction<ConnectedUser[]>>;
+    getUserStatus: (userId: string) => SocketUserStatus | undefined;
 };
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,35 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, LogOut, Plus, Settings } from 'lucide-react';
 import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
+import { UserStatusMenu } from '@/components/user-status-menu';
 import useAppContext from '@/hooks/useAppContext';
 import federatedLogout from '@/lib/federated-logout';
+import useSocket from '@/hooks/useSocket';
+import { SocketEvents } from '@/constants/socketEvents';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
+    const { socket, connected } = useSocket();
     const router = useRouter();
     const pathname = usePathname();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { currentUser, guilds: servers, getServerChannels } = useAppContext();
+    const [userStatus, setUserStatus] = useState<
+        'online' | 'idle' | 'dnd' | 'offline'
+    >('online');
+    const {
+        currentUser,
+        guilds: servers,
+        getServerChannels,
+        getUserStatus,
+    } = useAppContext();
+
+    useEffect(() => {
+        if (connected) {
+            socket.current?.emit(
+                SocketEvents.UPDATE_CURRENT_STATUS,
+                userStatus,
+            );
+        }
+    }, [userStatus, connected]);
 
     if (!currentUser) return null;
 
@@ -85,15 +106,18 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                         username={currentUser.username}
                         avatarUrl={currentUser.avatarUrl}
                     />
-                    <div className="flex flex-col">
+                    <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium truncate">
                             {currentUser.username.length > 12
                                 ? `${currentUser.username.slice(0, 12)}...`
                                 : currentUser.username}
                         </span>
-                        <span className="text-xs text-zinc-400 capitalize">
-                            {/* {currentUser.status} */} online
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <UserStatusMenu
+                                status={getUserStatus(currentUser.id) || 'idle'}
+                                onStatusChange={setUserStatus}
+                            />
+                        </div>
                     </div>
                     <div className="ml-auto flex gap-1">
                         <Button

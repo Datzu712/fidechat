@@ -6,4 +6,6 @@ export enum SocketEvents {
     MESSAGE_DELETE = 'messageDelete',
     MEMBER_ADD = 'memberAdd',
     FORCE_SYNC = 'forceSync',
+    USER_STATUS_UPDATE = 'userStatusUpdate',
+    UPDATE_CURRENT_STATUS = 'updateCurrentClientStatus', // client -> server
 }

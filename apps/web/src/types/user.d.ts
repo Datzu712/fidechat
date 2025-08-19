@@ -5,3 +5,14 @@ export interface AppUser {
     isBot: boolean;
     avatarUrl?: string;
 }
+
+export type SocketUserStatus =
+    | 'online'
+    | 'idle'
+    | 'dnd'
+    | 'offline'
+    | undefined; // undefined means offline btw
+export interface ConnectedUser {
+    userId: string;
+    status: SocketUserStatus;
+}

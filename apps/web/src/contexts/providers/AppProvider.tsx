@@ -10,6 +10,8 @@ import type {
     GuildWithMembers,
     ChannelWithMessages,
     Message,
+    ConnectedUser,
+    SocketUserStatus,
 } from '@/types';
 import {
     type SyncAppStateResponse,
@@ -25,6 +27,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [guilds, setGuilds] = useState<GuildWithMembers[]>([]);
     const [channels, setChannels] = useState<ChannelWithMessages[]>([]);
     const [serverMembers, setServerMembers] = useState<GuildMember[]>([]);
+    const [connectedUsers, setConnectedUsers] = useState<ConnectedUser[]>([]);
 
     const syncAppState = useApiMutation<SyncAppStateResponse, void>(
         '/users/@me/sync',
@@ -34,6 +37,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
                 console.log(data);
 
+                setConnectedUsers(data.connectedUsers || []);
                 setUsers(() => {
                     const updatedUsers = data.users || [];
                     if (
@@ -192,6 +196,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         [],
     );
 
+    const handleUserStatusUpdate = useCallback((data: ConnectedUser[]) => {
+        setConnectedUsers(() => {
+            return data;
+        });
+    }, []);
+
+    const getUserStatus = useCallback(
+        (userId: string): SocketUserStatus | undefined => {
+            return connectedUsers.find((user) => user.userId === userId)
+                ?.status;
+        },
+        [connectedUsers],
+    );
+
     useEffect(() => {
         if (connected) {
             syncAppState.mutate();
@@ -206,6 +224,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         [SocketEvents.MESSAGE_CREATE]: handleMessageCreate,
         [SocketEvents.MESSAGE_UPDATE]: handleMessageUpdate,
         [SocketEvents.MESSAGE_DELETE]: handleMessageDelete,
+        [SocketEvents.USER_STATUS_UPDATE]: handleUserStatusUpdate,
     });
 
     const value = useMemo<AppContextType>(
@@ -222,15 +241,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setServerMembers,
             syncAppState,
             getServerChannels,
+            connectedUsers,
+            setConnectedUsers,
+            getUserStatus,
         }),
         [
             channels,
+            connectedUsers,
             currentUser,
             getServerChannels,
             guilds,
             serverMembers,
             syncAppState,
             users,
+            getUserStatus,
         ],
     );
 

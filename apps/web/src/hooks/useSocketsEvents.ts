@@ -3,6 +3,7 @@ import { Socket } from 'socket.io-client';
 import type {
     AppUser,
     ChannelWithMessages,
+    ConnectedUser,
     GuildMember,
     GuildWithMembers,
     Message,
@@ -25,6 +26,7 @@ type SocketEventHandlers = {
         id: string;
         channelId: string;
     }) => void;
+    [SocketEvents.USER_STATUS_UPDATE]?: (data: ConnectedUser[]) => void;
 };
 
 export function useSocketEvents(
