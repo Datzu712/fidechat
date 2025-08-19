@@ -406,11 +406,15 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                                                     {messageUser?.username ||
                                                         'Unknown User'}
                                                 </span>
-                                                {messageUser?.isBot && (
-                                                    <span className="px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded">
-                                                        BOT
-                                                    </span>
-                                                )}
+                                                <span
+                                                    className={
+                                                        messageUser?.isBot
+                                                            ? 'px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded'
+                                                            : 'hidden'
+                                                    }
+                                                >
+                                                    BOT
+                                                </span>
                                                 <span className="text-xs text-zinc-400">
                                                     {formatMessageTime(
                                                         message.createdAt,

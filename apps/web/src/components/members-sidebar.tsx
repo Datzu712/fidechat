@@ -117,7 +117,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                     <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-white">
                                         {member.username}
                                     </span>
-                                    {member.isBot && (
+                                    {!!member.isBot && (
                                         <span className="ml-1 px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded">
                                             BOT
                                         </span>
