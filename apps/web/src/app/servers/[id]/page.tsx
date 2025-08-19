@@ -7,6 +7,9 @@ import { useSession } from 'next-auth/react';
 import useAppContext from '@/hooks/useAppContext';
 import { ChatArea } from '@/components/chat-area';
 import Image from 'next/image';
+import { Bot, PlusCircle, Lock } from 'lucide-react';
+import { CreateChannelModal } from '@/components/create-channel-modal';
+import { useState } from 'react';
 
 export default function ServerPage() {
     const router = useRouter();
@@ -15,6 +18,7 @@ export default function ServerPage() {
         channelId: string;
     }>();
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { status } = useSession();
     const { currentUser, channels, guilds } = useAppContext();
     if (status !== 'authenticated' || !currentUser) {
@@ -27,9 +31,12 @@ export default function ServerPage() {
 
     // Check if channel exists and belongs to the server
     const guildChannels = channels.filter((c) => c.guildId === params.id);
+    const currentGuild = guilds.find((g) => g.id === params.id);
+
+    const isOwner = currentGuild?.ownerId === currentUser?.id;
 
     if (guildChannels.length === 0) {
-        const currentGuild = guilds.find((g) => g.id === params.id);
+        // Usamos el currentGuild que ya está definido arriba
 
         return (
             <div className="flex flex-col items-center justify-center w-full h-full bg-zinc-900">
@@ -42,26 +49,23 @@ export default function ServerPage() {
                     <div className="mb-6 flex justify-center">
                         <div className="h-20 w-20 relative animate-bounce-gentle">
                             <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping"></div>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-primary/60 w-full h-full p-2 animate-pulse"
-                            >
-                                <rect
-                                    x="2"
-                                    y="7"
-                                    width="20"
-                                    height="15"
-                                    rx="2"
+                            {currentGuild?.iconUrl ? (
+                                <div className="w-full h-full p-2 relative">
+                                    <Image
+                                        src={currentGuild.iconUrl}
+                                        alt={`${currentGuild.name} Icon`}
+                                        fill
+                                        sizes="64px"
+                                        priority
+                                        className="object-cover rounded-full animate-pulse"
+                                    />
+                                </div>
+                            ) : (
+                                <Bot
+                                    className="text-primary/60 w-full h-full p-2 animate-pulse"
+                                    strokeWidth={1.5}
                                 />
-                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                <path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
-                            </svg>
+                            )}
                             <div className="absolute inset-0 rounded-full border border-primary/20 animate-pulse"></div>
                         </div>
                     </div>
@@ -72,7 +76,7 @@ export default function ServerPage() {
 
                     <p className="text-zinc-400 mb-6">
                         {currentGuild?.name
-                            ? `"${currentGuild.name}" doesn't have any channels yet.`
+                            ? `"${currentGuild.name}" doesn't have any channels yet :(`
                             : "This server doesn't have any channels yet."}
                     </p>
 
@@ -86,32 +90,34 @@ export default function ServerPage() {
                         <div className="h-0.5 w-0 bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 group-hover:w-full transition-all duration-700 mt-2 mx-auto"></div>
                     </div>
 
-                    {/* Botón decorativo - no funcional pero visualmente atractivo */}
-                    <div className="inline-flex items-center px-4 py-2 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-md text-zinc-300 text-sm border border-zinc-700 cursor-not-allowed opacity-70">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-4 h-4 mr-2"
+                    {isOwner ? (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="inline-flex items-center px-4 py-2 bg-primary/20 hover:bg-primary/30 transition-colors rounded-md text-primary text-sm border border-primary/30 cursor-pointer"
                         >
-                            <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
-                            <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
-                            <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
-                        </svg>
-                        Only admins can create channels
-                    </div>
+                            <PlusCircle className="w-4 h-4 mr-2" />
+                            Create a new channel
+                        </button>
+                    ) : (
+                        <div className="inline-flex items-center px-4 py-2 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-md text-zinc-300 text-sm border border-zinc-700 cursor-not-allowed opacity-70">
+                            <Lock className="w-4 h-4 mr-2" />
+                            Only admins can create channels
+                        </div>
+                    )}
                 </div>
+
+                <CreateChannelModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    serverId={params.id}
+                />
             </div>
         );
     }
 
     // If no channel is selected, show a default view
     if (!params.channelId) {
-        const currentGuild = guilds.find((g) => g.id === params.id);
+        // Usamos el currentGuild que ya está definido arriba
 
         return (
             <div className="message-area flex flex-col h-full flex-1 min-w-0">
@@ -296,12 +302,5 @@ export default function ServerPage() {
         );
     }
 
-    /**
-     * Renderiza el componente ChatArea cuando hay un canal seleccionado
-     *
-     * - Estructura de datos adaptada al formato esperado por ChatArea
-     * - Proporciona el ID del usuario actual para identificar los mensajes propios
-     * - Mantiene la consistencia visual entre componentes al usar ChatArea
-     */
     return <ChatArea channel={selectedChannel} />;
 }
