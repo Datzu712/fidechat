@@ -32,15 +32,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             timeout: 10000,
         });
 
-        if (process.env.NODE_ENV === 'development') {
-            socket.current.onAny((event, ...args) => {
-                console.debug('[socket] Socket event received:', event, args);
-            });
+        socket.current.onAny((event, ...args) => {
+            console.debug('[socket] Socket event received:', event, args);
+        });
 
-            socket.current.onAnyOutgoing((event, ...args) => {
-                console.debug('Socket event sent:', event, args);
-            });
-        }
+        socket.current.onAnyOutgoing((event, ...args) => {
+            console.debug('Socket event sent:', event, args);
+        });
 
         socket.current.on('connect', () => {
             setConnected(true);
