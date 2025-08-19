@@ -31,7 +31,8 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
         .filter(
             (usr) =>
                 server.members?.some((member) => member.userId === usr.id) &&
-                !(owner?.id === usr.id),
+                !(owner?.id === usr.id) &&
+                !usr.isBot,
         )
         .sort((a, b) => {
             const statusA = getUserStatus(a.id);
@@ -40,6 +41,8 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                 getUserStatusPriority(statusA) - getUserStatusPriority(statusB)
             );
         });
+
+    const bots = users.filter((usr) => usr.isBot);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -114,6 +117,11 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                     <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-white">
                                         {member.username}
                                     </span>
+                                    {member.isBot && (
+                                        <span className="ml-1 px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded">
+                                            BOT
+                                        </span>
+                                    )}
                                     {member.id === server.ownerId && (
                                         <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
                                     )}
@@ -132,17 +140,6 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
         );
     };
 
-    // const renderStatusGroup = (
-    //     status: string,
-    //     adminList: typeof members,
-    //     memberList: typeof members,
-    // ) => {
-    //     const allMembers = [...adminList, ...memberList];
-    //     if (allMembers.length === 0) return null;
-
-    //     return renderMemberGroup(getStatusText(status), allMembers, true);
-    // };
-
     return (
         <div
             className={cn(
@@ -157,34 +154,13 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
             <ScrollArea className="flex-1 px-2 py-3">
                 <div className="space-y-2">
                     {renderMemberGroup('Owner', [owner ?? unknownUser])}
-                    {renderMemberGroup('Members', regularMembers)}
-                    {/* Online Members */}
+                    {renderMemberGroup('Bots', bots)}
                     {/* {renderStatusGroup(
                         'online',
                         adminsByStatus.online,
                         membersByStatus.online,
                     )} */}
-
-                    {/* Away Members */}
-                    {/* {renderStatusGroup(
-                        'away',
-                        adminsByStatus.away,
-                        membersByStatus.away,
-                    )} */}
-
-                    {/* Busy Members */}
-                    {/* {renderStatusGroup(
-                        'busy',
-                        adminsByStatus.busy,
-                        membersByStatus.busy,
-                    )} */}
-
-                    {/* Offline Members */}
-                    {/* {renderStatusGroup(
-                        'offline',
-                        adminsByStatus.offline,
-                        membersByStatus.offline,
-                    )} */}
+                    {renderMemberGroup('Members', regularMembers)}
                 </div>
             </ScrollArea>
         </div>
