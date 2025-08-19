@@ -8,16 +8,20 @@ import type {
     Message,
 } from '@/types';
 import { SocketEvents } from '@/constants/socketEvents';
-
 type SocketEventHandlers = {
-    onGuildCreate?: (guild: GuildWithMembers) => void;
-    onChannelCreate?: (channel: ChannelWithMessages) => void;
-    onMemberAdd?: (data: {
+    [SocketEvents.GUILD_CREATE]?: (guild: GuildWithMembers) => void;
+    [SocketEvents.CHANNEL_CREATE]?: (channel: ChannelWithMessages) => void;
+    [SocketEvents.MEMBER_ADD]?: (data: {
         user: AppUser;
         memberMetadata: GuildMember;
     }) => void;
-    onForceSync?: () => void;
-    onMessageCreate?: (data: Message) => void;
+    [SocketEvents.FORCE_SYNC]?: () => void;
+    [SocketEvents.MESSAGE_CREATE]?: (data: Message) => void;
+    [SocketEvents.MESSAGE_UPDATE]?: (data: {
+        messageId: string;
+        content: string;
+    }) => void;
+    [SocketEvents.MESSAGE_DELETE]?: (messageId: string) => void;
 };
 
 export function useSocketEvents(
@@ -29,38 +33,22 @@ export function useSocketEvents(
         const currentSocket = socket.current;
         if (!connected || !currentSocket) return;
 
-        if (handlers.onGuildCreate) {
-            currentSocket.on(SocketEvents.GUILD_CREATE, handlers.onGuildCreate);
-        }
+        console.debug(
+            `Registering the following events: ${Object.keys(handlers).join(', ')}`,
+        );
 
-        if (handlers.onChannelCreate) {
-            currentSocket.on(
-                SocketEvents.CHANNEL_CREATE,
-                handlers.onChannelCreate,
-            );
-        }
+        Object.entries(handlers).forEach(([event, handler]) => {
+            if (handler) {
+                currentSocket.on(event, handler);
+            }
+        });
 
-        if (handlers.onMemberAdd) {
-            currentSocket.on(SocketEvents.MEMBER_ADD, handlers.onMemberAdd);
-        }
-
-        if (handlers.onForceSync) {
-            currentSocket.on(SocketEvents.FORCE_SYNC, handlers.onForceSync);
-        }
-
-        if (handlers.onMessageCreate) {
-            currentSocket.on(
-                SocketEvents.MESSAGE_CREATE,
-                handlers.onMessageCreate,
-            );
-        }
-
-        // Cleanup
         return () => {
             if (currentSocket) {
-                for (const event of Object.values(SocketEvents)) {
+                // Remover solo los eventos que fueron registrados
+                Object.keys(handlers).forEach((event) => {
                     currentSocket.off(event);
-                }
+                });
             }
         };
     }, [socket, connected, handlers]);

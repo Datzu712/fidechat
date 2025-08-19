@@ -16,6 +16,7 @@ import {
     AppContext,
 } from '../appContext';
 import { useSocketEvents } from '@/hooks/useSocketsEvents';
+import { SocketEvents } from '@/constants/socketEvents';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -57,19 +58,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, [connected]);
 
     useSocketEvents(socket, connected, {
-        onGuildCreate: (newGuild) => {
+        [SocketEvents.GUILD_CREATE]: (newGuild) => {
             setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
         },
-        onChannelCreate: (newChannel) => {
+        [SocketEvents.CHANNEL_CREATE]: (newChannel) => {
             setChannels((prevChannels) => [
                 ...prevChannels,
                 { ...newChannel, messages: [] },
             ]);
         },
-        onForceSync: () => {
+        [SocketEvents.FORCE_SYNC]: () => {
             syncAppState.mutate();
         },
-        onMemberAdd: ({ user, memberMetadata }) => {
+        [SocketEvents.MEMBER_ADD]: ({ user, memberMetadata }) => {
             setServerMembers((prevMembers) => [...prevMembers, memberMetadata]);
             setUsers((prevUsers) => [...prevUsers, user]);
 
@@ -87,7 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 return prevGuilds;
             });
         },
-        onMessageCreate: (newMessage) => {
+        [SocketEvents.MESSAGE_CREATE]: (newMessage) => {
             const targetChannel = channels.find(
                 (channel) => channel.id === newMessage.channelId,
             );
