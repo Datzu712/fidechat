@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DeleteMessageDialog } from './delete-message-dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Hash, Send, Pencil, Check, X, Trash2 } from 'lucide-react';
+import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
 import { UserAvatar } from '@/components/user-avatar';
 import { MobileMembersToggle } from '@/components/mobile-members-toggle';
 import useAppContext from '@/hooks/useAppContext';
@@ -15,7 +15,10 @@ import type { ChannelWithMessages, MessageCreationAttributes } from '@/types';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import { useToast } from '@/hooks/useToast';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
+// todo: refactor this component in sub components D:
 export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     const { toast } = useToast();
     const { users, guilds, currentUser } = useAppContext();
@@ -31,6 +34,10 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     // Deleting messages stuff
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+
+    // Emoji picker stuff
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
 
     const guildMembers = [...users, currentUser];
 
@@ -156,6 +163,41 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
 
         handleUpdateMessage(messageId, editedContent);
     };
+
+    const handleEmojiSelect = (emoji: { native: string }) => {
+        if (editingMessageId) {
+            setEditedContent((prev) => prev + emoji.native);
+        } else {
+            setMessageContet((prev) => prev + emoji.native);
+        }
+        setShowEmojiPicker(false);
+    };
+
+    // Close emoji picker when clicking outside or pressing escape
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                emojiPickerRef.current &&
+                !emojiPickerRef.current.contains(event.target as Node)
+            ) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && showEmojiPicker) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showEmojiPicker]);
 
     const handleDeleteMessage = (messageId: string) => {
         console.log(messageId);
@@ -373,6 +415,19 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                                                                 size="sm"
                                                                 variant="ghost"
                                                                 className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                                                onClick={() =>
+                                                                    setShowEmojiPicker(
+                                                                        !showEmojiPicker,
+                                                                    )
+                                                                }
+                                                                title="Add emoji"
+                                                            >
+                                                                <Smile className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-zinc-700"
                                                                 onClick={
                                                                     handleCancelEdit
                                                                 }
@@ -435,14 +490,81 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
 
                 {/* Message Input */}
                 <div className="p-4">
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                        <Input
-                            value={messageContent}
-                            onChange={(e) => setMessageContet(e.target.value)}
-                            placeholder={`Message #${channel.name}`}
-                            disabled={isLoading}
-                            className="flex-1 bg-zinc-700 border-zinc-600 text-white placeholder-zinc-400"
-                        />
+                    <form
+                        onSubmit={handleSendMessage}
+                        className="flex gap-2 relative"
+                    >
+                        <div className="flex-1 relative">
+                            <Input
+                                value={messageContent}
+                                onChange={(e) =>
+                                    setMessageContet(e.target.value)
+                                }
+                                placeholder={`Message #${channel.name}`}
+                                disabled={isLoading}
+                                className="w-full bg-zinc-700 border-zinc-600 text-white placeholder-zinc-400 pr-10"
+                            />
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-1 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                                    onClick={() =>
+                                        setShowEmojiPicker(!showEmojiPicker)
+                                    }
+                                >
+                                    <Smile className="h-5 w-5" />
+                                </Button>
+                            </div>
+
+                            {showEmojiPicker && (
+                                <div
+                                    className="absolute bottom-14 right-0 z-50"
+                                    ref={emojiPickerRef}
+                                >
+                                    <div className="shadow-lg rounded-md overflow-hidden border border-zinc-800 emoji-picker-animation">
+                                        <Picker
+                                            data={data}
+                                            onEmojiSelect={handleEmojiSelect}
+                                            theme="dark"
+                                            previewPosition="none"
+                                            skinTonePosition="none"
+                                            emojiButtonSize={28}
+                                            emojiSize={20}
+                                            maxFrequentRows={1}
+                                            searchPosition="top"
+                                            navPosition="bottom"
+                                            perLine={8}
+                                            categories={[
+                                                'frequent',
+                                                'people',
+                                                'nature',
+                                                'foods',
+                                                'activity',
+                                                'places',
+                                                'objects',
+                                                'symbols',
+                                                'flags',
+                                            ]}
+                                            set="native"
+                                            style={
+                                                {
+                                                    '--em-rgb-background':
+                                                        '32, 34, 37', // Discord dark background
+                                                    '--em-rgb-input':
+                                                        '47, 49, 54', // Discord input background
+                                                    '--em-rgb-color':
+                                                        '220, 221, 222', // Discord text color
+                                                    '--em-border-radius': '8px',
+                                                } as React.CSSProperties
+                                            }
+                                            categoryColor="#5865F2" // Discord blue
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         <Button
                             type="submit"
                             disabled={isLoading || !messageContent.trim()}
