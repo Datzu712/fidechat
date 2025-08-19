@@ -34,7 +34,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
                 console.log(data);
 
-                setUsers(data.users || []);
+                setUsers(() => {
+                    const updatedUsers = data.users || [];
+                    if (
+                        data.currentUser &&
+                        !updatedUsers.some(
+                            (user) => user.id === data.currentUser?.id,
+                        )
+                    ) {
+                        updatedUsers.push(data.currentUser);
+                    }
+                    return updatedUsers;
+                });
                 setGuilds(data.guilds || []);
                 setChannels(data.channels || []);
                 setCurrentUser(data.currentUser || null);

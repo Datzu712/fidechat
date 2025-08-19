@@ -6,11 +6,17 @@ import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useAppContext from '@/hooks/useAppContext';
 import { AppUser } from '@/types';
-
 interface MembersSidebarProps {
     serverId: string;
     className?: string;
 }
+
+const unknownUser: Omit<AppUser, 'email'> = {
+    id: '',
+    username: 'Unknown',
+    avatarUrl: '',
+    isBot: true,
+};
 
 export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
     const { guilds, currentUser, users } = useAppContext();
@@ -18,11 +24,11 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
     if (!server || !currentUser) return null;
 
-    // Group members by role
-    //const admins = members.filter((member) => member.role === 'ADMIN');
-    const admins = [currentUser];
-    const regularMembers = users.filter((usr) =>
-        server.members?.some((member) => member.userId === usr.id),
+    const owner = users.find((u) => u.id === server.ownerId);
+    const regularMembers = users.filter(
+        (usr) =>
+            server.members?.some((member) => member.userId === usr.id) &&
+            !(owner?.id === usr.id),
     );
 
     // Group by online status
@@ -77,8 +83,8 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
     const renderMemberGroup = (
         title: string,
-        membersList: AppUser[],
-        showRole = false,
+        membersList: Omit<AppUser, 'email'>[],
+        showRole = true,
     ) => {
         if (membersList.length === 0) return null;
 
@@ -97,7 +103,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                         >
                             <div className="relative">
                                 <UserAvatar
-                                    username={member.username}
+                                    username={member?.username}
                                     avatarUrl={member.avatarUrl}
                                     className="h-8 w-8"
                                 />
@@ -114,7 +120,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                     <span className="text-sm font-medium text-zinc-300 truncate group-hover:text-white">
                                         {member.username}
                                     </span>
-                                    {showRole && member.role === 'ADMIN' && (
+                                    {member.id === server.ownerId && (
                                         <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
                                     )}
                                 </div>
@@ -130,16 +136,16 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
         );
     };
 
-    const renderStatusGroup = (
-        status: string,
-        adminList: typeof members,
-        memberList: typeof members,
-    ) => {
-        const allMembers = [...adminList, ...memberList];
-        if (allMembers.length === 0) return null;
+    // const renderStatusGroup = (
+    //     status: string,
+    //     adminList: typeof members,
+    //     memberList: typeof members,
+    // ) => {
+    //     const allMembers = [...adminList, ...memberList];
+    //     if (allMembers.length === 0) return null;
 
-        return renderMemberGroup(getStatusText(status), allMembers, true);
-    };
+    //     return renderMemberGroup(getStatusText(status), allMembers, true);
+    // };
 
     return (
         <div
@@ -154,7 +160,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
             <ScrollArea className="flex-1 px-2 py-3">
                 <div className="space-y-2">
-                    {renderMemberGroup('Admins', admins, true)}
+                    {renderMemberGroup('Owner', [owner ?? unknownUser], true)}
                     {renderMemberGroup('Members', regularMembers, true)}
                     {/* Online Members */}
                     {/* {renderStatusGroup(
