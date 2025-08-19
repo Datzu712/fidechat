@@ -1,11 +1,23 @@
 import { useEffect } from 'react';
 import { Socket } from 'socket.io-client';
-import { Channel, GuildWithMembers } from '@/types';
+import type {
+    AppUser,
+    ChannelWithMessages,
+    GuildMember,
+    GuildWithMembers,
+    Message,
+} from '@/types';
 import { SocketEvents } from '@/constants/socketEvents';
 
 type SocketEventHandlers = {
     onGuildCreate?: (guild: GuildWithMembers) => void;
-    onChannelCreate?: (channel: Channel) => void;
+    onChannelCreate?: (channel: ChannelWithMessages) => void;
+    onMemberAdd?: (data: {
+        user: AppUser;
+        memberMetadata: GuildMember;
+    }) => void;
+    onForceSync?: () => void;
+    onMessageCreate?: (data: Message) => void;
 };
 
 export function useSocketEvents(
@@ -25,6 +37,21 @@ export function useSocketEvents(
             currentSocket.on(
                 SocketEvents.CHANNEL_CREATE,
                 handlers.onChannelCreate,
+            );
+        }
+
+        if (handlers.onMemberAdd) {
+            currentSocket.on(SocketEvents.MEMBER_ADD, handlers.onMemberAdd);
+        }
+
+        if (handlers.onForceSync) {
+            currentSocket.on(SocketEvents.FORCE_SYNC, handlers.onForceSync);
+        }
+
+        if (handlers.onMessageCreate) {
+            currentSocket.on(
+                SocketEvents.MESSAGE_CREATE,
+                handlers.onMessageCreate,
             );
         }
 

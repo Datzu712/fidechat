@@ -303,19 +303,5 @@ export default function ServerPage() {
      * - Proporciona el ID del usuario actual para identificar los mensajes propios
      * - Mantiene la consistencia visual entre componentes al usar ChatArea
      */
-    return (
-        <ChatArea
-            channel={{
-                id: selectedChannel.id,
-                name: selectedChannel.name,
-                server_id: params.id,
-                server: {
-                    name:
-                        guilds.find((g) => g.id === params.id)?.name ||
-                        'Server',
-                },
-            }}
-            userId={currentUser.id}
-        />
-    );
+    return <ChatArea channel={selectedChannel} />;
 }

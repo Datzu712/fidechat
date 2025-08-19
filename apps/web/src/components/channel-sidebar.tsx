@@ -28,7 +28,6 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
         server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
-        console.log(`/servers/${serverId}/channels/${channelId}`);
         router.push(`/servers/${serverId}/channels/${channelId}`);
     };
     const handleLogout = () => {
@@ -101,6 +100,14 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
+                            onClick={() =>
+                                window.open(
+                                    process.env.NEXT_PUBLIC_KEYCLOAK_URL
+                                        ? `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}`
+                                        : '#',
+                                    '_blank',
+                                )
+                            }
                         >
                             <Settings className="h-4 w-4" />
                         </Button>

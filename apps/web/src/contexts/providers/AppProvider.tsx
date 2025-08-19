@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSocket from '@/hooks/useSocket';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import type { Channel, AppUser, GuildMember, GuildWithMembers } from '@/types';
+import type {
+    AppUser,
+    GuildMember,
+    GuildWithMembers,
+    ChannelWithMessages,
+} from '@/types';
 import {
     type SyncAppStateResponse,
     AppContextType,
@@ -16,8 +21,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
     const [users, setUsers] = useState<Omit<AppUser, 'email'>[]>([]);
     const [guilds, setGuilds] = useState<GuildWithMembers[]>([]);
-    const [channels, setChannels] = useState<Channel[]>([]);
-    const [messages, setMessages] = useState<object[]>([]);
+    const [channels, setChannels] = useState<ChannelWithMessages[]>([]);
     const [serverMembers, setServerMembers] = useState<GuildMember[]>([]);
 
     const syncAppState = useApiMutation<SyncAppStateResponse, void>(
@@ -53,12 +57,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, [connected]);
 
     useSocketEvents(socket, connected, {
-        onGuildCreate: (newGuild: GuildWithMembers) => {
+        onGuildCreate: (newGuild) => {
             setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
         },
-        onChannelCreate: (newChannel: Channel) => {
-            console.log('New channel created:', newChannel);
-            setChannels((prevChannels) => [...prevChannels, newChannel]);
+        onChannelCreate: (newChannel) => {
+            setChannels((prevChannels) => [
+                ...prevChannels,
+                { ...newChannel, messages: [] },
+            ]);
+        },
+        onForceSync: () => {
+            syncAppState.mutate();
+        },
+        onMemberAdd: ({ user, memberMetadata }) => {
+            setServerMembers((prevMembers) => [...prevMembers, memberMetadata]);
+            setUsers((prevUsers) => [...prevUsers, user]);
+
+            setGuilds((prevGuilds) => {
+                const guild = prevGuilds.find(
+                    (g) => g.id === memberMetadata.guildId,
+                );
+                if (guild) {
+                    return prevGuilds.map((g) =>
+                        g.id === guild.id
+                            ? { ...g, members: [...g.members, memberMetadata] }
+                            : g,
+                    );
+                }
+                return prevGuilds;
+            });
+        },
+        onMessageCreate: (newMessage) => {
+            const targetChannel = channels.find(
+                (channel) => channel.id === newMessage.channelId,
+            );
+
+            if (targetChannel) {
+                targetChannel.messages.push(newMessage);
+
+                setChannels((prevChannels) =>
+                    prevChannels.map((channel) =>
+                        channel.id === targetChannel.id
+                            ? { ...channel, messages: [...channel.messages] }
+                            : channel,
+                    ),
+                );
+            }
         },
     });
 
@@ -68,13 +112,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             users,
             guilds,
             channels,
-            messages,
             serverMembers,
             setCurrentUser,
             setUsers,
             setGuilds,
             setChannels,
-            setMessages,
             setServerMembers,
             syncAppState,
             getServerChannels,
@@ -84,7 +126,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             currentUser,
             getServerChannels,
             guilds,
-            messages,
             serverMembers,
             syncAppState,
             users,

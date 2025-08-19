@@ -2,37 +2,39 @@
 
 import type React from 'react';
 
-import { useEffect, useRef, useState } from 'react';
-import { useMockData } from '@/components/mock-data-provider';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Hash, Send } from 'lucide-react';
 import { UserAvatar } from '@/components/user-avatar';
 import { MobileMembersToggle } from '@/components/mobile-members-toggle';
+import useAppContext from '@/hooks/useAppContext';
+import type { ChannelWithMessages, MessageCreationAttributes } from '@/types';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import { useToast } from '@/hooks/useToast';
+import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
 
-type Channel = {
-    id: string;
-    name: string;
-    server_id?: string; // Add this optional field
-    server: {
-        name: string;
-    };
-};
-
-export function ChatArea({
-    channel,
-    userId,
-}: {
-    channel: Channel;
-    userId: string;
-}) {
-    const [newMessage, setNewMessage] = useState('');
+export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
+    const { toast } = useToast();
+    const [messageContent, setMessageContet] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { getChannelMessages, sendMessage, users } = useMockData();
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { users, guilds, currentUser } = useAppContext();
 
-    const messages = getChannelMessages(channel.id);
+    const guildMembers = [...users, currentUser];
+
+    const guild = guilds.find((g) => g.id === channel?.guildId);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messages = useMemo(() => {
+        const messages = channel?.messages || [];
+
+        return messages.sort((a, b) => {
+            return (
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+            );
+        });
+    }, [channel]);
 
     useEffect(() => {
         scrollToBottom();
@@ -42,24 +44,41 @@ export function ChatArea({
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const { mutate: sendMessage } = useApiMutation<
+        void,
+        MessageCreationAttributes
+    >(`/guilds/${guild?.id}/channels/${channel?.id}/messages`, {
+        onError: (error) => {
+            toast({
+                variant: 'destructive',
+                title: 'Failed to create channel',
+                description: parseAxiosError(error),
+            });
+            console.error(error);
+        },
+    });
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!newMessage.trim()) return;
+        if (!messageContent.trim()) return;
 
         setIsLoading(true);
 
-        try {
-            await sendMessage(newMessage, channel.id);
-            setNewMessage('');
-        } catch (error) {
-            console.error('Error sending message:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        sendMessage(
+            {
+                content: messageContent,
+                channelId: channel!.id,
+                authorId: currentUser!.id,
+            },
+            {
+                onSettled: () => setIsLoading(false),
+            },
+        );
+        setMessageContet('');
     };
 
-    const formatMessageTime = (timestamp: string) => {
+    const formatMessageTime = (timestamp: string | Date) => {
         const date = new Date(timestamp);
         const now = new Date();
         const isToday = date.toDateString() === now.toDateString();
@@ -77,6 +96,8 @@ export function ChatArea({
         }
     };
 
+    if (!channel || !currentUser) return null;
+
     return (
         <div className="message-area flex flex-col h-full flex-1 min-w-0">
             {/* Channel Header */}
@@ -87,7 +108,7 @@ export function ChatArea({
                     Welcome to #{channel.name}!
                 </div>
                 <div className="ml-auto">
-                    <MobileMembersToggle serverId={channel.server_id || ''} />
+                    <MobileMembersToggle serverId={channel.guildId || ''} />
                 </div>
             </div>
 
@@ -107,8 +128,8 @@ export function ChatArea({
                         </div>
                     ) : (
                         messages.map((message) => {
-                            const messageUser = users.find(
-                                (u) => u.id === message.user_id,
+                            const messageUser = guildMembers.find(
+                                (u) => u?.id === message.authorId,
                             );
                             return (
                                 <div
@@ -119,7 +140,7 @@ export function ChatArea({
                                         username={
                                             messageUser?.username || 'Unknown'
                                         }
-                                        avatarUrl={messageUser?.avatar_url}
+                                        avatarUrl={messageUser?.avatarUrl}
                                         className="h-10 w-10 mt-1"
                                     />
                                     <div className="flex-1 min-w-0">
@@ -130,7 +151,7 @@ export function ChatArea({
                                             </span>
                                             <span className="text-xs text-zinc-400">
                                                 {formatMessageTime(
-                                                    message.created_at,
+                                                    message.createdAt,
                                                 )}
                                             </span>
                                         </div>
@@ -150,15 +171,15 @@ export function ChatArea({
             <div className="p-4">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                     <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        value={messageContent}
+                        onChange={(e) => setMessageContet(e.target.value)}
                         placeholder={`Message #${channel.name}`}
                         disabled={isLoading}
                         className="flex-1 bg-zinc-700 border-zinc-600 text-white placeholder-zinc-400"
                     />
                     <Button
                         type="submit"
-                        disabled={isLoading || !newMessage.trim()}
+                        disabled={isLoading || !messageContent.trim()}
                         size="icon"
                     >
                         <Send className="h-4 w-4" />

@@ -18,14 +18,6 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
 
     if (!server || !currentUser) return null;
 
-    const members = [
-        ...users.filter((user) =>
-            server.members?.some((member) => member.userId === user.id),
-        ),
-    ];
-
-    console.log(members);
-
     // Group members by role
     //const admins = members.filter((member) => member.role === 'ADMIN');
     const admins = [currentUser];
