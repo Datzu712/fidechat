@@ -14,12 +14,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { PlusCircle } from 'lucide-react';
 import { CreateServerModal } from '@/components/create-server-modal';
+import { DiscoverServersModal } from '@/components/discover-servers-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import useAppContext from '@/hooks/useAppContext';
 import { useSession } from 'next-auth/react';
 
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState(false);
     const { status } = useSession();
     const { guilds } = useAppContext();
 
@@ -114,12 +116,36 @@ export function ServerSidebar() {
                                 Create a server
                             </TooltipContent>
                         </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="h-12 w-12 rounded-full bg-zinc-700 hover:bg-blue-500 text-blue-500 hover:text-white transition-all"
+                                    onClick={() => setIsDiscoverModalOpen(true)}
+                                >
+                                    <i className="fa-solid fa-compass fa-lg" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                                Discover servers
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                 </ScrollArea>
 
                 <CreateServerModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                />
+
+                <DiscoverServersModal
+                    isOpen={isDiscoverModalOpen}
+                    onClose={() => setIsDiscoverModalOpen(false)}
+                    onServerSelect={(serverId) => {
+                        handleServerClick(serverId);
+                        setIsDiscoverModalOpen(false);
+                    }}
                 />
             </div>
         </TooltipProvider>
