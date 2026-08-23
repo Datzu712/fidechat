@@ -26,22 +26,14 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     @IsString()
     KEYCLOAK_CLIENT_SECRET!: string;
 
-    // Oracle
+    // Postgres
     @IsString()
-    ORACLE_PWD!: string;
+    DATABASE_URL!: string;
 
     @IsNumber()
     @Min(1)
-    ORACLE_PORT!: number;
-
-    @IsString()
-    ORACLE_USER!: string;
-
-    @IsString()
-    ORACLE_SERVICE_NAME!: string;
-
-    @IsString()
-    ORACLE_HOST!: string;
+    @IsOptional()
+    DATABASE_POOL_MAX?: number;
 
     // Api
     @IsNumber()

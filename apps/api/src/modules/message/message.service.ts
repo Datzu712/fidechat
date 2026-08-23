@@ -28,7 +28,7 @@ export class MessageService {
         guildId: string,
         createdAt: string,
     ): Promise<void> {
-        const guildMembers = (await this.userRepository.getGuildUsers(guildId))?.map((user) => user.ID) || [];
+        const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
 
         this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, {
             id: messageId,
@@ -112,7 +112,7 @@ export class MessageService {
             const result = await this.messageRepository.updateMessage(id, content);
 
             if (result.success) {
-                const guildMembers = (await this.userRepository.getGuildUsers(guildId))?.map((user) => user.ID) || [];
+                const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
                 this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_UPDATE, { id, content });
             }
 
@@ -135,10 +135,10 @@ export class MessageService {
             const result = await this.messageRepository.deleteMessage(id);
 
             if (result.success) {
-                const guildMembers = (await this.userRepository.getGuildUsers(guildId))?.map((user) => user.ID) || [];
+                const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
                 this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_DELETE, {
                     id,
-                    channelId: message.CHANNEL_ID,
+                    channelId: message.channelId,
                 });
             }
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { UserRepository } from './user.repository';
 import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { AppUser, GuildUser } from '@/infrastructure/database/oracle/types/user';
+import type { AppUser, GuildUser } from '@/infrastructure/database/schema';
 
 @Injectable()
 export class UserService {
@@ -12,7 +12,7 @@ export class UserService {
     ) {}
 
     /**
-     * Synchronizes a user from Keycloak (KC) with the local Oracle database.
+     * Synchronizes a user from Keycloak (KC) with the local Postgres database.
      *
      * If the user already exists in the `APP_USER` table (matched by `kcUser.id`), updates their `username` and `email`.
      * Otherwise, inserts a new user record with the provided `id`, `username`, and `email`.
@@ -38,8 +38,7 @@ export class UserService {
             avatarUrl: pictureUrl,
         });
 
-        const guildMembers =
-            (await this.userRepo.getGuildUsers(this.userRepo.DEFAULT_GUILD_ID))?.map((user) => user.ID) || [];
+        const guildMembers = (await this.userRepo.getGuildUsers(this.userRepo.DEFAULT_GUILD_ID)).map((user) => user.id);
 
         if (result.wasAddedToGuild) {
             const appUser: AppUser = {

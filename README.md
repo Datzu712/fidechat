@@ -6,7 +6,7 @@ de commits completo de ambos:
 
 | Workspace  | Paquete          | Origen                                                              | Stack                                        |
 | ---------- | ---------------- | ------------------------------------------------------------------- | -------------------------------------------- |
-| `apps/api` | `@fidechat/api`  | [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) | NestJS 11 · Fastify · Oracle 18c · Keycloak · Socket.IO |
+| `apps/api` | `@fidechat/api`  | [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) | NestJS 11 · Fastify · PostgreSQL + Drizzle · Keycloak · Socket.IO |
 | `apps/web` | `@fidechat/web`  | [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web)         | Next.js 15 · React 19 · Tailwind · Radix UI   |
 
 ## Estructura
@@ -27,7 +27,7 @@ fidechat/
 
 - Node.js >= 20
 - pnpm >= 10
-- Docker + Docker Compose (para Oracle, Postgres y Keycloak)
+- Docker + Docker Compose (para Postgres y Keycloak)
 
 ## Uso
 
@@ -55,7 +55,8 @@ Los compose files viven en `apps/api` y siguen ejecutándose desde ahí:
 ```bash
 cd apps/api
 cp .env.sample .env
-docker compose -f local-docker-compose.yaml up -d
+docker compose -f local-docker-compose.yaml up -d   # Postgres + Keycloak
+pnpm db:migrate                                     # crea el schema con Drizzle
 ```
 
 El build de producción del backend (`apps/api/dockerfile.prod`) usa la raíz del

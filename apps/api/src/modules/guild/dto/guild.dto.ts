@@ -1,8 +1,13 @@
-import { StrictOmit } from 'ts-essentials';
-import type { Guild } from '../guild.repository';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
-export class GuildDto implements StrictOmit<Guild, 'id' | 'ownerId'> {
+/**
+ * Contrato HTTP para crear/actualizar un guild.
+ *
+ * No se deriva de la fila de la base de datos a proposito: el schema de Drizzle
+ * usa `null` para las columnas opcionales, mientras que el payload usa campos
+ * ausentes.
+ */
+export class GuildDto {
     @IsString({ groups: ['create', 'update'] })
     @IsNotEmpty({ groups: ['create'] })
     name!: string;
@@ -14,10 +19,7 @@ export class GuildDto implements StrictOmit<Guild, 'id' | 'ownerId'> {
 
     @IsBoolean({ groups: ['create', 'update'] })
     @IsOptional({ groups: ['create', 'update'] })
-    isPublic!: boolean;
+    isPublic?: boolean;
 
-    // @IsString({ groups: ['create', 'update'] })
-    // @IsNotEmpty({ groups: ['create'] })
-    // @IsUUID('4', { groups: ['create', 'update'] })
-    // ownerId!: string; Owner id is taken from the authenticated user
+    // ownerId se toma del usuario autenticado, no del body.
 }

@@ -1,7 +1,7 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { Channel } from '../channel.repository';
 
-export class ChannelDto implements Omit<Channel, 'id' | 'guildId'> {
+/** Contrato HTTP para crear un canal. `guildId` viaja en la URL. */
+export class ChannelDto {
     @IsString()
     name!: string;
 
@@ -11,5 +11,5 @@ export class ChannelDto implements Omit<Channel, 'id' | 'guildId'> {
 
     @IsNumber()
     @IsOptional()
-    position!: number;
+    position?: number;
 }

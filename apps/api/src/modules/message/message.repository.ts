@@ -1,110 +1,127 @@
-import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import oracledb, { Connection } from 'oracledb';
+import { Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
-import { DATABASE_CONNECTION } from '@/infrastructure/database/oracle/oracle.provider';
-import { sql } from '@/infrastructure/database/oracle/query-builder/sql-template';
 
-export interface Message {
-    id: string;
-    content: string;
-    authorId: string;
-    channelId: string;
-    createdAt?: Date;
-}
+import { Logger } from '@/common/logger';
+import { AuditService } from '@/infrastructure/database/audit/audit.service';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
+import { type Message, message } from '@/infrastructure/database/schema';
 
-export interface RefMessageDatabase {
-    ID: string;
-    CONTENT: string;
-    AUTHOR_ID: string;
-    CHANNEL_ID: string;
-    CREATED_AT: Date;
-}
+export type { Message };
 
-export type MessageCreationAttributes = Omit<Message, 'id'>;
+export type MessageCreationAttributes = Omit<Message, 'id' | 'createdAt'> & { createdAt?: Date };
 
 @Injectable()
 export class MessageRepository {
     private readonly logger = new Logger(MessageRepository.name);
 
-    constructor(@Inject(DATABASE_CONNECTION) private readonly db: Connection) {}
+    constructor(
+        @Inject(DRIZZLE) private readonly db: DrizzleDB,
+        private readonly audit: AuditService,
+    ) {}
 
-    async createMessage({ channelId, authorId, content, createdAt = new Date() }: MessageCreationAttributes) {
+    /** Reemplaza a `PKG_MESSAGES.CREATE_MESSAGE`. */
+    async createMessage({
+        channelId,
+        authorId,
+        content,
+        createdAt = new Date(),
+    }: MessageCreationAttributes): Promise<{ id: string }> {
         try {
             const id = v4();
-            await this.db.execute(
-                ...sql`BEGIN
-                    PKG_MESSAGES.CREATE_MESSAGE(${id}, ${content}, ${authorId}, ${channelId}, ${createdAt});
-                END;`,
-                { autoCommit: true },
-            );
+
+            await this.db.transaction(async (tx) => {
+                const [created] = await tx
+                    .insert(message)
+                    .values({ id, content, authorId, channelId, createdAt })
+                    .returning();
+
+                await this.audit.record(tx, {
+                    table: 'message',
+                    operation: 'INSERT',
+                    recordId: id,
+                    after: created,
+                    actorId: authorId,
+                });
+            });
 
             return { id };
         } catch (error) {
             this.logger.error(error);
-            throw new Error(`Failed to create message`, { cause: error });
+            throw new InternalServerErrorException('Failed to create message', { cause: error });
         }
     }
 
-    async getMessage(id: string): Promise<UppercaseKeys<RefMessageDatabase> | null> {
+    /**
+     * Reemplaza a `PKG_MESSAGES.GET_MESSAGE`.
+     *
+     * El cursor de Oracle devolvia las claves en MAYUSCULAS (`CHANNEL_ID`);
+     * ahora se devuelve la fila ya en camelCase.
+     */
+    async getMessage(id: string): Promise<Message | null> {
         try {
-            const result = await this.db.execute<{ cursor: oracledb.ResultSet<UppercaseKeys<RefMessageDatabase>> }>(
-                `DECLARE
-                    v_cursor SYS_REFCURSOR;
-                BEGIN
-                    PKG_MESSAGES.GET_MESSAGE(:id, :cursor);
-                END;`,
-                {
-                    id,
-                    cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-                },
-                { outFormat: oracledb.OUT_FORMAT_OBJECT },
-            );
-
-            const cursor = result.outBinds?.cursor;
-            const rows = await cursor?.getRows(1);
-            await cursor?.close();
-
-            if (!rows?.length) {
-                return null;
-            }
-
-            return rows[0];
+            const found = (await this.db.select().from(message).where(eq(message.id, id)).limit(1)).at(0);
+            return found ?? null;
         } catch (error) {
             this.logger.error(error);
-            throw new InternalServerErrorException(`Failed to get message`, { cause: error });
+            throw new InternalServerErrorException('Failed to get message', { cause: error });
         }
     }
 
-    async updateMessage(id: string, content: string) {
+    /** Reemplaza a `PKG_MESSAGES.UPDATE_MESSAGE`. */
+    async updateMessage(id: string, content: string, actorId?: string): Promise<{ success: boolean }> {
         try {
-            await this.db.execute(
-                ...sql`
-                    BEGIN
-                        PKG_MESSAGES.UPDATE_MESSAGE(${id}, ${content});
-                    END;
-                `,
-                { autoCommit: true },
-            );
+            await this.db.transaction(async (tx) => {
+                const before = (await tx.select().from(message).where(eq(message.id, id)).limit(1)).at(0);
+
+                if (!before) {
+                    throw new NotFoundException('Message not found');
+                }
+
+                const [after] = await tx.update(message).set({ content }).where(eq(message.id, id)).returning();
+
+                await this.audit.record(tx, {
+                    table: 'message',
+                    operation: 'UPDATE',
+                    recordId: id,
+                    before,
+                    after,
+                    actorId: actorId ?? before.authorId,
+                });
+            });
 
             return { success: true };
         } catch (error) {
-            throw new Error(`Failed to update message`, { cause: error });
+            if (error instanceof NotFoundException) throw error;
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to update message', { cause: error });
         }
     }
 
-    async deleteMessage(id: string) {
+    /** Reemplaza a `PKG_MESSAGES.DELETE_MESSAGE`. */
+    async deleteMessage(id: string, actorId?: string): Promise<{ success: boolean }> {
         try {
-            await this.db.execute(
-                `BEGIN
-                    PKG_MESSAGES.DELETE_MESSAGE(:id);
-                END;`,
-                { id },
-                { autoCommit: true },
-            );
+            await this.db.transaction(async (tx) => {
+                const deleted = (await tx.delete(message).where(eq(message.id, id)).returning()).at(0);
+
+                if (!deleted) {
+                    throw new NotFoundException('Message not found');
+                }
+
+                await this.audit.record(tx, {
+                    table: 'message',
+                    operation: 'DELETE',
+                    recordId: id,
+                    before: deleted,
+                    actorId: actorId ?? deleted.authorId,
+                });
+            });
 
             return { success: true };
         } catch (error) {
-            throw new Error(`Failed to delete message`, { cause: error });
+            if (error instanceof NotFoundException) throw error;
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to delete message', { cause: error });
         }
     }
 }

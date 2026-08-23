@@ -31,18 +31,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install Oracle Instant Client
-# RUN apk --no-cache add libaio libc6-compat curl unzip && \
-#     curl -o instantclient.zip https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip -SL && \
-#     unzip instantclient.zip && \
-#     rm instantclient.zip && \
-#     mv instantclient*/ /instantclient && \
-#     ln -s /instantclient/libclntsh.so.19.1 /instantclient/libclntsh.so && \
-#     ln -s /instantclient/libocci.so.19.1 /instantclient/libocci.so && \
-#     apk add --no-cache bash
-
-ENV LD_LIBRARY_PATH=/instantclient
-
 # node_modules de pnpm: la raiz guarda el store (.pnpm) y apps/api solo enlaces
 # relativos hacia el, por lo que hay que copiar ambos para conservarlos.
 COPY --from=prod-deps /repo/node_modules ./node_modules

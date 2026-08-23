@@ -8,12 +8,9 @@ declare interface IEnvironmentVariables {
     // fidechat config
     DEFAULT_GUILD_ID?: string;
 
-    // Oracle
-    ORACLE_PWD: string;
-    ORACLE_PORT: number;
-    ORACLE_USER: string;
-    ORACLE_SERVICE_NAME: string;
-    ORACLE_HOST: string;
+    // Postgres
+    DATABASE_URL: string;
+    DATABASE_POOL_MAX?: number;
 
     // Keycloak
     KEYCLOAK_URL: string;
@@ -27,10 +24,6 @@ declare interface IEnvironmentVariables {
     // chat yipiti
     OPENAI_API_KEY: string;
 }
-
-declare type UppercaseKeys<T> = {
-    [K in keyof T as Uppercase<string & K>]: T[K];
-};
 
 declare interface IReqUser {
     exp: number;

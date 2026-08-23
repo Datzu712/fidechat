@@ -1,132 +1,137 @@
 import { Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import oracledb, { type Connection } from 'oracledb';
+import { eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { DATABASE_CONNECTION } from '@/infrastructure/database/oracle/oracle.provider';
-import { GuildDto } from './dto/guild.dto';
-import { sql } from '@/infrastructure/database/oracle/query-builder/sql-template';
 import { Logger } from '@/common/logger';
+import { AuditService } from '@/infrastructure/database/audit/audit.service';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
+import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema';
+import { GuildDto } from './dto/guild.dto';
 
-export interface Guild {
-    id: string;
-    name: string;
-    iconUrl?: string;
-    isPublic: boolean;
-    ownerId: string;
-}
-
-export interface RefGuildDB {
-    ID: string;
-    NAME: string;
-    ICON_URL?: string;
-    IS_PUBLIC: boolean;
-    OWNER_ID: string;
-}
+export type { Guild };
 
 @Injectable()
 export class GuildRepository {
     private readonly logger = new Logger(GuildRepository.name);
 
-    constructor(@Inject(DATABASE_CONNECTION) private readonly db: Connection) {}
+    constructor(
+        @Inject(DRIZZLE) private readonly db: DrizzleDB,
+        private readonly audit: AuditService,
+    ) {}
 
-    async createGuild(ownerId: string, dto: GuildDto) {
-        const guildId = v4();
-
-        await this.db.execute(
-            ...sql`
-                BEGIN
-                    PKG_GUILD.CREATE_GUILD(${guildId}, ${dto.name}, ${dto.iconUrl || null}, ${dto.isPublic ? 1 : 0}, ${ownerId});
-                END;
-                `,
-        );
-
-        await this.db.commit();
-
-        return { success: true };
-    }
-
-    async getGuild(id: string) {
+    /**
+     * Reemplaza a `PKG_GUILD.CREATE_GUILD` mas el trigger `trg_guild_add_owner`:
+     * el alta del guild y el alta del dueno como miembro ocurren en la misma
+     * transaccion, igual que antes, pero ahora de forma explicita.
+     */
+    async createGuild(ownerId: string, dto: GuildDto): Promise<{ id: string; success: boolean }> {
         try {
-            const result = await this.db.execute(
-                `DECLARE
-                    v_cursor SYS_REFCURSOR;
-                BEGIN
-                    PKG_GUILD.GET_GUILD(:id, v_cursor);
-                    :cursor := v_cursor;
-                END;`,
-                { id },
-            );
+            const guildId = v4();
 
-            console.log(result);
+            await this.db.transaction(async (tx) => {
+                const [created] = await tx
+                    .insert(guild)
+                    .values({
+                        id: guildId,
+                        name: dto.name,
+                        iconUrl: dto.iconUrl ?? null,
+                        isPublic: dto.isPublic ?? false,
+                        ownerId,
+                    })
+                    .returning();
 
-            if (!result.rows?.[0]) {
-                throw new NotFoundException('Guild not found');
-            }
+                await this.audit.record(tx, {
+                    table: 'guild',
+                    operation: 'INSERT',
+                    recordId: guildId,
+                    after: created,
+                    actorId: ownerId,
+                });
 
-            return result.rows[0];
+                const membership = (
+                    await tx.insert(guildUsers).values({ guildId, userId: ownerId }).onConflictDoNothing().returning()
+                ).at(0);
+
+                if (membership) {
+                    await this.audit.record(tx, {
+                        table: 'guild_users',
+                        operation: 'INSERT',
+                        recordId: `${guildId}:${ownerId}`,
+                        after: membership,
+                        actorId: ownerId,
+                    });
+                }
+            });
+
+            return { id: guildId, success: true };
         } catch (error) {
-            if (error instanceof NotFoundException) throw error;
-            throw new Error(`Failed to get guild`, { cause: error });
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to create guild', { cause: error });
         }
     }
 
-    async updateGuild(id: string, dto: GuildDto) {
+    async getGuild(id: string): Promise<Guild> {
         try {
-            const updateFields = [];
-            if (dto.name) updateFields.push(`NAME = '${dto.name}'`);
-            if (dto.iconUrl) updateFields.push(`ICON_URL = '${dto.iconUrl}'`);
-            updateFields.push(`IS_PUBLIC = ${dto.isPublic ? 1 : 0}`);
+            const found = (await this.db.select().from(guild).where(eq(guild.id, id)).limit(1)).at(0);
 
-            if (updateFields.length === 0) {
-                return { success: true };
+            if (!found) {
+                throw new NotFoundException('Guild not found');
             }
 
-            const fieldsString = updateFields.join(', ');
+            return found;
+        } catch (error) {
+            if (error instanceof NotFoundException) throw error;
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to get guild', { cause: error });
+        }
+    }
 
-            await this.db.execute(
-                ...sql`BEGIN
-                    PKG_GUILD.UPDATE_GUILD(${id}, ${fieldsString});
-                END;`,
-            );
+    /**
+     * Reemplaza a `PKG_GUILD.UPDATE_GUILD`, que armaba un `EXECUTE IMMEDIATE`
+     * concatenando los valores recibidos. Aqui el SET se construye por columna y
+     * los valores viajan como parametros.
+     */
+    async updateGuild(id: string, dto: Partial<GuildDto>, actorId?: string): Promise<{ success: boolean }> {
+        const changes: Partial<typeof guild.$inferInsert> = {};
+        if (dto.name !== undefined) changes.name = dto.name;
+        if (dto.iconUrl !== undefined) changes.iconUrl = dto.iconUrl;
+        if (dto.isPublic !== undefined) changes.isPublic = dto.isPublic;
 
-            await this.db.commit();
+        if (!Object.keys(changes).length) {
+            return { success: true };
+        }
+
+        try {
+            await this.db.transaction(async (tx) => {
+                const before = (await tx.select().from(guild).where(eq(guild.id, id)).limit(1)).at(0);
+
+                if (!before) {
+                    throw new NotFoundException(`Could not update guild. Guild not found for ID: ${id}`);
+                }
+
+                const [after] = await tx.update(guild).set(changes).where(eq(guild.id, id)).returning();
+
+                await this.audit.record(tx, {
+                    table: 'guild',
+                    operation: 'UPDATE',
+                    recordId: id,
+                    before,
+                    after,
+                    actorId,
+                });
+            });
 
             return { success: true };
         } catch (error) {
-            throw new InternalServerErrorException(`Failed to update guild`, { cause: error });
+            if (error instanceof NotFoundException) throw error;
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to update guild', { cause: error });
         }
     }
 
     async getPublicGuilds(): Promise<Guild[]> {
         try {
-            const result = await this.db.execute<{ cursor: oracledb.ResultSet<RefGuildDB> }>(
-                `DECLARE
-                    v_cursor SYS_REFCURSOR;
-                BEGIN
-                    PKG_GUILD.GET_PUBLIC_GUILDS(:cursor);
-                END;
-            `,
-                {
-                    cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-                },
-                { outFormat: oracledb.OUT_FORMAT_OBJECT },
-            );
-
-            const cursor = result.outBinds?.cursor;
-            const rows = await cursor?.getRows();
-            await cursor?.close();
-
-            if (!rows?.length) {
-                return [];
-            }
-
-            return rows.map((row) => ({
-                id: row.ID,
-                name: row.NAME,
-                iconUrl: row.ICON_URL,
-                isPublic: row.IS_PUBLIC,
-                ownerId: row.OWNER_ID,
-            }));
+            return await this.db.select().from(guild).where(eq(guild.isPublic, true));
         } catch (error) {
             this.logger.error(error);
             throw new InternalServerErrorException('Failed to get public guilds', { cause: error });

@@ -1,6 +1,6 @@
 # Fidechat Backend
 
-A modern real-time chat application backend built with NestJS, Oracle Database, and WebSocket integration. This project features guild-based chat rooms, user authentication via Keycloak, and a robust database architecture with Oracle PL/SQL packages.
+A modern real-time chat application backend built with NestJS, PostgreSQL (via Drizzle ORM) and WebSocket integration. This project features guild-based chat rooms, user authentication via Keycloak, and a fully type-safe data layer: all queries live in the repositories, there are no stored procedures, functions or triggers in the database.
 
 ![Fidechat Backend Architecture](/assets//image.png)
 
@@ -37,7 +37,7 @@ A modern real-time chat application backend built with NestJS, Oracle Database, 
 - **Real-time Communication**: WebSocket integration for instant messaging
 - **Guild-based Architecture**: Discord-like guild and channel management
 - **Authentication**: Keycloak integration for secure user authentication
-- **Oracle Database**: Enterprise-grade database with PL/SQL packages and procedures
+- **PostgreSQL + Drizzle ORM**: Type-safe queries and versioned SQL migrations, no database-side business logic
 - **RESTful API**: Complete CRUD operations for users, guilds, and channels
 - **Type Safety**: Full TypeScript implementation with strict typing
 - **Validation**: Input validation using class-validator
@@ -47,7 +47,7 @@ A modern real-time chat application backend built with NestJS, Oracle Database, 
 ## 🛠️ Tech Stack
 
 - **Backend Framework**: NestJS with Fastify
-- **Database**: Oracle 18c Express Edition
+- **Database**: PostgreSQL 17 + Drizzle ORM
 - **Authentication**: Keycloak with PostgreSQL
 - **Language**: TypeScript
 - **WebSockets**: Socket.IO
@@ -92,17 +92,19 @@ Create a `.env` file in the root directory with the following variables:
 NODE_ENV=development
 API_PORT=3000
 
-# Oracle Database
-ORACLE_HOST=localhost
-ORACLE_PORT=1521
-ORACLE_USER=system
-ORACLE_PWD=your_oracle_password
-ORACLE_SERVICE_NAME=XEPDB1
+# Application database (Drizzle). Runs on the same Postgres instance as
+# Keycloak, in its own `fidechat` database.
+DATABASE_URL=postgres://keycloak:your_postgres_password@localhost:5432/fidechat
+DATABASE_POOL_MAX=10
 
-# PostgreSQL (for Keycloak)
+# Guild every new user is auto-joined to (UUID)
+DEFAULT_GUILD_ID=
+
+# PostgreSQL container (hosts both the `keycloak` and `fidechat` databases)
 PG_USER=keycloak
 PG_PASSWORD=your_postgres_password
 PG_NAME=keycloak
+APP_DB_NAME=fidechat
 DB_PORT=5432
 
 # Keycloak
@@ -123,16 +125,26 @@ KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
 ### 4. Start the Services
 
 ```bash
-# Start all services (Oracle, PostgreSQL, Keycloak)
-docker-compose -f local-docker-compose.yaml up -d
-
-# Wait for services to be ready (especially Oracle DB initialization)
-# This may take a few minutes on first run
+# Start all services (PostgreSQL, Keycloak)
+docker compose -f local-docker-compose.yaml up -d
 ```
+
+`sql/init-databases.sh` creates the `fidechat` database next to Keycloak's the
+first time the Postgres volume is initialized. If you already have a volume from
+a previous run, recreate it with
+`docker compose -f local-docker-compose.yaml down -v` or create the database by
+hand.
 
 ### 5. Initialize the Database
 
-The Oracle database will be automatically initialized with the schema and packages from `/sql/init.sql` when the container starts for the first time.
+The schema lives in `src/infrastructure/database/schema/` and is applied with
+Drizzle migrations:
+
+```bash
+pnpm db:migrate           # apply pending migrations
+pnpm db:generate          # regenerate SQL after editing the schema
+pnpm db:studio            # browse the data
+```
 
 ### 6. Run the Application
 
@@ -156,10 +168,10 @@ The application will be available at:
 ```
 .
 ├── scripts                   # Helper scripts for project setup and maintenance
-├── sql                       # Database scripts
-│   ├── init.sql              # Main initialization script
-│   ├── pkg_*.sql             # PL/SQL packages
-│   └── triggers.sql
+├── drizzle                   # Generated SQL migrations (checked in)
+├── sql
+│   ├── init-databases.sh     # Creates the app database on first Postgres boot
+│   └── legacy-oracle         # Old Oracle schema & PL/SQL, kept for reference only
 ├── src                       # Application source code
 │   ├── common                # Shared utilities and services
 │   │   ├── logger            # Custom logging implementation
@@ -168,10 +180,9 @@ The application will be available at:
 │   │   │   └── utils         # Logger utilities
 │   │   └── utils             # Environment validation
 │   ├── config                # Configuration files
-│   ├── database              # Database connection and types
-│   │   └── oracle            # Oracle-specific implementations
-│   │       ├── query-builder # Query builder for Oracle
-│   │       └── types         # Oracle-specific types
+│   ├── database              # Database connection, schema and auditing
+│   │   ├── audit             # Audit-log writer (replaces the TRG_AUD_* triggers)
+│   │   └── schema            # Drizzle table definitions and relations
 │   ├── modules               # Feature modules
 │   │   ├── auth              # Authentication (Keycloak)
 │   │   │   └── keycloak
@@ -222,17 +233,22 @@ todo
 
 ## =� Database Schema
 
-The application uses Oracle Database with the following main entities:
+The application uses PostgreSQL with the following main entities:
 
-- **APP_USER**: User information and profiles
-- **GUILD**: Chat server/guild data
-- **CHANNEL**: Text channels within guilds
-- **GUILD_USERS**: Many-to-many relationship for guild membership
+- **app_user**: User information and profiles
+- **guild**: Chat server/guild data
+- **channel**: Text channels within guilds
+- **message**: Channel messages
+- **guild_users**: Many-to-many relationship for guild membership
+- **audit_log**: INSERT/UPDATE/DELETE trail for the five tables above
 
-Key PL/SQL packages:
-- `PKG_USER`: User management operations
-- `PKG_GUILD`: Guild management operations
-- `pkg_sync_data`: Data synchronization functions
+There is no logic inside the database: no stored procedures, no functions, no
+triggers. Every query is written with Drizzle in the corresponding repository,
+and writes that used to depend on a trigger (adding a guild owner as a member,
+writing the audit row) now happen explicitly inside the same transaction.
+
+See `sql/legacy-oracle/README.md` for a mapping from each old PL/SQL object to
+the TypeScript that replaced it.
 
 ## 📜 Available Scripts
 
@@ -248,14 +264,19 @@ pnpm run start:prod       # Start production server
 # Code Quality
 pnpm run lint             # Run ESLint
 pnpm run format           # Format code with Prettier
+
+# Database (Drizzle)
+pnpm db:generate          # Generate a migration from the schema
+pnpm db:migrate           # Apply pending migrations
+pnpm db:push              # Push the schema straight to the DB (dev only)
+pnpm db:studio            # Open Drizzle Studio
 ```
 
 ## 🐳 Docker Configuration
 
 The project includes a complete Docker setup:
 
-- **Oracle 18c Express**: Main application database
-- **PostgreSQL**: Keycloak database
+- **PostgreSQL 17**: hosts two databases, `fidechat` (the app) and `keycloak`
 - **Keycloak**: Authentication and authorization server
 
 ### Starting Services
@@ -280,10 +301,12 @@ docker-compose -f local-docker-compose.yaml logs -f
 
 ### Common Issues
 
-1. **Oracle Connection Issues**
-   - Ensure Oracle container is fully started (may take 2-3 minutes)
-   - Check Oracle credentials in `.env` file
-   - Verify ORACLE_SERVICE_NAME is correct
+1. **Database Connection Issues**
+   - Check that `DATABASE_URL` points at the `fidechat` database, not `keycloak`
+   - `database "fidechat" does not exist`: the Postgres volume predates
+     `sql/init-databases.sh`. Recreate it with `docker compose -f
+     local-docker-compose.yaml down -v`, or run `CREATE DATABASE fidechat;`
+   - `relation "app_user" does not exist`: run `pnpm db:migrate`
 
 2. **Keycloak Authentication**
    - Verify Keycloak is accessible at the configured URL

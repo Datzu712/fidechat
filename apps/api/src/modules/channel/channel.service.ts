@@ -16,7 +16,7 @@ export class ChannelService {
         try {
             const result = await this.channelRepository.createChannel(guildId, dto);
 
-            const guildMembers = (await this.userRepository.getGuildUsers(guildId))?.map((user) => user.ID) || [];
+            const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
 
             this.gateway.emitToUsers(guildMembers, SocketEvents.CHANNEL_CREATE, {
                 // eslint-disable-next-line @typescript-eslint/no-misused-spread -- its just a dto bro

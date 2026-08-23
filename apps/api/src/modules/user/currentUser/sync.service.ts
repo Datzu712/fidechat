@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SyncRepository } from './sync.repository';
 import { GatewayService } from '@/modules/gateway/gateway.service';
 
@@ -10,11 +10,7 @@ export class SyncService {
     ) {}
 
     public async getCurrentUserData(currentUser: IReqUser) {
-        const userData = await this.syncRepo.getCurrentUserData(currentUser.sub);
-        if (!userData) {
-            throw new InternalServerErrorException('Failed to retrieve user data');
-        }
-
-        return userData;
+        // El repositorio ya lanza si el usuario no existe o si falla el armado.
+        return this.syncRepo.getCurrentUserData(currentUser.sub);
     }
 }

@@ -1,101 +1,139 @@
-import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import oracledb from 'oracledb';
-import { DATABASE_CONNECTION } from '@/infrastructure/database/oracle/oracle.provider';
-import { sql } from '@/infrastructure/database/oracle/query-builder/sql-template';
-import { AppUser } from '@/infrastructure/database/oracle/types/user';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+
+import { Logger } from '@/common/logger';
+import { AuditService } from '@/infrastructure/database/audit/audit.service';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
+import { type AppUser, appUser, guildUsers } from '@/infrastructure/database/schema';
+
+export interface UpsertUserInput {
+    id: string;
+    username: string;
+    email: string;
+    avatarUrl?: string | null;
+    isBot?: boolean;
+    /** Guild al que se agrega al usuario si aun no pertenece. Por defecto `DEFAULT_GUILD_ID`. */
+    defaultGuildId?: string;
+}
+
+export interface UpsertUserResult {
+    wasAddedToGuild: boolean;
+    /** Solo viene poblado cuando `wasAddedToGuild` es true, igual que el SP de Oracle. */
+    guildId: string | null;
+}
 
 @Injectable()
 export class UserRepository {
     private readonly logger = new Logger(UserRepository.name);
-    public DEFAULT_GUILD_ID!: string;
+    public readonly DEFAULT_GUILD_ID: string;
 
     constructor(
-        @Inject(DATABASE_CONNECTION) private readonly oracle: oracledb.Connection,
+        @Inject(DRIZZLE) private readonly db: DrizzleDB,
         private readonly config: ConfigService<IEnvironmentVariables>,
+        private readonly audit: AuditService,
     ) {
         this.DEFAULT_GUILD_ID = this.config.getOrThrow('DEFAULT_GUILD_ID');
     }
 
-    async findById(id: string) {
-        const result = await this.oracle.execute<AppUser>(...sql`SELECT * FROM APP_USER WHERE id = ${id}`);
-        return result.rows?.[0];
+    async findById(id: string): Promise<AppUser | undefined> {
+        const [user] = await this.db.select().from(appUser).where(eq(appUser.id, id)).limit(1);
+        return user;
     }
-    async upsertUser(user: {
-        id: string;
-        username: string;
-        email: string;
-        avatarUrl?: string | null;
-        defaultGuildId?: string;
-    }) {
-        const sqlBindings = sql`
-            BEGIN 
-                PKG_USER.SP_UPSERT_USER(
-                    ${user.id}, 
-                    ${user.username}, 
-                    ${user.email}, 
-                    ${user.avatarUrl ?? null}, 
-                    ${this.DEFAULT_GUILD_ID}, 
-                    :was_added_to_guild, 
-                    :guild_id
-                ); 
-            END;
-        `;
-        try {
-            const result = await this.oracle.execute<{
-                was_added_to_guild: number;
-                guild_id: string | null;
-            }>(
-                sqlBindings[0],
-                Object.assign(
-                    {
-                        was_added_to_guild: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-                        guild_id: { dir: oracledb.BIND_OUT, type: oracledb.STRING },
-                    },
-                    sqlBindings[1],
-                ),
-                {
-                    autoCommit: true,
-                },
-            );
 
-            return {
-                wasAddedToGuild: result.outBinds!.was_added_to_guild === 1,
-                guildId: result.outBinds!.guild_id,
-            };
+    /**
+     * Reemplazo de `PKG_USER.SP_UPSERT_USER`.
+     *
+     * Inserta o actualiza el usuario y, si todavia no pertenece al guild por
+     * defecto, lo agrega. Todo en una sola transaccion junto con la auditoria.
+     */
+    async upsertUser(user: UpsertUserInput): Promise<UpsertUserResult> {
+        const targetGuildId = user.defaultGuildId ?? this.DEFAULT_GUILD_ID;
+
+        try {
+            return await this.db.transaction(async (tx) => {
+                const before = (await tx.select().from(appUser).where(eq(appUser.id, user.id)).limit(1)).at(0);
+
+                const [after] = await tx
+                    .insert(appUser)
+                    .values({
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                        avatarUrl: user.avatarUrl ?? null,
+                        isBot: user.isBot ?? false,
+                    })
+                    .onConflictDoUpdate({
+                        target: appUser.id,
+                        set: {
+                            username: user.username,
+                            email: user.email,
+                            avatarUrl: user.avatarUrl ?? null,
+                            // Solo se pisa si el llamador lo declara explicitamente.
+                            ...(user.isBot === undefined ? {} : { isBot: user.isBot }),
+                        },
+                    })
+                    .returning();
+
+                await this.audit.record(tx, {
+                    table: 'app_user',
+                    operation: before ? 'UPDATE' : 'INSERT',
+                    recordId: user.id,
+                    before,
+                    after,
+                    actorId: user.id,
+                });
+
+                if (!targetGuildId) {
+                    return { wasAddedToGuild: false, guildId: null };
+                }
+
+                const membership = await tx
+                    .insert(guildUsers)
+                    .values({ guildId: targetGuildId, userId: user.id })
+                    .onConflictDoNothing()
+                    .returning();
+
+                if (!membership.length) {
+                    return { wasAddedToGuild: false, guildId: null };
+                }
+
+                await this.audit.record(tx, {
+                    table: 'guild_users',
+                    operation: 'INSERT',
+                    recordId: `${targetGuildId}:${user.id}`,
+                    after: membership[0],
+                    actorId: user.id,
+                });
+
+                return { wasAddedToGuild: true, guildId: targetGuildId };
+            });
         } catch (error) {
-            this.logger.error('Error in upsertUser:', error);
+            this.logger.error(new Error('Error in upsertUser', { cause: error }));
             throw error;
         }
     }
 
     /**
-     * Retrieves all users that belong to a specific guild from the database.
+     * Todos los usuarios que pertenecen a un guild.
      *
-     * @param guildId - The unique identifier of the guild
-     * @returns Promise<AppUser[]> - A promise that resolves to an array of AppUser objects
-     * @throws {Error} - If there's an error executing the database procedure
-     *
-     * @remarks
-     * This method executes the stored procedure 'sp_get_guild_users' which returns a SYS_REFCURSOR
-     * containing the guild users' information.
+     * Reemplaza al procedimiento `sp_get_guild_users`, que devolvia un
+     * SYS_REFCURSOR con las columnas en MAYUSCULAS. Ahora devuelve objetos ya en
+     * camelCase.
      */
-    async getGuildUsers(guildId: string): Promise<Array<UppercaseKeys<AppUser>> | undefined> {
+    async getGuildUsers(guildId: string): Promise<AppUser[]> {
         try {
-            const result = await this.oracle.execute<{ p_rc: oracledb.ResultSet<UppercaseKeys<AppUser>> }>(
-                `BEGIN sp_get_guild_users(:p_guild_id, :p_rc); END;`,
-                {
-                    p_guild_id: guildId,
-                    p_rc: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-                },
-                { outFormat: oracledb.OUT_FORMAT_OBJECT },
-            );
-
-            const cur = result.outBinds!.p_rc;
-            const allRows = await cur.getRows();
-
-            await cur.close();
-            return allRows;
+            return await this.db
+                .select({
+                    id: appUser.id,
+                    username: appUser.username,
+                    email: appUser.email,
+                    isBot: appUser.isBot,
+                    avatarUrl: appUser.avatarUrl,
+                })
+                .from(appUser)
+                .innerJoin(guildUsers, eq(guildUsers.userId, appUser.id))
+                .where(eq(guildUsers.guildId, guildId));
         } catch (error) {
             this.logger.error(error);
 
