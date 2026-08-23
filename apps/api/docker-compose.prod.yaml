@@ -70,8 +70,9 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: dockerfile.prod
+      # Contexto = raiz del monorepo (este compose vive en apps/api/)
+      context: ../..
+      dockerfile: apps/api/dockerfile.prod
     container_name: fidechat-backend
     restart: always
     env_file:

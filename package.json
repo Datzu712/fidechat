@@ -1,0 +1,26 @@
+{
+    "name": "fidechat",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Fidechat monorepo — Discord clone (NestJS + Next.js + Oracle + Keycloak)",
+    "license": "MIT",
+    "packageManager": "pnpm@11.22.0",
+    "engines": {
+        "node": ">=20.0.0",
+        "pnpm": ">=10.0.0"
+    },
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "test": "turbo run test",
+        "test:e2e": "turbo run test:e2e",
+        "format": "prettier --write \"apps/*/{src,tests,types}/**/*.{ts,tsx,js,jsx,mjs,json}\"",
+        "clean": "turbo run clean && rm -rf node_modules .turbo"
+    },
+    "devDependencies": {
+        "prettier": "^3.9.6",
+        "turbo": "^2.10.11",
+        "typescript": "^5.9.2"
+    }
+}

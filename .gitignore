@@ -1,0 +1,32 @@
+# dependencias
+node_modules/
+
+# turborepo
+.turbo/
+
+# builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# tests
+coverage/
+
+# entorno
+.env
+.env.*
+!.env.sample
+
+# logs
+*.log
+npm-debug.log*
+.pnpm-debug.log*
+
+# editores / SO
+.idea/
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

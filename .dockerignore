@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/.env
+**/*.log
+.git
+.gitignore
+.github
+.vscode
+.idea
+**/Dockerfile*
+**/dockerfile*
+**/docker-compose*
+**/.dockerignore

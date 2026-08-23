@@ -1,0 +1,14 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Paquetes con scripts de instalación aprobados
+# (unión de los onlyBuiltDependencies de los dos repos originales).
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  chromedriver: true
+  oracledb: true
+  sharp: true
+  unrs-resolver: true
