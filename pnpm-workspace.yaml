@@ -5,6 +5,7 @@ packages:
 # Paquetes con scripts de instalación aprobados.
 allowBuilds:
   '@nestjs/core': true
+  '@parcel/watcher': false
   '@scarf/scarf': true
   '@swc/core': true
   chromedriver: true
