@@ -12,3 +12,10 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+# nest-keycloak-connect 1.10.1 (la ultima estable) declara @nestjs <11, pero en
+# runtime funciona con Nest 12. Ver types/nest-keycloak-connect.d.ts en la api.
+peerDependencyRules:
+  allowedVersions:
+    'nest-keycloak-connect>@nestjs/common': '12'
+    'nest-keycloak-connect>@nestjs/core': '12'

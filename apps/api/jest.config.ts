@@ -1,8 +1,14 @@
 import { createDefaultPreset, pathsToModuleNameMapper } from 'ts-jest';
-import { compilerOptions } from './tsconfig.json';
+import tsconfig from './tsconfig.json' with { type: 'json' };
 import type { Config } from 'jest';
 
-const tsJestTransformCfg = createDefaultPreset().transform;
+// Jest carga este archivo con el type stripping nativo de Node, que exige el
+// atributo `type: 'json'` para importar JSON.
+const { compilerOptions } = tsconfig;
+
+// TS 6 exige `rootDir` explicito. Se pasa solo a ts-jest: ponerlo en
+// tsconfig.json haria que nest build emita dist/src/main.js.
+const tsJestTransformCfg = createDefaultPreset({ tsconfig: { rootDir: '.' } }).transform;
 
 const config: Config = {
     testEnvironment: 'node',
