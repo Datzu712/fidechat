@@ -134,7 +134,7 @@ export default function ServerPage() {
                 <div className="flex-1 px-4 flex items-center justify-center">
                     <div className="flex flex-col items-center justify-center text-center">
                         {/* Icono principal con múltiples efectos de animación */}
-                        {/* 
+                        {/*
                           - rounded-full: crea un círculo perfecto
                           - bg-primary/20: color primario con 20% de opacidad
                           - animate-pulse: efecto de pulsación nativo de Tailwind
@@ -142,7 +142,7 @@ export default function ServerPage() {
                         */}
                         {/* Contenedor principal del icono con animaciones */}
                         <div className="h-20 w-20 rounded-full flex items-center justify-center mb-5 animate-pulse relative">
-                            {/* 
+                            {/*
                               Efectos decorativos alrededor del icono
                               - Múltiples capas para crear profundidad visual
                             */}
@@ -192,7 +192,7 @@ export default function ServerPage() {
                             )}
                         </div>
 
-                        {/* 
+                        {/*
                           Título con efecto de aparición suave (fade-in)
                           - animate-fade-in: animación personalizada que cambia la opacidad de 0 a 1
                         */}
@@ -200,7 +200,7 @@ export default function ServerPage() {
                             Welcome to {currentGuild?.name || 'this server'}!
                         </h3>
 
-                        {/* 
+                        {/*
                           Texto descriptivo con efecto de deslizamiento hacia arriba
                           - animate-slide-up: animación personalizada que combina movimiento y opacidad
                           - opacity-0: comienza invisible
@@ -217,7 +217,7 @@ export default function ServerPage() {
                             Select a channel from the sidebar to start chatting.
                         </p>
 
-                        {/* 
+                        {/*
                           Contenedor de canales disponibles con efectos interactivos
                           - hover:shadow-md: añade sombra al pasar el cursor
                           - hover:shadow-primary/20: la sombra es del color primario con 20% opacidad
@@ -240,7 +240,7 @@ export default function ServerPage() {
                             </p>
                         </div>
 
-                        {/* 
+                        {/*
                           Lista de botones de canales con animación retrasada
                           - gap-2: espacio de 0.5rem entre elementos
                           - El último retraso (0.6s) para que aparezca al final

@@ -1,0 +1,117 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+Fidechat is a Discord clone. It is a pnpm + Turborepo monorepo formed by merging two repos, with the full history of both kept:
+
+- `apps/api` (`@fidechat/api`): NestJS 11 on Fastify, PostgreSQL via Drizzle ORM, Keycloak auth, Socket.IO.
+- `apps/web` (`@fidechat/web`): Next.js 15 App Router, React 19, Tailwind, shadcn/Radix UI, NextAuth (Keycloak provider), TanStack Query.
+- `packages/` is empty for now. **No code is shared between apps**, so types and socket event names are duplicated on both sides (see "Cross-app contracts").
+
+Code comments, READMEs and commit bodies are mostly in Spanish. Commits follow Conventional Commits with a scope, for example `feat(api)!: ...` or `chore(monorepo): ...`.
+
+## Commands
+
+Run from the repo root. Use `pnpm --filter @fidechat/api <script>` or `pnpm --filter @fidechat/web <script>` to target one app.
+
+```bash
+pnpm install
+pnpm dev                 # both apps (api: nest --watch, web: next dev --turbopack)
+pnpm build | lint | test | format | format:check
+pnpm --filter @fidechat/api lint:fix     # also available for web
+```
+
+Infrastructure (Postgres + Keycloak) and all DB commands run from `apps/api`:
+
+```bash
+cd apps/api && cp .env.sample .env
+docker compose -f local-docker-compose.yaml up -d
+pnpm db:migrate          # apply drizzle/ migrations
+pnpm db:generate         # after editing schema/*.ts: generate a new SQL migration (commit it)
+pnpm db:push | db:studio
+```
+
+Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, web on 3000.
+
+### Tests
+
+The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
+
+```bash
+pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
+pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"   # single test by name
+```
+
+### Type checking
+
+**Neither build type-checks.** The api builds with SWC (`nest-cli.json` `builder: swc`), and the web has `typescript.ignoreBuildErrors: true`. Use:
+
+```bash
+pnpm --filter @fidechat/api exec tsc --noEmit -p tsconfig.json
+pnpm --filter @fidechat/web exec tsc --noEmit
+```
+
+Both currently report pre-existing errors (a duplicated fastify version breaking `@fastify/csrf-protection` typing in `main.ts`, and a NextAuth route export in web). Compare against that baseline rather than expecting zero errors.
+
+### Lint / format
+
+The repo uses **oxlint + oxfmt** (ESLint and Prettier were removed; any `eslint-disable` comments left in the code are leftovers). The api lints with `--type-aware` (via `oxlint-tsgolint`). Formatting is 4-space indentation and single quotes, with `printWidth` set to **120 in api and 80 in web**.
+
+tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` without `baseUrl`, and `jest.config.ts` anchors them with a `<rootDir>/` prefix. Do not reintroduce `baseUrl`.
+
+## API architecture (`apps/api`)
+
+**Bootstrap (`src/main.ts`).** The app uses Fastify with a global prefix of `api` and URI versioning, so routes look like `/api/v1/guilds`. Swagger is served at `/api`. `src/instrumentation.ts` loads `dotenv` before anything else.
+
+**Auth is global.** `app.module.ts` registers the Keycloak `AuthGuard`, `ResourceGuard` and `RoleGuard` from `nest-keycloak-connect` as `APP_GUARD`, so every route requires a bearer token by default. `KeycloakSyncInterceptor` then upserts the Keycloak user into `app_user` on **every** request. That is how users come to exist in the DB, and no signup endpoint exists. Get the caller with `@AuthenticatedUser() user: IReqUser` and use `user.sub` as the user id. Never read owner or author ids from the request body.
+
+**Env vars** are validated at boot by class-validator (`src/config/environment.ts`, applied through `validateEnv`) and also declared as the ambient `IEnvironmentVariables` in `types/global.d.ts`. A new variable must be added to **both** files, and to `.env.sample`.
+
+**Feature modules (`src/modules/<feature>/`)** follow the pattern controller → service → repository:
+
+- Controllers apply a per-parameter `ValidationPipe` with class-validator `groups` (`'create'` / `'update'`) on DTOs. DTOs are hand-written on purpose and are not derived from Drizzle rows: the DB uses `null` where payloads use absent fields.
+- Services hold business rules and emit realtime events through `GatewayService`.
+- Repositories hold **all** SQL. They wrap unexpected errors in `InternalServerErrorException` and rethrow `NotFoundException` unchanged.
+
+**Data layer (`src/infrastructure/database/`).**
+
+- `DatabaseModule` is `@Global`. Inject the client with `@Inject(DRIZZLE) db: DrizzleDB`.
+- The schema lives in `schema/*.ts` and is re-exported from `schema/index.ts`, which is what `drizzle.config.ts` reads. Generated migrations in `drizzle/` are checked in.
+- **The database holds no logic**: no stored procedures, functions or triggers. Anything a trigger used to do is now explicit code inside a transaction. For example, `GuildRepository.createGuild` inserts the owner into `guild_users`.
+- **Auditing is manual.** A write to `app_user`, `guild`, `guild_users`, `channel` or `message` should call `AuditService.record(tx, {...})` inside the same `db.transaction`, so the audit row commits or rolls back together with the change. `recordSafe` is only for writes outside a transaction. Repository helpers accept `DrizzleExecutor` (`DrizzleDB | DrizzleTx`) so they can compose into a caller's transaction.
+- `sql/legacy-oracle/` is the old Oracle PL/SQL, kept for reference only. Its README maps each old package or trigger to the TypeScript that replaced it.
+
+**Realtime (`src/modules/gateway/gateway.service.ts`).**
+
+- A single `@WebSocketGateway` shares the HTTP port, with an optional namespace set by `SOCKET_NAMESPACE`.
+- The handshake token (`auth.token`, or an `access-token` header as a Postman fallback) is verified against the Keycloak JWKS.
+- Each socket joins a room named after its user id (`sub`). Services fan out to users with `emitToUser`/`emitToUsers`. For guild-wide events they first look up member ids with `UserRepository.getGuildUsers`; there are no guild or channel rooms.
+- Presence (`#activeUsers`) is an in-memory map, which assumes a single API instance.
+
+**AI bots (`src/modules/ai/`).** Three bot users with hard-coded UUIDs (`IAUserModels`) are upserted on module init and are always shown online. When a non-bot message matches a bot's name pattern, `MessageService` generates the reply asynchronously (fire-and-forget) through OpenAI and toggles the bot's typing status.
+
+## Web architecture (`apps/web`)
+
+**Provider chain (`src/app/providers.tsx`).** The order is `QueryProvider` → `SessionProvider` → `SocketProvider` → `AppProvider`:
+
+- NextAuth runs with the Keycloak provider and a JWT session strategy. Access-token refresh is implemented in `src/app/api/auth/[...nextauth]/route.ts`, and the access token is exposed as `session.accessToken`.
+- `SocketProvider` opens the Socket.IO connection once the session is authenticated, passing the access token.
+
+**State model (`src/contexts/providers/AppProvider.tsx`).**
+
+1. When the socket connects, `AppProvider` calls `GET /users/@me/sync` and loads the whole client state into React context: guilds with members, channels with messages, users and presence.
+2. Socket events are then applied as incremental updates to that state.
+3. A `forceSync` event triggers a full re-sync.
+
+Components read this state through `useAppContext`. `MockDataProvider` is a leftover from the prototype that some layouts still use, and real data comes from `AppProvider`.
+
+**HTTP.** Requests go through `useApi` / `useApiData` / `useApiMutation` (`src/lib/hooks/`), built on an axios client (`src/lib/api/client.ts`) with base URL `${NEXT_PUBLIC_REST_API_URL}/api/v1`, a bearer token from the session, and re-sign-in on 401.
+
+**UI and env.** `src/components/ui/` contains generated shadcn components (see `components.json`). The web app has no `.env` sample; the required variables are typed in `global-types/node-env.d.ts`. `NEXT_PUBLIC_SOCKET_URL` must point at the API origin, because Socket.IO is served on the API port.
+
+## Cross-app contracts (keep in sync by hand)
+
+- **Socket events.** Defined in the api `SocketEvents` enum (`gateway.service.ts`) and the `ServerToClientEvents` payload types (`apps/api/types/socket.d.ts`). The web side mirrors them in `src/constants/socketEvents.ts` and the handler types in `src/hooks/useSocketsEvents.ts`. Adding an event means touching all four, plus the handler in `AppProvider`.
+- **Response shapes.** The api returns camelCase Drizzle rows. The web mirrors them in `src/types/*.d.ts`, and `SyncAppStateResponse` in `src/contexts/appContext.ts` mirrors `SyncRepository`.

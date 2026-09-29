@@ -5,7 +5,7 @@
         "parser": {
             "syntax": "typescript",
             "decorators": true,
-            "dynamicImport": true,
+            "dynamicImport": true
         },
         "baseUrl": "./"
     },
