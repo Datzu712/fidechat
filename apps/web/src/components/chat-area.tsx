@@ -550,7 +550,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-zinc-300 break-words">
+                                                <p className="text-zinc-300 wrap-break-word">
                                                     {message.content}
                                                     {'updatedAt' in message &&
                                                         message.updatedAt !==

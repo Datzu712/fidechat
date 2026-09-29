@@ -28,8 +28,8 @@ function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
 
     return (
         <div className="relative mt-4 mb-6">
-            <div className="absolute inset-0 bg-gradient-to-b from-zinc-800/80 to-zinc-900/80 blur-sm"></div>
-            <div className="relative flex items-start gap-3 p-4 bg-zinc-800/30 rounded-md border border-zinc-700/50 shadow-lg backdrop-blur-sm">
+            <div className="absolute inset-0 bg-linear-to-b from-zinc-800/80 to-zinc-900/80 blur-xs"></div>
+            <div className="relative flex items-start gap-3 p-4 bg-zinc-800/30 rounded-md border border-zinc-700/50 shadow-lg backdrop-blur-xs">
                 <div className="relative">
                     <div className="absolute inset-0 bg-zinc-900/50 rounded-full blur-[2px]"></div>
                     <UserAvatar
@@ -40,14 +40,14 @@ function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-medium text-white drop-shadow-sm">
+                        <span className="font-medium text-white drop-shadow-xs">
                             {username}
                         </span>
                         <span className="text-xs text-zinc-400">
                             {formatTime(new Date(message.createdAt))}
                         </span>
                     </div>
-                    <p className="text-zinc-200 break-words leading-relaxed">
+                    <p className="text-zinc-200 wrap-break-word leading-relaxed">
                         {message.content}
                     </p>
                 </div>

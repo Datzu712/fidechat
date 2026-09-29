@@ -38,7 +38,7 @@ export default function ServerLayout({
             <div className="flex-1 flex min-w-0">{children}</div>
             <MembersSidebar
                 serverId={params.id}
-                className="hidden lg:flex flex-shrink-0"
+                className="hidden lg:flex shrink-0"
             />
         </>
     );

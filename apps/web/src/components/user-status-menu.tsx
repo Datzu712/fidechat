@@ -46,7 +46,7 @@ export function UserStatusMenu({
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className="outline-none flex items-center gap-1.5 hover:bg-zinc-700/50 rounded-md px-1.5 py-0.5 cursor-pointer">
+                <button className="outline-hidden flex items-center gap-1.5 hover:bg-zinc-700/50 rounded-md px-1.5 py-0.5 cursor-pointer">
                     <currentStatus.icon
                         className={`h-3.5 w-3.5 ${currentStatus.color} stroke-[2.5]`}
                     />

@@ -42,8 +42,8 @@ export default function ServerPage() {
             <div className="flex flex-col items-center justify-center w-full h-full bg-zinc-900">
                 <div className="max-w-md text-center p-8 relative animate-fade-in">
                     {/* Decoración visual - círculos con gradientes */}
-                    <div className="absolute -top-20 -left-20 w-40 h-40 rounded-full bg-gradient-to-br from-primary/30 to-transparent blur-xl"></div>
-                    <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-xl"></div>
+                    <div className="absolute -top-20 -left-20 w-40 h-40 rounded-full bg-linear-to-br from-primary/30 to-transparent blur-xl"></div>
+                    <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-linear-to-br from-primary/20 to-transparent blur-xl"></div>
 
                     {/* Icono animado */}
                     <div className="mb-6 flex justify-center">
@@ -87,7 +87,7 @@ export default function ServerPage() {
                         <p className="text-zinc-500 text-sm italic group-hover:text-zinc-400 transition-colors">
                             Channels are where you can talk with
                         </p>
-                        <div className="h-0.5 w-0 bg-gradient-to-r from-primary/0 via-primary/30 to-primary/0 group-hover:w-full transition-all duration-700 mt-2 mx-auto"></div>
+                        <div className="h-0.5 w-0 bg-linear-to-r from-primary/0 via-primary/30 to-primary/0 group-hover:w-full transition-all duration-700 mt-2 mx-auto"></div>
                     </div>
 
                     {isOwner ? (
@@ -156,7 +156,7 @@ export default function ServerPage() {
                                 /* Contenedor mejorado para iconos personalizados con proporción ajustada */
                                 <div className="relative h-14 w-14 rounded-full overflow-hidden shadow-xl shadow-primary/15 server-icon-container">
                                     {/* Resplandor exterior para enfatizar el icono */}
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/40 via-primary/10 to-primary/40 rounded-full animate-rotate-slow"></div>
+                                    <div className="absolute -inset-0.5 bg-linear-to-r from-primary/40 via-primary/10 to-primary/40 rounded-full animate-rotate-slow"></div>
 
                                     {/* Fondo con gradiente suave para asegurar buen contraste */}
                                     <div className="absolute inset-0 bg-zinc-900/80"></div>

@@ -123,7 +123,7 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                         </span>
                                     )}
                                     {member.id === server.ownerId && (
-                                        <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+                                        <Crown className="h-3 w-3 text-yellow-500 shrink-0" />
                                     )}
                                 </div>
                                 <div className="text-xs text-zinc-500 truncate">
