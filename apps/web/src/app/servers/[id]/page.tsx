@@ -56,7 +56,7 @@ export default function ServerPage() {
                                         alt={`${currentGuild.name} Icon`}
                                         fill
                                         sizes="64px"
-                                        priority
+                                        preload
                                         className="object-cover rounded-full animate-pulse"
                                     />
                                 </div>
@@ -167,7 +167,7 @@ export default function ServerPage() {
                                         alt={`${currentGuild.name} Icon`}
                                         fill
                                         sizes="64px"
-                                        priority
+                                        preload
                                         className="object-cover scale-90 hover:scale-100 transition-all duration-500 ease-out rounded-full p-0.5"
                                         style={{
                                             filter: 'contrast(1.05) brightness(1.05)',

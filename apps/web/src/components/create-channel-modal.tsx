@@ -30,7 +30,9 @@ import { CreateChannelPayload } from '@/types';
 const formSchema = z.object({
     name: z.string().min(1, 'Channel name is required').max(100),
     description: z.string().max(1000).optional(),
-    position: z.number().min(0).default(0),
+    // Sin .default(0): defaultValues ya lo inicializa, y con zod 4 el default
+    // hace que el tipo de entrada difiera del de salida en useForm.
+    position: z.number().min(0),
 });
 
 type FormValues = z.infer<typeof formSchema>;
