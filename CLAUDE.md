@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Fidechat is a Discord clone. It is a pnpm + Turborepo monorepo formed by merging two repos, with the full history of both kept:
 
-- `apps/api` (`@fidechat/api`): NestJS 11 on Fastify, PostgreSQL via Drizzle ORM, Keycloak auth, Socket.IO.
-- `apps/web` (`@fidechat/web`): Next.js 15 App Router, React 19, Tailwind, shadcn/Radix UI, NextAuth (Keycloak provider), TanStack Query.
+- `apps/api` (`@fidechat/api`): NestJS 12 on Fastify, PostgreSQL via Drizzle ORM, Keycloak auth, Socket.IO.
+- `apps/web` (`@fidechat/web`): Next.js 16 App Router, React 19, Tailwind v4, shadcn/Radix UI, NextAuth (Keycloak provider), TanStack Query.
 - `packages/` is empty for now. **No code is shared between apps**, so types and socket event names are duplicated on both sides (see "Cross-app contracts").
 
 Code comments, READMEs and commit bodies are mostly in Spanish. Commits follow Conventional Commits with a scope, for example `feat(api)!: ...` or `chore(monorepo): ...`.
@@ -18,7 +18,7 @@ Run from the repo root. Use `pnpm --filter @fidechat/api <script>` or `pnpm --fi
 
 ```bash
 pnpm install
-pnpm dev                 # both apps (api: nest --watch, web: next dev --turbopack)
+pnpm dev                 # both apps (api: nest --watch, web: next dev, Turbopack by default)
 pnpm build | lint | test | format | format:check
 pnpm --filter @fidechat/api lint:fix     # also available for web
 ```
@@ -39,6 +39,8 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
 
+The scripts run Jest as `node --experimental-vm-modules .../jest.js`: Nest 12, uuid and jwks-rsa (jose) are ESM-only, and Jest can only `require()` them with that flag. Use the `test` script rather than a bare `jest`. Node >= 24.15 is required.
+
 ```bash
 pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
 pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"   # single test by name
@@ -53,7 +55,9 @@ pnpm --filter @fidechat/api exec tsc --noEmit -p tsconfig.json
 pnpm --filter @fidechat/web exec tsc --noEmit
 ```
 
-Both currently report pre-existing errors (a duplicated fastify version breaking `@fastify/csrf-protection` typing in `main.ts`, and a NextAuth route export in web). Compare against that baseline rather than expecting zero errors.
+Both currently pass with zero errors.
+
+TypeScript is pinned to **6.x** on purpose: TS 7 ships no JS compiler API, which ts-jest, the Nest CLI and the tanstack plugin that oxlint loads all need. `@types/node` tracks the Node 24 runtime, not the latest major.
 
 ### Lint / format
 
@@ -66,6 +70,8 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 **Bootstrap (`src/main.ts`).** The app uses Fastify with a global prefix of `api` and URI versioning, so routes look like `/api/v1/guilds`. Swagger is served at `/api`. `src/instrumentation.ts` loads `dotenv` before anything else.
 
 **Auth is global.** `app.module.ts` registers the Keycloak `AuthGuard`, `ResourceGuard` and `RoleGuard` from `nest-keycloak-connect` as `APP_GUARD`, so every route requires a bearer token by default. `KeycloakSyncInterceptor` then upserts the Keycloak user into `app_user` on **every** request. That is how users come to exist in the DB, and no signup endpoint exists. Get the caller with `@AuthenticatedUser() user: IReqUser` and use `user.sub` as the user id. Never read owner or author ids from the request body.
+
+`nest-keycloak-connect` 1.10.1 is unmaintained and declares Nest <11 as its peer; it works on Nest 12 at runtime. Its typings import `@nestjs/common/interfaces`, which Nest 12 no longer exports, so `types/nest-keycloak-connect.d.ts` redirects that path. `fastify` is pinned to the exact version `@nestjs/platform-fastify` pins; a second copy breaks the plugin types in `main.ts`, so bump both together.
 
 **Env vars** are validated at boot by class-validator (`src/config/environment.ts`, applied through `validateEnv`) and also declared as the ambient `IEnvironmentVariables` in `types/global.d.ts`. A new variable must be added to **both** files, and to `.env.sample`.
 
