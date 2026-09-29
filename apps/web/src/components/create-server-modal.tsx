@@ -131,12 +131,10 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                         <div className="flex items-center space-x-2">
                             <Checkbox
                                 id="isPublic"
-                                value={isPublic ? 'true' : 'false'}
-                                onChange={(e) => {
-                                    setIsPublic(
-                                        (e.target as HTMLInputElement).checked,
-                                    );
-                                }}
+                                checked={isPublic}
+                                onCheckedChange={(checked) =>
+                                    setIsPublic(checked === true)
+                                }
                                 disabled={isLoading}
                             />
                             <Label htmlFor="isPublic" className="text-sm">
