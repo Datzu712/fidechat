@@ -18,9 +18,20 @@ browser sessions.
 
 ![Two users chatting in real time](v1/05-realtime-two-users.png)
 
-## v2: NestJS + Oracle, Next.js (Jul – Aug 2025)
+## v2: NestJS + Oracle + Keycloak, Next.js (Jul – Aug 2025)
 
-_Coming once the v2 legacy environment is ready._
+| | |
+| --- | --- |
+| ![Keycloak login](v2/01-keycloak-login.png) Sign in through Keycloak | ![Servers home](v2/02-servers-home.png) Servers home |
+| ![Chat](v2/03-chat.png) Channel chat, members and presence | ![Create server](v2/05-create-server.png) Creating a server |
+| ![Discover servers](v2/06-discover-servers.png) Discovering public servers | ![Create channel](v2/07-create-channel.png) Creating a channel |
+| ![Status menu](v2/08-status-menu.png) Status menu | ![Edit message](v2/09-edit-message.png) Editing a message |
+| ![Delete message](v2/10-delete-message.png) Deleting a message | ![Emoji picker](v2/11-emoji-picker.png) Emoji picker |
+
+Real time: Ana (left) and Bruno (right) in two separate browser sessions, with
+Bruno's typing indicator.
+
+![Two users chatting in real time](v2/04-realtime-two-users.png)
 
 ## v3: current version (Aug 2026 – today)
 
