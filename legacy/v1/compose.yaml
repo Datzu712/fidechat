@@ -7,8 +7,6 @@
 #   -> http://localhost:4100  (demo users in legacy/README.md)
 #
 # V1_API_SRC / V1_WEB_SRC override the sources with local folders (see README).
-#
-# This file is v3 tooling (written with AI); the code it runs is not.
 
 name: fidechat-v1
 

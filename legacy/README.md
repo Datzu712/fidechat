@@ -2,7 +2,7 @@
 
 Docker Compose environments that build and run the **exact code of each old
 version's git tags**, with demo data. The tags are never modified; the glue
-lives here. These files are v3 tooling written with AI; the code they run is not.
+lives here.
 
 | Version | Tags | Run | URL |
 | ------- | ---- | --- | --- |
