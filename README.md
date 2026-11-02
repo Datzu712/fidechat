@@ -41,6 +41,8 @@ Compose environments that build the exact code of each tag, with demo data:
 docker compose -f legacy/v1/compose.yaml up --build   # v1 -> http://localhost:4100
 ```
 
+Screenshots of each version are in [docs/screenshots/](docs/screenshots/README.md).
+
 The v2 environment is in progress. Until then, v2 can be run by hand from its
 tags (in v1 and v2 each app had its own `pnpm-lock.yaml` and there was no
 workspace, so run the commands inside `apps/api` or `apps/web`):
@@ -61,7 +63,7 @@ fidechat/
 │   └── web/          # Next.js frontend (@fidechat/web)
 ├── packages/         # shared code (empty for now)
 ├── legacy/           # reproducible environments for v1 and v2
-├── docs/             # history-map.md: monorepo hashes ↔ original repos
+├── docs/             # history-map.md (hashes ↔ original repos), screenshots/
 ├── .github/          # CI workflows
 ├── package.json      # workspace root
 ├── pnpm-workspace.yaml
