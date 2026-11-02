@@ -7,11 +7,12 @@ lives here.
 | Version | Tags | URL |
 | ------- | ---- | --- |
 | v1 (Java + React/Vite) | `api-v1-java`, `web-v1-vite` | http://localhost:4100 |
-| v2 (NestJS/Oracle + Next.js) | `api-v2-nest-oracle`, `web-v2-next` | _in progress_ |
+| v2 (NestJS/Oracle + Next.js) | `api-v2-nest-oracle`, `web-v2-next` | http://localhost:4200 |
 
-v1 demo users: `ana@demo.local` and `bruno@demo.local`, password `demo1234`.
+Demo users in both: Ana and Bruno, password `demo1234` (v1 logs in with
+`ana@demo.local`, v2 through Keycloak with `ana` or `ana@demo.local`).
 
-To run v1, build from local checkouts of its tags (works offline and on forks):
+To run a version, build from local checkouts of its tags (works offline and on forks):
 
 ```bash
 git worktree add ../fidechat-api-v1 api-v1-java
@@ -23,7 +24,11 @@ docker compose -f legacy/v1/compose.yaml up --build
 # if you don't mind downloading the tags from GitHub.
 ```
 
-Use `down -v` to reset the data.
+v2 works the same way with `api-v2-nest-oracle`, `web-v2-next`, `V2_API_SRC`,
+`V2_WEB_SRC` and `legacy/v2/compose.yaml`. Use `down -v` to reset the data.
+
+v2 notes: Oracle XE 18 only has an x86-64 image. The AI bots answer only if you
+export `OPENAI_API_KEY` before starting it.
 
 Known v1 bugs, kept as they were: the API trusts the `authorId` in the message
 body, and a channel owner sees their channel once per member.

@@ -1,0 +1,129 @@
+# Fidechat v2 (Jul - Aug 2025): NestJS + Oracle XE + Keycloak, Next.js.
+#
+# Builds the EXACT code of tags `api-v2-nest-oracle` and `web-v2-next` straight
+# from GitHub (Docker git build context), without checking it out or modifying it.
+#
+#   docker compose -f legacy/v2/compose.yaml up --build
+#   -> http://localhost:4200  (demo users in legacy/README.md)
+#
+# V2_API_SRC / V2_WEB_SRC override the sources with local folders (see README).
+#
+# Keycloak is published as http://keycloak.localhost:4280. Browsers resolve
+# *.localhost to this machine, and inside Docker the same name is a network
+# alias, so the token issuer is identical for the browser, the API and NextAuth
+# (v2 validates it in all three places).
+
+name: fidechat-v2
+
+x-keycloak-url: &keycloak-url http://keycloak.localhost:4280
+
+services:
+    oracle:
+        build:
+            context: ./oracle
+            additional_contexts:
+                src: ${V2_API_SRC:-https://github.com/Datzu712/fidechat.git#api-v2-nest-oracle:apps/api}
+        environment:
+            ORACLE_PASSWORD: oracle
+            # v2 used a schema called ADMIN (see its .env.sample), and the SQL dump
+            # references it by name (`ALTER PACKAGE ADMIN.PKG_SYNC_DATA ...`).
+            APP_USER: admin
+            APP_USER_PASSWORD: admin
+        healthcheck:
+            # The image's own healthcheck.sh passes as soon as the database opens,
+            # before the init scripts finish. Wait for the seeded guild instead.
+            test:
+                [
+                    'CMD-SHELL',
+                    "echo \"select 'SEEDED' from guild where id = '44444444-4444-4444-4444-444444444444';\" | sqlplus -s admin/admin@//localhost:1521/XEPDB1 | grep -q SEEDED",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 60
+            start_period: 30s
+        volumes:
+            - oracle_data:/opt/oracle/oradata
+
+    keycloak:
+        image: quay.io/keycloak/keycloak:26.3
+        command: ['start-dev', '--import-realm']
+        environment:
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 4280
+            KC_HOSTNAME: *keycloak-url
+            KC_HEALTH_ENABLED: 'true'
+        volumes:
+            - ./keycloak/realm-fidechat.json:/opt/keycloak/data/import/realm-fidechat.json:ro
+        ports:
+            - '4280:4280'
+        networks:
+            default:
+                aliases:
+                    - keycloak.localhost
+        healthcheck:
+            # The image has no curl; talk HTTP to the management port directly.
+            test:
+                [
+                    'CMD-SHELL',
+                    "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 60
+
+    api:
+        build:
+            context: ./api
+            additional_contexts:
+                src: ${V2_API_SRC:-https://github.com/Datzu712/fidechat.git#api-v2-nest-oracle:apps/api}
+        environment:
+            NODE_ENV: production
+            API_PORT: 8080
+            CORS_ORIGIN: http://localhost:4200
+            ORACLE_USER: admin
+            ORACLE_PWD: admin
+            ORACLE_HOST: oracle
+            ORACLE_PORT: 1521
+            ORACLE_SERVICE_NAME: oracle:1521/XEPDB1
+            KEYCLOAK_URL: *keycloak-url
+            PUBLIC_KEYCLOAK_URL: *keycloak-url
+            KEYCLOAK_REALM: fidechat
+            KEYCLOAK_CLIENT_ID: fidechat
+            KEYCLOAK_CLIENT_SECRET: legacy-v2-client-secret
+            KEYCLOAK_ADMIN: admin
+            KEYCLOAK_ADMIN_PASSWORD: admin
+            # Guild every user is added to on first login (seeded in oracle/20-seed.sql).
+            DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
+            # Required by v2's env validation. Set a real key to make the AI bots answer.
+            OPENAI_API_KEY: ${OPENAI_API_KEY:-not-set}
+        ports:
+            - '4201:8080'
+        depends_on:
+            oracle:
+                condition: service_healthy
+            keycloak:
+                condition: service_healthy
+
+    web:
+        build:
+            context: ./web
+            additional_contexts:
+                src: ${V2_WEB_SRC:-https://github.com/Datzu712/fidechat.git#web-v2-next:apps/web}
+            args:
+                NEXT_PUBLIC_REST_API_URL: http://localhost:4201
+                NEXT_PUBLIC_SOCKET_URL: http://localhost:4201
+        environment:
+            NEXTAUTH_URL: http://localhost:4200
+            NEXTAUTH_SECRET: legacy-v2-nextauth-secret
+            KEYCLOAK_CLIENT_ID: fidechat
+            KEYCLOAK_CLIENT_SECRET: legacy-v2-client-secret
+            KEYCLOAK_ISSUER: http://keycloak.localhost:4280/realms/fidechat
+        ports:
+            - '4200:3000'
+        depends_on:
+            keycloak:
+                condition: service_healthy
+
+volumes:
+    oracle_data:

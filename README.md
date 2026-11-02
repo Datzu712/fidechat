@@ -39,20 +39,10 @@ Compose environments that build the exact code of each tag, with demo data:
 
 ```bash
 docker compose -f legacy/v1/compose.yaml up --build   # v1 -> http://localhost:4100
+docker compose -f legacy/v2/compose.yaml up --build   # v2 -> http://localhost:4200
 ```
 
 Screenshots of each version are in [docs/screenshots/](docs/screenshots/README.md).
-
-The v2 environment is in progress. Until then, v2 can be run by hand from its
-tags (in v1 and v2 each app had its own `pnpm-lock.yaml` and there was no
-workspace, so run the commands inside `apps/api` or `apps/web`):
-
-```bash
-git switch --detach api-v2-nest-oracle && cd apps/api \
-  && docker compose -f local-docker-compose.yaml up -d && pnpm install && pnpm dev
-git switch --detach web-v2-next && cd apps/web && pnpm install && pnpm dev
-git switch main   # to go back
-```
 
 ## Structure
 
