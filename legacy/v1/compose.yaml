@@ -6,11 +6,7 @@
 #   docker compose -f legacy/v1/compose.yaml up --build
 #   -> http://localhost:4100  (demo users in legacy/README.md)
 #
-# Without access to GitHub (private repo, offline, or a fork), export the tags
-# from your local clone and point the build contexts at those folders:
-#
-#   legacy/export-tags.sh v1 && docker compose --env-file legacy/.src/v1.env \
-#       -f legacy/v1/compose.yaml up --build
+# V1_API_SRC / V1_WEB_SRC override the sources with local folders (see README).
 #
 # This file is v3 tooling (written with AI); the code it runs is not.
 
