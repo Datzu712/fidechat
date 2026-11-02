@@ -28,7 +28,13 @@ v2 works the same way with `api-v2-nest-oracle`, `web-v2-next`, `V2_API_SRC`,
 `V2_WEB_SRC` and `legacy/v2/compose.yaml`. Use `down -v` to reset the data.
 
 v2 notes: Oracle XE 18 only has an x86-64 image. The AI bots answer only if you
-export `OPENAI_API_KEY` before starting it.
+export `OPENAI_API_KEY` before starting it. They ask for `gpt-3.5-turbo`, which
+OpenAI retired, so `legacy/v2/openai-proxy` swaps it for `gpt-4o-mini` (override
+with `OPENAI_REPLACEMENT_MODEL`).
 
 Known v1 bugs, kept as they were: the API trusts the `authorId` in the message
 body, and a channel owner sees their channel once per member.
+
+Known v2 bug, kept as it was: if a channel is empty when the page loads, the
+client crashes when that channel's first message arrives (`t.messages is not
+iterable`). The seed gives every channel a message so the demo avoids it.

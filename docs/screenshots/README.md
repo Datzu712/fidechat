@@ -27,6 +27,7 @@ browser sessions.
 | ![Discover servers](v2/06-discover-servers.png) Discovering public servers | ![Create channel](v2/07-create-channel.png) Creating a channel |
 | ![Status menu](v2/08-status-menu.png) Status menu | ![Edit message](v2/09-edit-message.png) Editing a message |
 | ![Delete message](v2/10-delete-message.png) Deleting a message | ![Emoji picker](v2/11-emoji-picker.png) Emoji picker |
+| ![AI bot typing](v2/12-ai-bot-typing.png) An AI bot typing | ![AI bot replies](v2/13-ai-bot-replies.png) AI bots replying (Chat yipiyi and chayanne) |
 
 Real time: Ana (left) and Bruno (right) in two separate browser sessions, with
 Bruno's typing indicator.

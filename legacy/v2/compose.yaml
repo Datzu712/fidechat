@@ -97,6 +97,8 @@ services:
             DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
             # Required by v2's env validation. Set a real key to make the AI bots answer.
             OPENAI_API_KEY: ${OPENAI_API_KEY:-not-set}
+            # v2's bots ask for gpt-3.5-turbo, which OpenAI retired; see openai-proxy/.
+            OPENAI_BASE_URL: http://openai-proxy:8080/v1
         ports:
             - '4201:8080'
         depends_on:
@@ -104,6 +106,13 @@ services:
                 condition: service_healthy
             keycloak:
                 condition: service_healthy
+            openai-proxy:
+                condition: service_started
+
+    openai-proxy:
+        build: ./openai-proxy
+        environment:
+            REPLACEMENT_MODEL: ${OPENAI_REPLACEMENT_MODEL:-gpt-4o-mini}
 
     web:
         build:

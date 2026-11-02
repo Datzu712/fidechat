@@ -24,5 +24,10 @@ VALUES ('66666666-6666-6666-6666-666666666666', 'backend', 'NestJS, Oracle and K
 INSERT INTO MESSAGE (ID, CONTENT, AUTHOR_ID, CHANNEL_ID)
 VALUES ('77777777-7777-7777-7777-777777777777', 'Hi! This is Fidechat v2 (NestJS + Oracle + Keycloak).',
         '11111111-1111-1111-1111-111111111111', '55555555-5555-5555-5555-555555555555');
+-- Every channel gets a message: v2's client crashes when the first message of a
+-- channel that loaded empty arrives over the socket (see legacy/README.md).
+INSERT INTO MESSAGE (ID, CONTENT, AUTHOR_ID, CHANNEL_ID)
+VALUES ('88888888-8888-8888-8888-888888888888', 'Ask the bots anything here: mention chat yipiyi, chayanne or pedro pascal.',
+        '22222222-2222-2222-2222-222222222222', '66666666-6666-6666-6666-666666666666');
 
 COMMIT;
