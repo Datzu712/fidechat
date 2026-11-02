@@ -108,8 +108,3 @@ pnpm db:migrate                                     # create the schema with Dri
 
 The backend production build (`apps/api/dockerfile.prod`) uses the monorepo
 root as its context, because there is now a single pnpm lockfile, at the root.
-
-## Per-app documentation
-
-- [apps/api/README.md](apps/api/README.md): endpoints, database schema, Keycloak setup.
-- [apps/web/README.md](apps/web/README.md): client features and structure.
