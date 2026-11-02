@@ -1,0 +1,72 @@
+# Fidechat v1 (Nov 2024 - Feb 2025): Java/Spring Boot + React/Vite + PostgreSQL.
+#
+# Builds the EXACT code of tags `api-v1-java` and `web-v1-vite` straight from
+# GitHub (Docker git build context), without checking it out or modifying it.
+#
+#   docker compose -f legacy/v1/compose.yaml up --build
+#   -> http://localhost:4100  (demo users in legacy/README.md)
+#
+# Without access to GitHub (private repo, offline, or a fork), export the tags
+# from your local clone and point the build contexts at those folders:
+#
+#   legacy/export-tags.sh v1 && docker compose --env-file legacy/.src/v1.env \
+#       -f legacy/v1/compose.yaml up --build
+#
+# This file is v3 tooling (written with AI); the code it runs is not.
+
+name: fidechat-v1
+
+services:
+    db:
+        build:
+            context: ./db
+            additional_contexts:
+                src: ${V1_API_SRC:-https://github.com/Datzu712/fidechat.git#api-v1-java:apps/api}
+        environment:
+            # backup.sql runs `owner to postgres`, so the role must have that name.
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: fidechat
+        healthcheck:
+            # 127.0.0.1 on purpose: while the init scripts run, the temporary
+            # server only listens on a unix socket, so this does not turn
+            # healthy until the schema and seed are loaded.
+            test: ['CMD', 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres', '-d', 'fidechat']
+            interval: 3s
+            timeout: 3s
+            retries: 30
+        volumes:
+            - db_data:/var/lib/postgresql/data
+
+    api:
+        build:
+            context: ./api
+            additional_contexts:
+                src: ${V1_API_SRC:-https://github.com/Datzu712/fidechat.git#api-v1-java:apps/api}
+        environment:
+            PG_URL: jdbc:postgresql://db:5432/fidechat
+            PG_USER: postgres
+            PG_PASSWORD: postgres
+            JWT_SECRET: legacy-v1-jwt-secret
+            JWT_WEBSOCKET_SECRET: legacy-v1-websocket-secret
+            ENV: prod
+        depends_on:
+            db:
+                condition: service_healthy
+
+    web:
+        build:
+            context: ./web
+            additional_contexts:
+                src: ${V1_WEB_SRC:-https://github.com/Datzu712/fidechat.git#web-v1-vite:apps/web}
+            args:
+                # Same origin as the page: nginx proxies /api and /ws to the backend.
+                VITE_API_URL: http://localhost:${V1_PORT:-4100}
+                VITE_WS_URL: ws://localhost:${V1_PORT:-4100}
+        ports:
+            - '${V1_PORT:-4100}:80'
+        depends_on:
+            - api
+
+volumes:
+    db_data:

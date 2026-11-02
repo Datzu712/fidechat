@@ -1,113 +1,113 @@
 # Fidechat
 
-Monorepo de Fidechat: un clon de Discord con mensajería en tiempo real.
-Nace de la fusión de dos repositorios independientes (hoy archivados),
-conservando el historial de commits completo de ambos:
+Fidechat monorepo: a Discord clone with real-time messaging. It was created by
+merging two independent repositories (now archived), keeping the full commit
+history of both:
 
-| Workspace  | Paquete          | Origen (archivado)                                                  | Stack                                        |
+| Workspace  | Package          | Origin (archived)                                                   | Stack                                        |
 | ---------- | ---------------- | ------------------------------------------------------------------- | -------------------------------------------- |
 | `apps/api` | `@fidechat/api`  | [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) | NestJS 12 · Fastify · PostgreSQL + Drizzle · Keycloak · Socket.IO |
 | `apps/web` | `@fidechat/web`  | [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web)         | Next.js 16 · React 19 · Tailwind v4 · Radix UI   |
 
-## Historia del proyecto
+## Project history
 
-Fidechat es un side project que ha pasado por tres versiones. **Las dos primeras
-se escribieron sin asistentes de IA**; la tercera es un refactor asistido por IA.
+Fidechat is a side project that has gone through three versions. **The first two
+were written without AI assistants**; the third is an AI-assisted refactor.
 
-| Versión | Fechas | Backend | Frontend | Tags | Hecho con IA |
-| ------- | ------ | ------- | -------- | ---- | ------------ |
-| **v1** | nov 2024 – feb 2025 | Java 21 · Spring Boot 3.1 · JDBC (PostgreSQL) · JWT · WebSockets | React 18 · Vite | `api-v1-java` · `web-v1-vite` | No |
-| **v2** | jul 2025 – ago 2025 | NestJS 11 · Fastify · Oracle (paquetes PL/SQL y triggers) · Keycloak · Socket.IO | Next.js 15 · shadcn/ui · NextAuth | `api-v2-nest-oracle` · `web-v2-next` | No |
-| **v3** | ago 2026 – hoy | NestJS 12 · PostgreSQL + Drizzle · monorepo Turborepo | Next.js 16 · Tailwind v4 | — | Sí, con Claude |
+| Version | Dates | Backend | Frontend | Tags | Built with AI |
+| ------- | ----- | ------- | -------- | ---- | ------------- |
+| **v1** | Nov 2024 – Feb 2025 | Java 21 · Spring Boot 3.1 · JDBC (PostgreSQL) · JWT · WebSockets | React 18 · Vite | `api-v1-java` · `web-v1-vite` | No |
+| **v2** | Jul 2025 – Aug 2025 | NestJS 11 · Fastify · Oracle (PL/SQL packages and triggers) · Keycloak · Socket.IO | Next.js 15 · shadcn/ui · NextAuth | `api-v2-nest-oracle` · `web-v2-next` | No |
+| **v3** | Aug 2026 – today | NestJS 12 · PostgreSQL + Drizzle · Turborepo monorepo | Next.js 16 · Tailwind v4 | — | Yes, with Claude |
 
-**Cómo verificarlo:**
+**How to verify it:**
 
-- Los repositorios originales están **archivados (solo lectura) en GitHub**, con sus
-  hashes, pull requests y PRs de Dependabot originales:
-  [Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) y
+- The original repositories are **archived (read-only) on GitHub**, with their
+  original hashes, pull requests and Dependabot PRs:
+  [Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) and
   [fidechat-web](https://github.com/Datzu712/fidechat-web).
-- Al fusionarlos aquí los archivos se movieron a `apps/*`, lo que cambia los hashes.
-  [docs/history-map.md](docs/history-map.md) relaciona cada commit del monorepo con
-  su commit original en GitHub (171 de 171).
-- Todos los commits de v3, y solo esos, llevan la línea
-  `Co-Authored-By: Claude …`. Para listarlos:
-  `git log --grep='Co-Authored-By: Claude'`.
-- Los bots de chat con OpenAI que aparecen desde v2 son una **funcionalidad del
-  producto**, no código generado con IA.
+- Merging them here moved the files into `apps/*`, which changes every hash.
+  [docs/history-map.md](docs/history-map.md) maps each monorepo commit to its
+  original commit on GitHub (171 of 171).
+- Every v3 commit, and only those, carries a `Co-Authored-By: Claude …` line.
+  To list them: `git log --grep='Co-Authored-By: Claude'`.
+- The OpenAI chat bots present since v2 are a **product feature**, not
+  AI-generated code.
 
-**Cómo levantar una versión antigua:** cada tag deja el código exactamente como
-estaba, con sus propias instrucciones y archivos de Docker.
+**Running an old version:** [legacy/](legacy/README.md) has one-command Docker
+Compose environments that build the exact code of each tag, with demo data:
 
 ```bash
-# v1: backend Java (requiere JDK 21) y frontend Vite
-git switch --detach api-v1-java && cd apps/api && ./mvnw spring-boot:run
-git switch --detach web-v1-vite && cd apps/web && pnpm install && pnpm dev
+docker compose -f legacy/v1/compose.yaml up --build   # v1 -> http://localhost:4100
+```
 
-# v2: backend NestJS con Oracle XE + Keycloak, frontend Next.js
+The v2 environment is in progress. Until then, v2 can be run by hand from its
+tags (in v1 and v2 each app had its own `pnpm-lock.yaml` and there was no
+workspace, so run the commands inside `apps/api` or `apps/web`):
+
+```bash
 git switch --detach api-v2-nest-oracle && cd apps/api \
   && docker compose -f local-docker-compose.yaml up -d && pnpm install && pnpm dev
 git switch --detach web-v2-next && cd apps/web && pnpm install && pnpm dev
+git switch main   # to go back
 ```
 
-En v1 y v2 cada app tenía su propio `pnpm-lock.yaml` y no existía el workspace, así
-que los comandos se ejecutan dentro de `apps/api` o `apps/web`. Para volver:
-`git switch main`.
-
-## Estructura
+## Structure
 
 ```
 fidechat/
 ├── apps/
-│   ├── api/          # backend NestJS  (@fidechat/api)
-│   └── web/          # frontend Next.js (@fidechat/web)
-├── packages/         # código compartido (vacío por ahora)
-├── docs/             # history-map.md: hashes del monorepo ↔ repos originales
-├── .github/          # workflows de CI
-├── package.json      # raíz del workspace
+│   ├── api/          # NestJS backend   (@fidechat/api)
+│   └── web/          # Next.js frontend (@fidechat/web)
+├── packages/         # shared code (empty for now)
+├── legacy/           # reproducible environments for v1 and v2
+├── docs/             # history-map.md: monorepo hashes ↔ original repos
+├── .github/          # CI workflows
+├── package.json      # workspace root
 ├── pnpm-workspace.yaml
 └── turbo.json
 ```
 
-## Requisitos
+## Requirements
 
 - Node.js >= 24.15
 - pnpm >= 10
-- Docker + Docker Compose (para Postgres y Keycloak)
+- Docker + Docker Compose (for Postgres and Keycloak)
 
-## Uso
+## Usage
 
 ```bash
-pnpm install          # instala las dependencias de todos los workspaces
+pnpm install          # install dependencies for every workspace
 
-pnpm dev              # levanta api y web a la vez
-pnpm build            # compila todo
-pnpm lint             # lint de todo
-pnpm test             # tests de todo
+pnpm dev              # run api and web together
+pnpm build            # build everything
+pnpm lint             # lint everything
+pnpm test             # test everything
 ```
 
-Para trabajar sobre un solo workspace se usa `--filter`:
+Use `--filter` to work on a single workspace:
 
 ```bash
 pnpm --filter @fidechat/api dev
 pnpm --filter @fidechat/web dev
-pnpm --filter @fidechat/api add <paquete>
+pnpm --filter @fidechat/api add <package>
 ```
 
-## Servicios de infraestructura
+## Infrastructure services
 
-Los compose files viven en `apps/api` y siguen ejecutándose desde ahí:
+The compose files live in `apps/api` and are still run from there:
 
 ```bash
 cd apps/api
 cp .env.sample .env
 docker compose -f local-docker-compose.yaml up -d   # Postgres + Keycloak
-pnpm db:migrate                                     # crea el schema con Drizzle
+pnpm db:migrate                                     # create the schema with Drizzle
 ```
 
-El build de producción del backend (`apps/api/dockerfile.prod`) usa la raíz del
-monorepo como contexto, porque el lockfile de pnpm ahora es único y vive ahí.
+The backend production build (`apps/api/dockerfile.prod`) uses the monorepo
+root as its context, because there is now a single pnpm lockfile, at the root.
 
-## Documentación por app
+## Per-app documentation
 
-- [apps/api/README.md](apps/api/README.md) — endpoints, esquema de base de datos, setup de Keycloak.
-- [apps/web/README.md](apps/web/README.md) — features y estructura del cliente.
+- [apps/api/README.md](apps/api/README.md): endpoints, database schema, Keycloak setup.
+- [apps/web/README.md](apps/web/README.md): client features and structure.

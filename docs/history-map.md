@@ -1,26 +1,26 @@
-# Mapa de commits: monorepo ↔ repositorios originales
+# Commit map: monorepo ↔ original repositories
 
-Al fusionar los dos repositorios en este monorepo, sus archivos se movieron a
-`apps/api` y `apps/web`. Eso reescribe los hashes de todos los commits importados,
-aunque autor, fecha y mensaje se conservan intactos.
+Merging the two repositories into this monorepo moved their files into
+`apps/api` and `apps/web`. That rewrites the hash of every imported commit,
+although author, date and message are kept intact.
 
-Esta tabla relaciona cada commit importado con su hash **original**, que se puede
-verificar en los repositorios archivados en GitHub:
+This table maps each imported commit to its **original** hash, which can be
+checked in the archived repositories on GitHub:
 
 - [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) → `apps/api` (102 commits)
 - [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web) → `apps/web` (69 commits)
 
-El emparejamiento se hizo por fecha de autor, email y mensaje (coinciden 171 de 171),
-y el árbol de archivos del último commit de cada repo original es idéntico al de
-`apps/api` y `apps/web` en el punto de fusión.
+Commits were matched by author date, email and message (171 of 171 match), and
+the file tree of the last commit of each original repository is identical to
+`apps/api` and `apps/web` at the merge point.
 
-Versiones: **v1** = Java/Spring Boot + React/Vite, **v2** = NestJS/Oracle + Next.js.
-Ver la sección "Historia del proyecto" del [README](../README.md).
+Versions: **v1** = Java/Spring Boot + React/Vite, **v2** = NestJS/Oracle + Next.js.
+See the "Project history" section of the [README](../README.md).
 
 
 ## Fidechat-backend → `apps/api`
 
-| Versión | Fecha | Monorepo | Original | Mensaje |
+| Version | Date | Monorepo | Original | Message |
 | --- | --- | --- | --- | --- |
 | v1 | 2024-11-27 | `b63e6d4` | [`593e982`](https://github.com/Datzu712/Fidechat-backend/commit/593e9824238a0219b3849b6a2cebc7a88146e389) | first commit* |
 | v1 | 2024-11-27 | `64d85de` | [`98e2b87`](https://github.com/Datzu712/Fidechat-backend/commit/98e2b87f39776f5f6ec12602e4e1172936aa965d) | + gitignore |
@@ -127,7 +127,7 @@ Ver la sección "Historia del proyecto" del [README](../README.md).
 
 ## fidechat-web → `apps/web`
 
-| Versión | Fecha | Monorepo | Original | Mensaje |
+| Version | Date | Monorepo | Original | Message |
 | --- | --- | --- | --- | --- |
 | v1 | 2024-11-27 | `c6ec011` | [`05cb0b3`](https://github.com/Datzu712/fidechat-web/commit/05cb0b3c8c136918e235ad03f1e53f087bab21d3) | first commit |
 | v1 | 2024-11-27 | `afd8830` | [`d520b22`](https://github.com/Datzu712/fidechat-web/commit/d520b2247d9691128912d9c20d4e60741a81b8af) | eslint & prettier setup |

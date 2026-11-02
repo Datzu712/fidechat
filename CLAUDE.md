@@ -10,7 +10,7 @@ Fidechat is a Discord clone. It is a pnpm + Turborepo monorepo formed by merging
 - `apps/web` (`@fidechat/web`): Next.js 16 App Router, React 19, Tailwind v4, shadcn/Radix UI, NextAuth (Keycloak provider), TanStack Query.
 - `packages/` is empty for now. **No code is shared between apps**, so types and socket event names are duplicated on both sides (see "Cross-app contracts").
 
-Code comments, READMEs and commit bodies are mostly in Spanish. Commits follow Conventional Commits with a scope, for example `feat(api)!: ...` or `chore(monorepo): ...`.
+**Write all new code comments, Markdown docs, commit messages and other repo text in English.** Older comments and docs are still largely in Spanish; leave them unless you are already editing that text. Commits follow Conventional Commits with a scope, for example `feat(api)!: ...` or `chore(monorepo): ...`.
 
 ## Commands
 
