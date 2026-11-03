@@ -1,0 +1,7 @@
+#!/bin/sh
+# main only moves through merged pull requests. Enabled by `pnpm install`
+# (the root `prepare` script sets core.hooksPath to this folder).
+if [ "$(git branch --show-current)" = "main" ]; then
+    echo "pre-commit: do not commit on main. Create a branch first: git switch -c <type>/<topic>" >&2
+    exit 1
+fi

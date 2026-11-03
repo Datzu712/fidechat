@@ -1,0 +1,8 @@
+#!/bin/sh
+# Refuses to push to main; merge a pull request instead.
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "pre-push: do not push to main. Push a branch and open a pull request." >&2
+        exit 1
+    fi
+done

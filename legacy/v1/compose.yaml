@@ -4,9 +4,9 @@
 # GitHub (Docker git build context), without checking it out or modifying it.
 #
 #   docker compose -f legacy/v1/compose.yaml up --build
-#   -> http://localhost:4100  (demo users in legacy/README.md)
+#   -> http://localhost:4100  (demo users in legacy/v1/README.md)
 #
-# V1_API_SRC / V1_WEB_SRC override the sources with local folders (see README).
+# V1_API_SRC / V1_WEB_SRC override the sources with local folders (see this folder's README).
 
 name: fidechat-v1
 

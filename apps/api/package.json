@@ -23,7 +23,8 @@
         "db:push": "drizzle-kit push",
         "db:studio": "drizzle-kit studio",
         "lint:fix": "oxlint --type-aware --fix",
-        "format:check": "oxfmt --check"
+        "format:check": "oxfmt --check",
+        "typecheck": "tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {
         "@fastify/compress": "^9.2.0",
