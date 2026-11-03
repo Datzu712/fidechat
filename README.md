@@ -77,8 +77,8 @@ fidechat/
 
 ## Requirements
 
-- Node.js >= 24.15
-- pnpm >= 10
+- Node.js >= 26.13 (current LTS)
+- pnpm >= 12
 - Docker + Docker Compose (for Postgres and Keycloak)
 
 ## Usage
