@@ -32,10 +32,12 @@ services:
         healthcheck:
             # The image's own healthcheck.sh passes as soon as the database opens,
             # before the init scripts finish. Wait for the seeded guild instead.
+            # The marker is built with || because SQL*Plus echoes the query when
+            # it fails (e.g. table not created yet), so a literal would match.
             test:
                 [
                     'CMD-SHELL',
-                    "echo \"select 'SEEDED' from guild where id = '44444444-4444-4444-4444-444444444444';\" | sqlplus -s admin/admin@//localhost:1521/XEPDB1 | grep -q SEEDED",
+                    "echo \"select 'SEE' || 'DED' from guild where id = '44444444-4444-4444-4444-444444444444';\" | sqlplus -s admin/admin@//localhost:1521/XEPDB1 | grep -q SEEDED",
                 ]
             interval: 5s
             timeout: 5s
