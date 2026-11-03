@@ -11,8 +11,17 @@ history of both:
 
 ## Project history
 
-Fidechat is a side project that has gone through three versions. **The first two
-were written without AI assistants**; the third is an AI-assisted refactor.
+Fidechat started as a university project and has gone through three versions.
+**The first two were written without AI assistants**; the third is an
+AI-assisted refactor.
+
+- **v1 and v2 were university projects**, each built within a single
+  four-month term (cuatrimestre). They were written against a deadline, so the
+  code is rushed in places: they are kept here as a record of how the project
+  grew, not as examples of best practice.
+- **v3 is the final version, and the peak of it all**: the project I started at
+  university, rebuilt without a deadline, done properly this time, with
+  everything that never fit into a term.
 
 | Version | Dates | Backend | Frontend | Tags | Built with AI |
 | ------- | ----- | ------- | -------- | ---- | ------------- |
@@ -41,6 +50,12 @@ Compose environments that build the exact code of each tag, with demo data:
 docker compose -f legacy/v1/compose.yaml up --build   # v1 -> http://localhost:4100
 docker compose -f legacy/v2/compose.yaml up --build   # v2 -> http://localhost:4200
 ```
+
+> [!WARNING]
+> v1 and v2 are old and **full of known vulnerabilities**: outdated
+> dependencies, missing authorization checks and more. They are here to be
+> looked at, never to be deployed. Run them only locally, and do not use them
+> in production or expose them to a network.
 
 Screenshots of each version are in [docs/screenshots/](docs/screenshots/README.md).
 

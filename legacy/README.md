@@ -4,6 +4,13 @@ Docker Compose environments that build and run the **exact code of each old
 version's git tags**, with demo data. The tags are never modified; the glue
 lives here.
 
+> [!WARNING]
+> v1 and v2 were university projects built in one term each, and they are old.
+> They have **known vulnerabilities** (outdated dependencies, missing
+> authorization checks, hard-coded demo secrets in these environments) and
+> rushed code. Run them only on your machine, for reference. Never deploy them
+> or use them in production.
+
 | Version | Tags | URL |
 | ------- | ---- | --- |
 | v1 (Java + React/Vite) | `api-v1-java`, `web-v1-vite` | http://localhost:4100 |
