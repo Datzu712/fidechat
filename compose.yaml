@@ -1,0 +1,138 @@
+# Fidechat v3 demo: builds the api and the web from this checkout and runs them
+# with PostgreSQL, Keycloak and demo data. For development, use `pnpm dev` with
+# apps/api/local-docker-compose.yaml instead.
+#
+#   docker compose up --build
+#   -> http://localhost:4300  (log in as `ana` or `bruno`, password `demo1234`)
+#
+# Keycloak is published as http://keycloak.localhost:4380. Browsers resolve
+# *.localhost to this machine, and inside Docker the same name is a network
+# alias, so the token issuer is identical for the browser, the API and NextAuth.
+# The ports are fixed, because the realm's redirect URIs and the issuer use them.
+
+name: fidechat-v3
+
+x-keycloak-url: &keycloak-url http://keycloak.localhost:4380
+x-database-url: &database-url postgres://fidechat:fidechat@postgres:5432/fidechat
+
+services:
+    postgres:
+        image: postgres:18-alpine
+        environment:
+            POSTGRES_USER: fidechat
+            POSTGRES_PASSWORD: fidechat
+            POSTGRES_DB: fidechat
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U fidechat -d fidechat']
+            interval: 5s
+            timeout: 3s
+            retries: 30
+        volumes:
+            - postgres_data:/var/lib/postgresql
+
+    # Applies the drizzle/ migrations, using the api's build stage (it has drizzle-kit).
+    migrate:
+        build:
+            context: .
+            dockerfile: apps/api/dockerfile.prod
+            target: builder
+        command: ['pnpm', '--filter', '@fidechat/api', 'db:migrate']
+        environment:
+            DATABASE_URL: *database-url
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    seed:
+        image: postgres:18-alpine
+        command: ['psql', '-v', 'ON_ERROR_STOP=1', '-f', '/seed.sql']
+        environment:
+            PGHOST: postgres
+            PGUSER: fidechat
+            PGPASSWORD: fidechat
+            PGDATABASE: fidechat
+        volumes:
+            - ./docker/postgres/seed.sql:/seed.sql:ro
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
+
+    keycloak:
+        image: quay.io/keycloak/keycloak:26.3
+        command: ['start-dev', '--import-realm']
+        environment:
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 4380
+            KC_HOSTNAME: *keycloak-url
+            KC_HEALTH_ENABLED: 'true'
+        volumes:
+            - ./docker/keycloak/realm-fidechat.json:/opt/keycloak/data/import/realm-fidechat.json:ro
+        ports:
+            - '4380:4380'
+        networks:
+            default:
+                aliases:
+                    - keycloak.localhost
+        healthcheck:
+            # The image has no curl; talk HTTP to the management port directly.
+            test:
+                [
+                    'CMD-SHELL',
+                    "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 60
+
+    api:
+        build:
+            context: .
+            dockerfile: apps/api/dockerfile.prod
+        environment:
+            NODE_ENV: production
+            API_PORT: 8080
+            CORS_ORIGIN: http://localhost:4300
+            DATABASE_URL: *database-url
+            KEYCLOAK_URL: *keycloak-url
+            PUBLIC_KEYCLOAK_URL: *keycloak-url
+            KEYCLOAK_REALM: fidechat
+            KEYCLOAK_CLIENT_ID: fidechat
+            KEYCLOAK_CLIENT_SECRET: demo-v3-client-secret
+            KEYCLOAK_ADMIN: admin
+            KEYCLOAK_ADMIN_PASSWORD: admin
+            # Guild every user is added to on first login (seeded in docker/postgres/seed.sql).
+            DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
+            # Required by env validation; set a real key in the shell or a root .env.
+            # The bots stay silent anyway until v3 stops asking for the retired
+            # gpt-3.5-turbo (see the README's "Quick launch (v3)").
+            OPENAI_API_KEY: ${OPENAI_API_KEY:-not-set}
+        ports:
+            - '4301:8080'
+        depends_on:
+            seed:
+                condition: service_completed_successfully
+            keycloak:
+                condition: service_healthy
+
+    web:
+        build:
+            context: .
+            dockerfile: docker/web/Dockerfile
+            args:
+                NEXT_PUBLIC_REST_API_URL: http://localhost:4301
+                NEXT_PUBLIC_SOCKET_URL: http://localhost:4301
+        environment:
+            NEXTAUTH_URL: http://localhost:4300
+            NEXTAUTH_SECRET: demo-v3-nextauth-secret
+            KEYCLOAK_CLIENT_ID: fidechat
+            KEYCLOAK_CLIENT_SECRET: demo-v3-client-secret
+            KEYCLOAK_ISSUER: http://keycloak.localhost:4380/realms/fidechat
+        ports:
+            - '4300:3000'
+        depends_on:
+            keycloak:
+                condition: service_healthy
+
+volumes:
+    postgres_data:

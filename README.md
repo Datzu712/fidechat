@@ -68,8 +68,10 @@ fidechat/
 │   └── web/          # Next.js frontend (@fidechat/web)
 ├── packages/         # shared code (empty for now)
 ├── legacy/           # reproducible environments for v1 and v2
+├── docker/           # demo realm, seed and web Dockerfile for compose.yaml
 ├── docs/             # history-map.md (hashes ↔ original repos), screenshots/
 ├── .github/          # CI workflows
+├── compose.yaml      # quick launch of v3 (see below)
 ├── package.json      # workspace root
 ├── pnpm-workspace.yaml
 └── turbo.json
@@ -99,6 +101,30 @@ pnpm --filter @fidechat/api dev
 pnpm --filter @fidechat/web dev
 pnpm --filter @fidechat/api add <package>
 ```
+
+## Quick launch (v3)
+
+To try the current version without setting anything up, `compose.yaml` builds
+the api and the web from your checkout and runs them with PostgreSQL, Keycloak
+and demo data. It needs only Docker with Compose:
+
+```bash
+docker compose up --build   # -> http://localhost:4300
+```
+
+Log in as `ana` or `bruno` (or their `@demo.local` emails), password
+`demo1234`. Keycloak's console is at http://keycloak.localhost:4380 (`admin` /
+`admin`). Stop with `docker compose down`; add `-v` to wipe the database.
+The ports are fixed, because the Keycloak realm's redirect URIs use them, and
+the demo users and data live in `docker/`.
+
+> [!NOTE]
+> **AI bots and `OPENAI_API_KEY`.** The api needs the variable to boot, so
+> `compose.yaml` passes the placeholder `not-set` when it is missing; the bots
+> still show up online, but stay silent. To give them a real key, set
+> `OPENAI_API_KEY` in the shell or in a root `.env` (git-ignored, so it is the
+> right place for it). Even with a valid key the bots do not answer yet: v3
+> still asks for `gpt-3.5-turbo`, which OpenAI has retired. (ima changed it to the sdk from vercel in the next prs i hope)
 
 ## Infrastructure services
 
