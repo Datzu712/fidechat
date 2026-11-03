@@ -4,6 +4,7 @@
 **/.turbo
 **/coverage
 **/.env
+**/.env.*
 **/*.log
 .git
 .gitignore

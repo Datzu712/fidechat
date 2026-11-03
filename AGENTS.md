@@ -55,6 +55,8 @@ pnpm db:push | db:studio
 
 Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, web on 3000.
 
+`docker compose up --build` at the repo root is a separate, self-contained demo: it builds both apps from the checkout into containers, with demo data from `docker/` (web 4300, API 4301, Keycloak 4380). A schema change that breaks `docker/postgres/seed.sql` must update it.
+
 ### Tests
 
 The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
