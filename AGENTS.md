@@ -59,7 +59,7 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
 
-The scripts run Jest as `node --experimental-vm-modules .../jest.js`: Nest 12, uuid and jwks-rsa (jose) are ESM-only, and Jest can only `require()` them with that flag. Use the `test` script rather than a bare `jest`. Node >= 24.15 is required.
+The scripts run Jest as `node --experimental-vm-modules .../jest.js`: Nest 12, uuid and jwks-rsa (jose) are ESM-only, and Jest can only `require()` them with that flag. Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
 
 ```bash
 pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
@@ -70,7 +70,7 @@ pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"  
 
 **Neither build type-checks.** The api builds with SWC (`nest-cli.json` `builder: swc`), and the web has `typescript.ignoreBuildErrors: true`. Run `pnpm typecheck` (part of `pnpm check`); both apps pass with zero errors.
 
-TypeScript is pinned to **6.x** on purpose: TS 7 ships no JS compiler API, which ts-jest, the Nest CLI and the tanstack plugin that oxlint loads all need. `@types/node` tracks the Node 24 runtime, not the latest major.
+TypeScript is pinned to **6.x** on purpose: TS 7 ships no JS compiler API, which ts-jest, the Nest CLI and the tanstack plugin that oxlint loads all need. `@types/node` tracks the Node 26 runtime, not the latest major.
 
 ### Lint / format
 
