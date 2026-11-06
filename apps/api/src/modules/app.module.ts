@@ -1,8 +1,3 @@
-import {
-    AuthGuard as KeycloakAuthGuard,
-    ResourceGuard as KeycloakResourceGuard,
-    RoleGuard as KeycloakRoleGuard,
-} from 'nest-keycloak-connect';
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -10,7 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from '@/common/utils/env.validation';
 import { DatabaseModule } from '@/infrastructure/database/database.module';
 import { ChannelModule } from './channel/channel.module';
-import { KeycloakModule } from './auth/keycloak/keycloak.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './auth/auth.guard';
 import { KeycloakSyncInterceptor } from './auth/keycloak/keycloak-sync.interceptor';
 import { UserModule } from './user/user.module';
 import { GuildModule } from './guild/guild.module';
@@ -26,7 +22,7 @@ import { AIModule } from './ai/ai.module';
         }),
         DatabaseModule,
         ChannelModule,
-        KeycloakModule,
+        AuthModule,
         GuildModule,
         GatewayModule,
         UserModule,
@@ -36,15 +32,7 @@ import { AIModule } from './ai/ai.module';
     providers: [
         {
             provide: APP_GUARD,
-            useClass: KeycloakAuthGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: KeycloakResourceGuard,
-        },
-        {
-            provide: APP_GUARD,
-            useClass: KeycloakRoleGuard,
+            useClass: AuthGuard,
         },
         {
             provide: APP_INTERCEPTOR,

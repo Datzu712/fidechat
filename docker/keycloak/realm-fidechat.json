@@ -18,7 +18,21 @@
             "webOrigins": ["http://localhost:4300"],
             "attributes": {
                 "post.logout.redirect.uris": "http://localhost:4300/*"
-            }
+            },
+            "protocolMappers": [
+                {
+                    "name": "fidechat-api-audience",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.custom.audience": "urn:fidechat:api",
+                        "access.token.claim": "true",
+                        "introspection.token.claim": "true",
+                        "id.token.claim": "false"
+                    }
+                }
+            ]
         }
     ],
     "users": [

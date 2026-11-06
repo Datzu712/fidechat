@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { KeycloakModule } from './keycloak/keycloak.module';
+import { TokenVerifier } from './token-verifier.service';
 
 @Module({
-    imports: [KeycloakModule],
+    providers: [TokenVerifier],
+    exports: [TokenVerifier],
 })
 export class AuthModule {}

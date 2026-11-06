@@ -161,6 +161,7 @@ export class KeycloakClient {
             grant_type: 'password',
             client_id: this.config.clientId,
             client_secret: this.config.clientSecret,
+            scope: 'openid',
             username,
             password,
         });
