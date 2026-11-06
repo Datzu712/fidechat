@@ -50,6 +50,13 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     @IsString()
     PUBLIC_KEYCLOAK_URL!: string;
 
+    // BFF login
+    @IsString()
+    AUTH_CALLBACK_URL!: string;
+
+    @IsString()
+    PUBLIC_WEB_URL!: string;
+
     @IsString()
     OPENAI_API_KEY!: string;
 }

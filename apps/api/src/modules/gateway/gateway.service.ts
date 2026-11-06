@@ -4,6 +4,7 @@ import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@/common/logger';
 import { IAUserModels } from '../ai/ai-command.service';
 import { TokenVerifier } from '../auth/token-verifier.service';
+import { SessionService } from '../auth/session/session.service';
 
 export enum SocketEvents {
     GUILD_CREATE = 'guildCreate',
@@ -67,6 +68,7 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
     constructor(
         private readonly config: ConfigService<IEnvironmentVariables>,
         private readonly tokenVerifier: TokenVerifier,
+        private readonly sessions: SessionService,
     ) {
         this.logger.log('Initializing WebSocket Gateway...');
 
@@ -82,14 +84,15 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
      * todo: refuse handshake if no token is provided instead of disconnecting after connection is established
      */
     public async handleConnection(socket: SocketClient) {
-        let token: string | undefined = socket.handshake.auth.token;
-        if (!token) {
-            /*this.config.get('NODE_ENV') === 'development' && */
-            // In development mode, we allow a token to be passed through header "access-token" (for postman)
-            const accessToken = socket.handshake.headers['access-token'];
-            token = typeof accessToken === 'string' ? accessToken : undefined;
+        if (!this.sessions.isAllowedOrigin(socket.handshake.headers.origin)) {
+            this.logger.error(
+                `${socket.handshake.address} tried to connect from origin ${socket.handshake.headers.origin}`,
+            );
+            socket.disconnect();
+            return;
         }
 
+        const token = await this.getAccessTokenFromSocket(socket);
         if (!token) {
             this.logger.error(`${socket.handshake.address} tried to connect without a token`);
             socket.disconnect();
@@ -117,6 +120,19 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
             `Socket ${socket.id} connected with user data: ${JSON.stringify(socket.data.user)} (${socket.handshake.address} - socket: ${socket.id})`,
         );
         socket.emit('welcome', `Hi ${user.sub}, welcome to Fidechat!`);
+    }
+
+    /**
+     * The token comes from the session cookie (`SessionService.resolveAccessToken`); only outside
+     * production `auth.token` or the `access-token` header (Postman) are read.
+     */
+    private async getAccessTokenFromSocket(socket: SocketClient): Promise<string | undefined> {
+        return this.sessions.resolveAccessToken(socket.handshake.headers.cookie, () => {
+            const authToken: unknown = socket.handshake.auth.token;
+            const header = socket.handshake.headers['access-token'];
+            if (typeof authToken === 'string') return authToken;
+            return typeof header === 'string' ? header : undefined;
+        });
     }
 
     public emitToUser(userId: string, event: keyof ServerToClientEvents, data: any) {

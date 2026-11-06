@@ -1,14 +1,7 @@
-import {
-    CallHandler,
-    type ExecutionContext,
-    Injectable,
-    type NestInterceptor,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { CallHandler, type ExecutionContext, Injectable, type NestInterceptor } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 
 import { UserService } from '@/modules/user/user.service';
-import { Logger } from '@/common/logger';
 
 @Injectable()
 export class KeycloakSyncInterceptor implements NestInterceptor {
@@ -16,13 +9,11 @@ export class KeycloakSyncInterceptor implements NestInterceptor {
 
     async intercept(context: ExecutionContext, next: CallHandler) {
         const request = context.switchToHttp().getRequest<FastifyRequest>();
-        if (!request.user) {
-            Logger.debug('No user found in request', 'KeycloakSyncInterceptor');
-            throw new UnauthorizedException();
+        // AuthGuard already rejects protected routes without a user; @Public() routes have none.
+        if (request.user) {
+            // azure doesn't send a user profile photo URL bruh
+            await this.userService.syncUsersFromKC(request.user);
         }
-
-        // azure doesn't send a user profile photo URL bruh
-        await this.userService.syncUsersFromKC(request.user);
 
         return next.handle();
     }

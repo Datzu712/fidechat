@@ -14,7 +14,7 @@ export const API_AUDIENCE = 'urn:fidechat:api';
 @Injectable()
 export class TokenVerifier {
     private readonly jwks: JwksClient;
-    private readonly issuer: string;
+    readonly issuer: string;
 
     constructor(config: ConfigService<IEnvironmentVariables>) {
         this.issuer = `${config.getOrThrow('PUBLIC_KEYCLOAK_URL')}/realms/${config.getOrThrow('KEYCLOAK_REALM')}`;
@@ -36,6 +36,25 @@ export class TokenVerifier {
             throw new Error('Not an access token');
         }
         return payload as IReqUser;
+    }
+
+    /**
+     * Verifies an ID token for `clientId` (OIDC Core §3.1.3.7): signature, issuer, expiry,
+     * `aud` = `clientId`, `azp` if present, and `typ: ID`.
+     */
+    async idToken(token: string, clientId: string): Promise<jwt.JwtPayload> {
+        const decoded = jwt.decode(token, { complete: true });
+        if (!decoded) throw new Error('Malformed JWT');
+
+        const key = await this.jwks.getSigningKey(decoded.header.kid);
+        const payload = jwt.verify(token, key.getPublicKey(), {
+            algorithms: ['RS256'],
+            issuer: this.issuer,
+            audience: clientId,
+        });
+        if (typeof payload === 'string' || payload.typ !== 'ID') throw new Error('Not an ID token');
+        if (payload.azp !== undefined && payload.azp !== clientId) throw new Error('ID token issued to another client');
+        return payload;
     }
 
     // in the future we might want to add online() verifications via introspection

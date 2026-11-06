@@ -101,6 +101,8 @@ services:
             KEYCLOAK_CLIENT_SECRET: demo-v3-client-secret
             KEYCLOAK_ADMIN: admin
             KEYCLOAK_ADMIN_PASSWORD: admin
+            AUTH_CALLBACK_URL: http://localhost:4301/api/v1/auth/callback
+            PUBLIC_WEB_URL: http://localhost:4300/
             # Guild every user is added to on first login (seeded in docker/postgres/seed.sql).
             DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
             # Required by env validation; set a real key in the shell or a root .env.

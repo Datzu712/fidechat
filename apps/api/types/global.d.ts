@@ -21,6 +21,10 @@ declare interface IEnvironmentVariables {
     KEYCLOAK_ADMIN: string;
     KEYCLOAK_ADMIN_PASSWORD: string;
 
+    // BFF login
+    AUTH_CALLBACK_URL: string; // Public URL of GET /api/v1/auth/callback, registered in the Keycloak client
+    PUBLIC_WEB_URL: string; // Where the browser lands after login and logout
+
     // chat yipiti
     OPENAI_API_KEY: string;
 }
