@@ -1,10 +1,6 @@
-import type React from 'react';
+import { Outlet } from 'react-router';
 
-export default function AuthLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function AuthLayout() {
     return (
         <div
             className="u-flex u-flex-column u-vertically-center u-horizontally-center"
@@ -14,7 +10,7 @@ export default function AuthLayout({
                 padding: '1rem',
             }}
         >
-            {children}
+            <Outlet />
         </div>
     );
 }

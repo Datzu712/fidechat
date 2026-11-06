@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useLocation, useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,14 +8,14 @@ import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
 import { UserStatusMenu } from '@/components/user-status-menu';
 import useAppContext from '@/hooks/useAppContext';
-import federatedLogout from '@/lib/federated-logout';
+import logout from '@/lib/logout';
 import useSocket from '@/hooks/useSocket';
 import { SocketEvents } from '@/constants/socketEvents';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
     const { socket, connected } = useSocket();
-    const router = useRouter();
-    const pathname = usePathname();
+    const navigate = useNavigate();
+    const { pathname } = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userStatus, setUserStatus] = useState<
         'online' | 'idle' | 'dnd' | 'offline'
@@ -49,10 +47,10 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
         server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/
 
     const handleChannelClick = (channelId: string) => {
-        router.push(`/servers/${serverId}/channels/${channelId}`);
+        navigate(`/servers/${serverId}/channels/${channelId}`);
     };
     const handleLogout = () => {
-        federatedLogout();
+        void logout();
     };
 
     return (

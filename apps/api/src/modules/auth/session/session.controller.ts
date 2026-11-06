@@ -1,14 +1,13 @@
 import { Controller, Get, HttpCode, Post, Query, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { Public } from '../auth.decorators';
+import { AuthenticatedUser, Public } from '../auth.decorators';
 import { LOGIN_TTL_SECONDS, SessionService } from './session.service';
 import { LOGIN_STATE_COOKIE, readCookie, SESSION_COOKIE, serializeCookie } from './cookie.util';
 
 const AUTH_PATH = '/api/v1/auth';
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 
-@Public()
 @Controller({ version: '1', path: '/auth' })
 export class SessionController {
     constructor(
@@ -16,6 +15,7 @@ export class SessionController {
         private readonly config: ConfigService<IEnvironmentVariables>,
     ) {}
 
+    @Public()
     @Get('login')
     login(@Res() reply: FastifyReply) {
         const { state, redirectUrl } = this.sessions.startAuthCodeFlow();
@@ -32,6 +32,7 @@ export class SessionController {
      * an unexpected issuer, a failed code exchange) sends the browser back to the web app with a
      * `login_error` query parameter instead of an API error page.
      */
+    @Public()
     @Get('callback')
     async callback(
         @Req() request: FastifyRequest,
@@ -66,11 +67,18 @@ export class SessionController {
     }
 
     /** Returns the Keycloak end-session URL; the web app navigates there to end the SSO session too. */
+    @Public()
     @Post('logout')
     @HttpCode(200)
     logout(@Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
         const url = this.sessions.logout(readCookie(request.headers.cookie, SESSION_COOKIE));
         void reply.header('set-cookie', serializeCookie(SESSION_COOKIE, '', 0, '/', this.sessions.isProduction));
         return { url };
+    }
+
+    /** The caller's identity, or 401 without a session: the web app's "am I logged in?" check. */
+    @Get('me')
+    me(@AuthenticatedUser() user: IReqUser) {
+        return { sub: user.sub, name: user.name, username: user.preferred_username, email: user.email };
     }
 }

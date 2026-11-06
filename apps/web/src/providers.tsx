@@ -1,20 +1,18 @@
-'use client';
-
 import { ReactNode } from 'react';
-import { SessionProvider } from 'next-auth/react';
 
 import QueryProvider from '@/lib/api/QueryProvider';
+import { AuthProvider } from '@/contexts/providers/AuthProvider';
 import { SocketProvider } from '@/contexts/providers/SocketProvider';
-import { AppProvider } from '../contexts/providers/AppProvider';
+import { AppProvider } from './contexts/providers/AppProvider';
 
 export function Providers({ children }: { children: ReactNode }) {
     return (
         <QueryProvider>
-            <SessionProvider refetchInterval={60}>
+            <AuthProvider>
                 <SocketProvider>
                     <AppProvider>{children}</AppProvider>
                 </SocketProvider>
-            </SessionProvider>
+            </AuthProvider>
         </QueryProvider>
     );
 }

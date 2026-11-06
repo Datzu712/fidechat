@@ -48,6 +48,10 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     SOCKET_NAMESPACE?: string | undefined;
 
     @IsString()
+    @IsOptional()
+    WEB_DIST_DIR?: string | undefined;
+
+    @IsString()
     PUBLIC_KEYCLOAK_URL!: string;
 
     // BFF login

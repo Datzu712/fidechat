@@ -1,19 +1,12 @@
-'use client';
-
-import type React from 'react';
 import { ChannelSidebar } from '@/components/channel-sidebar';
 // Import the MembersSidebar component
 import { MembersSidebar } from '@/components/members-sidebar';
-import { useSession } from 'next-auth/react';
-import { useParams } from 'next/navigation';
+import { Outlet, useParams } from 'react-router';
+import useAuth from '@/hooks/useAuth';
 
-export default function ServerLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const { status } = useSession();
-    const params = useParams<{ id: string }>();
+export default function ServerLayout() {
+    const { status } = useAuth();
+    const params = useParams<{ id: string }>() as { id: string };
 
     //useEffect(() => {
     // // Check if user is a member of this server
@@ -35,7 +28,9 @@ export default function ServerLayout({
     return (
         <>
             <ChannelSidebar serverId={params.id} />
-            <div className="flex-1 flex min-w-0">{children}</div>
+            <div className="flex-1 flex min-w-0">
+                <Outlet />
+            </div>
             <MembersSidebar
                 serverId={params.id}
                 className="hidden lg:flex shrink-0"

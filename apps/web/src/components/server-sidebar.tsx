@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useLocation, useNavigate } from 'react-router';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,21 +15,21 @@ import { CreateServerModal } from '@/components/create-server-modal';
 import { DiscoverServersModal } from '@/components/discover-servers-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import useAppContext from '@/hooks/useAppContext';
-import { useSession } from 'next-auth/react';
+import useAuth from '@/hooks/useAuth';
 
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState(false);
-    const { status } = useSession();
+    const { status } = useAuth();
     const { guilds } = useAppContext();
 
-    const router = useRouter();
-    const pathname = usePathname();
+    const navigate = useNavigate();
+    const { pathname } = useLocation();
 
     if (status !== 'authenticated') return null;
 
     const handleServerClick = (serverId: string) => {
-        router.push(`/servers/${serverId}`);
+        navigate(`/servers/${serverId}`);
     };
 
     return (
@@ -44,7 +42,7 @@ export function ServerSidebar() {
                                 <Button
                                     variant="ghost"
                                     className="h-12 w-12 rounded-full bg-primary/10 hover:bg-primary/20 transition-all"
-                                    onClick={() => router.push('/servers')}
+                                    onClick={() => navigate('/servers')}
                                 >
                                     <i className="fa-solid fa-home fa-lg" />
                                 </Button>

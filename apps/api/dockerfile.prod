@@ -18,6 +18,14 @@ COPY turbo.json ./
 COPY apps/api ./apps/api
 RUN pnpm --filter @fidechat/api build
 
+# ---- web SPA: the API serves it, so the browser and the BFF cookie share one origin ----
+FROM base AS web-builder
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json ./apps/web/
+RUN pnpm install --frozen-lockfile --filter @fidechat/web...
+COPY apps/web ./apps/web
+RUN pnpm --filter @fidechat/web build
+
 # ---- dependencias solo de produccion ----
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -37,6 +45,8 @@ COPY --from=prod-deps /repo/node_modules ./node_modules
 COPY --from=prod-deps /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /repo/apps/api/dist ./apps/api/dist
 COPY --from=builder /repo/apps/api/package.json ./apps/api/package.json
+COPY --from=web-builder /repo/apps/web/dist ./apps/web/dist
+ENV WEB_DIST_DIR=/app/apps/web/dist
 
 # Copy SQL scripts needed for application
 # COPY apps/api/sql ./apps/api/sql

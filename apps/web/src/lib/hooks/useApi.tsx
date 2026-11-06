@@ -1,9 +1,7 @@
-'use client';
-
 import { type AxiosRequestConfig } from 'axios';
 import { useCallback } from 'react';
 import { useToast } from '../../hooks/useToast';
-import { useAxiosClient } from '../api/client';
+import { apiClient } from '../api/client';
 
 export interface ApiRequestOptions<T> extends AxiosRequestConfig<T> {
     displayError?: boolean;
@@ -36,7 +34,7 @@ export interface ApiRequestOptions<T> extends AxiosRequestConfig<T> {
  * ```
  */
 export function useApi<R>() {
-    const axiosClient = useAxiosClient(); // Usa el cliente preconfigurado
+    const axiosClient = apiClient;
     const { toast } = useToast();
 
     const apiRequest = useCallback(

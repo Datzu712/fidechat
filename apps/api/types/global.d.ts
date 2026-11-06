@@ -3,6 +3,7 @@ declare interface IEnvironmentVariables {
     NODE_ENV: 'development' | 'production' | 'test';
     API_PORT: number;
     SOCKET_NAMESPACE?: string;
+    WEB_DIST_DIR?: string; // Built web SPA to serve from the API (production image only)
     CORS_ORIGIN: string;
 
     // fidechat config

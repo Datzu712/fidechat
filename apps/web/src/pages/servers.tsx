@@ -1,10 +1,8 @@
-'use client';
-
 import { NoServerSelected } from '@/components/no-server-selected';
-import { useSession } from 'next-auth/react';
+import useAuth from '@/hooks/useAuth';
 
 export default function ChannelsPage() {
-    const { status } = useSession();
+    const { status } = useAuth();
 
     if (status !== 'authenticated') {
         return (

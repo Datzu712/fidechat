@@ -1,15 +1,13 @@
-'use client';
-
-import type React from 'react';
+import { Navigate, Outlet } from 'react-router';
+import useAuth from '@/hooks/useAuth';
 import { useMockData } from '@/components/mock-data-provider';
 import { ServerSidebar } from '@/components/server-sidebar';
 
-export default function ChannelsLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function ChannelsLayout() {
+    const { status } = useAuth();
     const { currentUser } = useMockData();
+
+    if (status === 'unauthenticated') return <Navigate to="/login" replace />;
 
     if (!currentUser) {
         return (
@@ -22,7 +20,7 @@ export default function ChannelsLayout({
     return (
         <div className="flex h-screen overflow-hidden">
             <ServerSidebar />
-            {children}
+            <Outlet />
         </div>
     );
 }

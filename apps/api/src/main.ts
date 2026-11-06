@@ -13,6 +13,7 @@ import { Logger } from './common/logger/logger.service';
 import { AppModule } from './modules/app.module';
 import { requestLogger } from '@/common/logger/request.logger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { SpaFallbackFilter } from '@/common/spa-fallback.filter';
 
 const logger = new Logger('Fidechat', {
     logLevels: ['debug', 'error', 'warn', 'verbose', 'log'],
@@ -36,7 +37,13 @@ async function bootstrap() {
         logger,
     });
 
-    void app.register(helmet);
+    // The CSP also covers the SPA: avatars and guild icons are arbitrary https URLs, and the demo runs
+    // over plain http, where upgrade-insecure-requests would rewrite every asset to https.
+    void app.register(helmet, {
+        contentSecurityPolicy: {
+            directives: { imgSrc: ["'self'", 'data:', 'https:'], upgradeInsecureRequests: null },
+        },
+    });
     void app.register(compression);
     void app.register(fastifyCSRF);
 
@@ -51,6 +58,22 @@ async function bootstrap() {
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     });
     app.setGlobalPrefix('api');
+
+    if (process.env.WEB_DIST_DIR) {
+        // The production image also serves the web SPA, so the browser talks to one origin and the
+        // BFF session cookie needs no CORS.
+        app.useStaticAssets({
+            root: process.env.WEB_DIST_DIR,
+            prefix: '/',
+            // Vite puts a content hash in every file name under assets/, so they never change.
+            setHeaders: (res, filePath) => {
+                if (filePath.includes('/assets/')) {
+                    res.setHeader('cache-control', 'public, max-age=31536000, immutable');
+                }
+            },
+        });
+        app.useGlobalFilters(new SpaFallbackFilter());
+    }
 
     const config = new DocumentBuilder()
         .setTitle('Cats example')

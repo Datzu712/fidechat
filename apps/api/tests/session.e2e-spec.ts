@@ -156,6 +156,12 @@ describe('BFF session login E2E', () => {
         expectLoginError(response, 'access_denied');
     });
 
+    it('should report no session on /auth/me without a cookie', async () => {
+        const response = await app.inject({ method: 'GET', url: '/api/v1/auth/me' });
+
+        expect(response.statusCode).toBe(401);
+    });
+
     it('should reject an unknown session cookie', async () => {
         const response = await app.inject({
             method: 'GET',
@@ -175,6 +181,10 @@ describe('BFF session login E2E', () => {
             headers: { cookie: sessionCookie },
         });
         expect(sync.statusCode).toBe(200);
+
+        const me = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { cookie: sessionCookie } });
+        expect(me.statusCode).toBe(200);
+        expect(me.json()).toMatchObject({ sub: testUserId, username: TEST_USER.username, email: TEST_USER.email });
 
         // Cookie-authenticated writes from another origin are refused (CSRF).
         const foreignWrite = await app.inject({
@@ -232,5 +242,12 @@ describe('BFF session login E2E', () => {
             headers: { cookie: sessionCookie },
         });
         expect(afterLogout.statusCode).toBe(401);
+
+        const meAfterLogout = await app.inject({
+            method: 'GET',
+            url: '/api/v1/auth/me',
+            headers: { cookie: sessionCookie },
+        });
+        expect(meAfterLogout.statusCode).toBe(401);
     });
 });

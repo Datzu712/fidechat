@@ -1,9 +1,7 @@
-'use client';
-
 import { ChatArea } from '@/components/chat-area';
-import { useParams } from 'next/navigation';
+import { useParams } from 'react-router';
 import useAppContext from '@/hooks/useAppContext';
-import { useSession } from 'next-auth/react';
+import useAuth from '@/hooks/useAuth';
 
 export default function ChannelPage() {
     const params = useParams<{
@@ -11,7 +9,7 @@ export default function ChannelPage() {
         channelId: string;
     }>();
 
-    const { status } = useSession();
+    const { status } = useAuth();
     const { currentUser, channels, guilds } = useAppContext();
 
     if (status !== 'authenticated' || !currentUser) {

@@ -1,4 +1,3 @@
-'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
@@ -9,7 +8,7 @@ import {
 } from '@tanstack/react-query';
 import { ApiRequestOptions, useApi } from './useApi';
 import { AxiosError } from 'axios';
-import { useSession } from 'next-auth/react';
+import useAuth from '@/hooks/useAuth';
 
 type UseApiDataOptions<K> = {
     queryOptions?: Omit<UseQueryOptions<K>, 'queryKey' | 'queryFn'>;
@@ -36,7 +35,7 @@ export function useApiData<K = any>(
     options?: UseApiDataOptions<K>,
 ) {
     const { apiRequest } = useApi<K>();
-    const { status } = useSession();
+    const { status } = useAuth();
 
     return useQuery({
         queryKey: [url, options],

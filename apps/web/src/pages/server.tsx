@@ -1,25 +1,20 @@
-'use client';
-
 import '@/styles/serverPage.css';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useNavigate, useParams } from 'react-router';
+import useAuth from '@/hooks/useAuth';
 import useAppContext from '@/hooks/useAppContext';
 import { ChatArea } from '@/components/chat-area';
-import Image from 'next/image';
 import { Bot, PlusCircle, Lock } from 'lucide-react';
 import { CreateChannelModal } from '@/components/create-channel-modal';
 import { useState } from 'react';
 
 export default function ServerPage() {
-    const router = useRouter();
-    const params = useParams<{
-        id: string; // guildId
-        channelId: string;
-    }>();
+    const navigate = useNavigate();
+    // `:id` is always set on this route; `channelId` is not.
+    const params = useParams() as { id: string; channelId?: string };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { status } = useSession();
+    const { status } = useAuth();
     const { currentUser, channels, guilds } = useAppContext();
     if (status !== 'authenticated' || !currentUser) {
         return (
@@ -51,13 +46,10 @@ export default function ServerPage() {
                             <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping"></div>
                             {currentGuild?.iconUrl ? (
                                 <div className="w-full h-full p-2 relative">
-                                    <Image
+                                    <img
                                         src={currentGuild.iconUrl}
                                         alt={`${currentGuild.name} Icon`}
-                                        fill
-                                        sizes="64px"
-                                        preload
-                                        className="object-cover rounded-full animate-pulse"
+                                        className="absolute inset-0 h-full w-full object-cover rounded-full animate-pulse"
                                     />
                                 </div>
                             ) : (
@@ -162,13 +154,10 @@ export default function ServerPage() {
                                     <div className="absolute inset-0 bg-zinc-900/80"></div>
 
                                     {/* Imagen con efectos visuales mejorados */}
-                                    <Image
+                                    <img
                                         src={currentGuild.iconUrl}
                                         alt={`${currentGuild.name} Icon`}
-                                        fill
-                                        sizes="64px"
-                                        preload
-                                        className="object-cover scale-90 hover:scale-100 transition-all duration-500 ease-out rounded-full p-0.5"
+                                        className="absolute inset-0 h-full w-full object-cover scale-90 hover:scale-100 transition-all duration-500 ease-out rounded-full p-0.5"
                                         style={{
                                             filter: 'contrast(1.05) brightness(1.05)',
                                         }}
@@ -258,7 +247,7 @@ export default function ServerPage() {
                                     key={channel.id}
                                     className="px-3 py-1 bg-primary/10 rounded-full text-primary text-xs hover:bg-primary/20 transition-colors cursor-pointer"
                                     onClick={() =>
-                                        router.push(
+                                        navigate(
                                             `/servers/${params.id}/channels/${channel.id}`,
                                         )
                                     }

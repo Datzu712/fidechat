@@ -14,10 +14,10 @@
             "secret": "demo-v3-client-secret",
             "standardFlowEnabled": true,
             "directAccessGrantsEnabled": true,
-            "redirectUris": ["http://localhost:4300/*", "http://localhost:4301/api/v1/auth/callback"],
-            "webOrigins": ["http://localhost:4300"],
+            "redirectUris": ["http://localhost:4300/api/v1/auth/callback"],
             "attributes": {
-                "post.logout.redirect.uris": "http://localhost:4300/*"
+                "post.logout.redirect.uris": "http://localhost:4300/",
+                "pkce.code.challenge.method": "S256"
             },
             "protocolMappers": [
                 {

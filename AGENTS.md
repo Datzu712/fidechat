@@ -28,7 +28,7 @@ These are not suggestions. If one blocks the task, stop and ask.
 Fidechat is a Discord clone. It is a pnpm + Turborepo monorepo formed by merging two repos, with the full history of both kept:
 
 - `apps/api` (`@fidechat/api`): NestJS 12 on Fastify, PostgreSQL via Drizzle ORM, Keycloak auth, Socket.IO.
-- `apps/web` (`@fidechat/web`): Next.js 16 App Router, React 19, Tailwind v4, shadcn/Radix UI, NextAuth (Keycloak provider), TanStack Query.
+- `apps/web` (`@fidechat/web`): Vite SPA, React 19, React Router, Tailwind v4, shadcn/Radix UI, TanStack Query. It has no server: the API is its BFF.
 - `packages/` is empty for now. **No code is shared between apps**, so types and socket event names are duplicated on both sides (see "Cross-app contracts").
 
 ## Commands
@@ -37,7 +37,7 @@ Run from the repo root. Use `pnpm --filter @fidechat/api <script>` or `pnpm --fi
 
 ```bash
 pnpm install
-pnpm dev                 # both apps (api: nest --watch, web: next dev, Turbopack by default)
+pnpm dev                 # both apps (api: nest --watch on 8080, web: vite on 3000, proxying /api and /socket.io to 8080)
 pnpm check              # lint + typecheck + format check: the definition of done
 pnpm build | lint | typecheck | test | format
 pnpm --filter @fidechat/api lint:fix     # also available for web
@@ -55,7 +55,7 @@ pnpm db:push | db:studio
 
 Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, web on 3000.
 
-`docker compose up --build` at the repo root is a separate, self-contained demo: it builds both apps from the checkout into containers, with demo data from `docker/` (web 4300, API 4301, Keycloak 4380). A schema change that breaks `docker/postgres/seed.sql` must update it.
+`docker compose up --build` at the repo root is a separate, self-contained demo: it builds the api image, which also serves the web SPA (`WEB_DIST_DIR`), with demo data from `docker/` (app 4300, Keycloak 4380). A schema change that breaks `docker/postgres/seed.sql` must update it.
 
 ### Tests
 
@@ -70,7 +70,7 @@ pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"  
 
 ### Type checking
 
-**Neither build type-checks.** The api builds with SWC (`nest-cli.json` `builder: swc`), and the web has `typescript.ignoreBuildErrors: true`. Run `pnpm typecheck` (part of `pnpm check`); both apps pass with zero errors.
+**Neither build type-checks.** The api builds with SWC (`nest-cli.json` `builder: swc`), and the web builds with Vite, which only strips types. Run `pnpm typecheck` (part of `pnpm check`); both apps pass with zero errors.
 
 TypeScript is pinned to **6.x** on purpose: TS 7 ships no JS compiler API, which ts-jest, the Nest CLI and the tanstack plugin that oxlint loads all need. `@types/node` tracks the Node 26 runtime, not the latest major.
 
@@ -117,10 +117,12 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 ## Web architecture (`apps/web`)
 
-**Provider chain (`src/app/providers.tsx`).** The order is `QueryProvider` → `SessionProvider` → `SocketProvider` → `AppProvider`:
+**One origin.** The browser must see the web app and the API on the same origin, because auth is the API's HttpOnly session cookie: in dev Vite proxies `/api` and `/socket.io` to the API (`vite.config.ts`), and in the production image the API serves the built SPA. The web app has no env vars and never handles tokens.
 
-- NextAuth runs with the Keycloak provider and a JWT session strategy. Access-token refresh is implemented in `src/app/api/auth/[...nextauth]/route.ts`, and the access token is exposed as `session.accessToken`.
-- `SocketProvider` opens the Socket.IO connection once the session is authenticated, passing the access token.
+**Routes and providers.** `src/main.tsx` defines the React Router routes (pages in `src/pages/`). The root route (`src/root-layout.tsx`) wraps everything in `src/providers.tsx`: `QueryProvider` → `AuthProvider` → `SocketProvider` → `AppProvider`.
+
+- `AuthProvider` asks `GET /api/v1/auth/me` once and exposes `status` through `useAuth`. Logging in is a navigation to `/api/v1/auth/login` (`src/pages/login.tsx`); `src/lib/logout.ts` posts `/api/v1/auth/logout` and follows the Keycloak end-session URL.
+- `SocketProvider` opens the same-origin Socket.IO connection once the session is authenticated; the cookie authenticates the handshake.
 
 **State model (`src/contexts/providers/AppProvider.tsx`).**
 
@@ -130,9 +132,9 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 Components read this state through `useAppContext`. `MockDataProvider` is a leftover from the prototype that some layouts still use, and real data comes from `AppProvider`.
 
-**HTTP.** Requests go through `useApi` / `useApiData` / `useApiMutation` (`src/lib/hooks/`), built on an axios client (`src/lib/api/client.ts`) with base URL `${NEXT_PUBLIC_REST_API_URL}/api/v1`, a bearer token from the session, and re-sign-in on 401.
+**HTTP.** Requests go through `useApi` / `useApiData` / `useApiMutation` (`src/lib/hooks/`), built on an axios client (`src/lib/api/client.ts`) with base URL `/api/v1`; a 401 sends the user to `/login`.
 
-**UI and env.** `src/components/ui/` contains generated shadcn components (see `components.json`). The web app has no `.env` sample; the required variables are typed in `global-types/node-env.d.ts`. `NEXT_PUBLIC_SOCKET_URL` must point at the API origin, because Socket.IO is served on the API port.
+**UI.** `src/components/ui/` contains generated shadcn components (see `components.json`).
 
 ## Cross-app contracts (keep in sync by hand)
 

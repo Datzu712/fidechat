@@ -7,7 +7,7 @@ history of both:
 | Workspace  | Package          | Origin (archived)                                                   | Stack                                        |
 | ---------- | ---------------- | ------------------------------------------------------------------- | -------------------------------------------- |
 | `apps/api` | `@fidechat/api`  | [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) | NestJS 12 · Fastify · PostgreSQL + Drizzle · Keycloak · Socket.IO |
-| `apps/web` | `@fidechat/web`  | [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web)         | Next.js 16 · React 19 · Tailwind v4 · Radix UI   |
+| `apps/web` | `@fidechat/web`  | [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web)         | Vite · React 19 · Tailwind v4 · Radix UI         |
 
 ## Project history
 
@@ -27,7 +27,7 @@ AI-assisted refactor.
 | ------- | ----- | ------- | -------- | ---- | ------------- |
 | **v1** | Nov 2024 – Feb 2025 | Java 21 · Spring Boot 3.1 · JDBC (PostgreSQL) · JWT · WebSockets | React 18 · Vite | `api-v1-java` · `web-v1-vite` | No |
 | **v2** | Jul 2025 – Aug 2025 | NestJS 11 · Fastify · Oracle (PL/SQL packages and triggers) · Keycloak · Socket.IO | Next.js 15 · shadcn/ui · NextAuth | `api-v2-nest-oracle` · `web-v2-next` | No |
-| **v3** | Aug 2026 – today | NestJS 12 · PostgreSQL + Drizzle · Turborepo monorepo | Next.js 16 · Tailwind v4 | — | Yes, with Claude |
+| **v3** | Aug 2026 – today | NestJS 12 · PostgreSQL + Drizzle · Turborepo monorepo | Vite SPA · Tailwind v4 | — | Yes, with Claude |
 
 **How to verify it:**
 
@@ -65,10 +65,10 @@ Screenshots of each version are in [docs/screenshots/](docs/screenshots/README.m
 fidechat/
 ├── apps/
 │   ├── api/          # NestJS backend   (@fidechat/api)
-│   └── web/          # Next.js frontend (@fidechat/web)
+│   └── web/          # Vite SPA frontend (@fidechat/web)
 ├── packages/         # shared code (empty for now)
 ├── legacy/           # reproducible environments for v1 and v2
-├── docker/           # demo realm, seed and web Dockerfile for compose.yaml
+├── docker/           # demo realm and seed for compose.yaml
 ├── docs/             # history-map.md (hashes ↔ original repos), screenshots/
 ├── .github/          # CI workflows
 ├── compose.yaml      # quick launch of v3 (see below)
@@ -105,8 +105,8 @@ pnpm --filter @fidechat/api add <package>
 ## Quick launch (v3)
 
 To try the current version without setting anything up, `compose.yaml` builds
-the api and the web from your checkout and runs them with PostgreSQL, Keycloak
-and demo data. It needs only Docker with Compose:
+the api image from your checkout (it also serves the web SPA) and runs it with
+PostgreSQL, Keycloak and demo data. It needs only Docker with Compose:
 
 ```bash
 docker compose up --build   # -> http://localhost:4300
@@ -138,4 +138,5 @@ pnpm db:migrate                                     # create the schema with Dri
 ```
 
 The backend production build (`apps/api/dockerfile.prod`) uses the monorepo
-root as its context, because there is now a single pnpm lockfile, at the root.
+root as its context, because there is now a single pnpm lockfile, at the root. It also builds the web
+SPA and serves it from the API, so the browser and the API share one origin.
