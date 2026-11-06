@@ -7,7 +7,7 @@ import helmet from '@fastify/helmet';
 import compression from '@fastify/compress';
 import fastifyCSRF from '@fastify/csrf-protection';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import Fastify from 'fastify';
+import Fastify, { type FastifyReply } from 'fastify';
 
 import { Logger } from './common/logger/logger.service';
 import { AppModule } from './modules/app.module';
@@ -66,9 +66,10 @@ async function bootstrap() {
             root: process.env.WEB_DIST_DIR,
             prefix: '/',
             // Vite puts a content hash in every file name under assets/, so they never change.
+            // @fastify/static 10 passes the FastifyReply here; Nest's typing still describes the old raw response.
             setHeaders: (res, filePath) => {
                 if (filePath.includes('/assets/')) {
-                    res.setHeader('cache-control', 'public, max-age=31536000, immutable');
+                    (res as unknown as FastifyReply).header('cache-control', 'public, max-age=31536000, immutable');
                 }
             },
         });
