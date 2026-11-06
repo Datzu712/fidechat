@@ -1,5 +1,3 @@
-'use client';
-
 import { Check, Circle, Moon, Minus } from 'lucide-react';
 import {
     DropdownMenu,

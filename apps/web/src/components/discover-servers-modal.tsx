@@ -1,7 +1,4 @@
-'use client';
-
 import { useState } from 'react';
-import Image from 'next/image';
 import {
     Dialog,
     DialogContent,
@@ -78,14 +75,13 @@ export function DiscoverServersModal({
                                     className="group relative overflow-hidden rounded-lg border bg-card transition-colors hover:bg-accent flex flex-col items-start text-left p-4 space-y-3"
                                 >
                                     <div className="w-full aspect-video relative rounded-md overflow-hidden bg-muted">
-                                        <Image
+                                        <img
                                             src={
                                                 server.iconUrl ||
                                                 '/placeholder.jpg'
                                             }
                                             alt={server.name}
-                                            fill
-                                            className="object-cover transition-transform group-hover:scale-105"
+                                            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
                                         />
                                     </div>
                                     <div>

@@ -1,5 +1,6 @@
-# Fidechat v3 demo: builds the api and the web from this checkout and runs them
-# with PostgreSQL, Keycloak and demo data. For development, use `pnpm dev` with
+# Fidechat v3 demo: builds the api image (which also serves the web SPA, so both
+# share one origin for the BFF session cookie) and runs it with PostgreSQL,
+# Keycloak and demo data. For development, use `pnpm dev` with
 # apps/api/local-docker-compose.yaml instead.
 #
 #   docker compose up --build
@@ -7,7 +8,7 @@
 #
 # Keycloak is published as http://keycloak.localhost:4380. Browsers resolve
 # *.localhost to this machine, and inside Docker the same name is a network
-# alias, so the token issuer is identical for the browser, the API and NextAuth.
+# alias, so the token issuer is identical for the browser and the API.
 # The ports are fixed, because the realm's redirect URIs and the issuer use them.
 
 name: fidechat-v3
@@ -101,6 +102,8 @@ services:
             KEYCLOAK_CLIENT_SECRET: demo-v3-client-secret
             KEYCLOAK_ADMIN: admin
             KEYCLOAK_ADMIN_PASSWORD: admin
+            AUTH_CALLBACK_URL: http://localhost:4300/api/v1/auth/callback
+            PUBLIC_WEB_URL: http://localhost:4300/
             # Guild every user is added to on first login (seeded in docker/postgres/seed.sql).
             DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
             # Required by env validation; set a real key in the shell or a root .env.
@@ -108,29 +111,10 @@ services:
             # gpt-3.5-turbo (see the README's "Quick launch (v3)").
             OPENAI_API_KEY: ${OPENAI_API_KEY:-not-set}
         ports:
-            - '4301:8080'
+            - '4300:8080'
         depends_on:
             seed:
                 condition: service_completed_successfully
-            keycloak:
-                condition: service_healthy
-
-    web:
-        build:
-            context: .
-            dockerfile: docker/web/Dockerfile
-            args:
-                NEXT_PUBLIC_REST_API_URL: http://localhost:4301
-                NEXT_PUBLIC_SOCKET_URL: http://localhost:4301
-        environment:
-            NEXTAUTH_URL: http://localhost:4300
-            NEXTAUTH_SECRET: demo-v3-nextauth-secret
-            KEYCLOAK_CLIENT_ID: fidechat
-            KEYCLOAK_CLIENT_SECRET: demo-v3-client-secret
-            KEYCLOAK_ISSUER: http://keycloak.localhost:4380/realms/fidechat
-        ports:
-            - '4300:3000'
-        depends_on:
             keycloak:
                 condition: service_healthy
 

@@ -1,17 +1,15 @@
-'use client';
-
 /**
  * Todos:
- * - [ ] Manage reconnection sync issues. (atm are fixed by adding more ttl to user's token provided by Keycloak)
+ * - [ ] Manage reconnection sync issues. (the API refreshes the session token on each handshake)
  */
-import { useSession } from 'next-auth/react';
+import useAuth from '@/hooks/useAuth';
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { SocketContext } from '../socketContext';
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [connected, setConnected] = useState(false);
-    const { data, status } = useSession();
+    const { status } = useAuth();
     const socket = useRef<Socket | null>(null);
 
     useEffect(() => {
@@ -21,10 +19,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             socket.current.disconnect();
         }
 
-        socket.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-            auth: {
-                token: data?.accessToken,
-            },
+        // Same origin as the page: the handshake carries the BFF session cookie.
+        socket.current = io({
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
@@ -44,9 +40,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             setConnected(true);
             console.debug('Connected to socket server');
         });
-        socket.current.on('disconnect', () => {
+        socket.current.on('disconnect', (reason) => {
             setConnected(false);
-            console.debug('Disconnected from socket server');
+            console.debug('Disconnected from socket server', reason);
+            // The server drops the socket when the session is gone (for example after an API restart,
+            // since sessions live in memory): go back through the login if that is the case.
+            if (reason === 'io server disconnect') {
+                void fetch('/api/v1/auth/me').then((response) => {
+                    if (response.status === 401)
+                        window.location.href = '/login';
+                });
+            }
         });
         socket.current.on('connect_error', (err: Error) => {
             setConnected(false);
@@ -61,7 +65,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             }
             setConnected(false);
         };
-    }, [data?.accessToken, status]);
+    }, [status]);
 
     return (
         <SocketContext.Provider

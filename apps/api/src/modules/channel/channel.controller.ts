@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, ValidationPipe } from '@nestjs/common';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
 import { ChannelDto } from './dto/channel.dto';
 import { ChannelService } from './channel.service';
 

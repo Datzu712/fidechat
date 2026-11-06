@@ -1,6 +1,4 @@
-'use client';
-
-import federatedLogout from '@/lib/federated-logout';
+import logout from '@/lib/logout';
 import type React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 
@@ -451,7 +449,7 @@ export function MockDataProvider({ children }: { children: React.ReactNode }) {
         serverMembers,
         login,
         register,
-        logout: federatedLogout,
+        logout,
         createServer,
         createChannel,
         sendMessage,

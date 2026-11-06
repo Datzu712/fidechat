@@ -1,4 +1,4 @@
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
 import { Controller, Get } from '@nestjs/common';
 import { SyncService } from './sync.service';
 

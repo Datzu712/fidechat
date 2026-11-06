@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
 import { GuildDto } from './dto/guild.dto';
 import { GuildService } from './guild.service';
 

@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
-import { KeycloakModule } from './keycloak/keycloak.module';
+import { TokenVerifier } from './token-verifier.service';
+import { SessionController } from './session/session.controller';
+import { SessionService } from './session/session.service';
 
 @Module({
-    imports: [KeycloakModule],
+    controllers: [SessionController],
+    providers: [TokenVerifier, SessionService],
+    exports: [TokenVerifier, SessionService],
 })
 export class AuthModule {}

@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
         "lib": ["dom", "dom.iterable", "esnext"],
-        "allowJs": true,
-        "target": "ES6",
+        "target": "ES2022",
         "skipLibCheck": true,
         "strict": true,
         "noEmit": true,
@@ -12,24 +11,11 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "jsx": "react-jsx",
-        "incremental": true,
-        "typeRoots": ["./global-types", "./node_modules/@types"],
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ],
+        "types": ["vite/client"],
         "paths": {
             "@/*": ["./src/*"]
         }
     },
-    "include": [
-        "next-env.d.ts",
-        "**/*.ts",
-        "**/*.tsx",
-        ".next/types/**/*.ts",
-        "global-types",
-        ".next/dev/types/**/*.ts"
-    ],
-    "exclude": ["node_modules"]
+    "include": ["src", "vite.config.ts"],
+    "exclude": ["node_modules", "dist"]
 }

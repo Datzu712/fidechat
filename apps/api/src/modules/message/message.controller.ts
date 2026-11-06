@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Param, Patch, Post, ValidationPipe } from '@nestjs/common';
-import { AuthenticatedUser } from 'nest-keycloak-connect';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
 import { MessageService } from './message.service';
 import { MessageDto } from './dto/message.dto';
 @Controller({

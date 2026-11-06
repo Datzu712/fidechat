@@ -1,10 +1,10 @@
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import jwt, { type JwtPayload } from 'jsonwebtoken';
-import jwksClient, { JwksClient } from 'jwks-rsa';
 import { ConfigService } from '@nestjs/config';
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Logger } from '@/common/logger';
 import { IAUserModels } from '../ai/ai-command.service';
+import { TokenVerifier } from '../auth/token-verifier.service';
+import { SessionService } from '../auth/session/session.service';
 
 export enum SocketEvents {
     GUILD_CREATE = 'guildCreate',
@@ -64,13 +64,13 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
 
     @WebSocketServer()
     public server!: SocketServer;
-    private readonly client: JwksClient;
 
-    constructor(private readonly config: ConfigService<IEnvironmentVariables>) {
+    constructor(
+        private readonly config: ConfigService<IEnvironmentVariables>,
+        private readonly tokenVerifier: TokenVerifier,
+        private readonly sessions: SessionService,
+    ) {
         this.logger.log('Initializing WebSocket Gateway...');
-        this.client = jwksClient({
-            jwksUri: `${this.config.getOrThrow('PUBLIC_KEYCLOAK_URL')}/realms/${this.config.getOrThrow('KEYCLOAK_REALM')}/protocol/openid-connect/certs`,
-        });
 
         for (const user of IAUserModels) {
             this.#activeUsers.set(user.id, {
@@ -80,81 +80,59 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
         }
     }
 
-    private getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
-        this.client.getSigningKey(header.kid, function (err, key) {
-            if (err) {
-                Logger.error(err);
-                return callback(err);
-            }
-
-            const signingKey = key!.getPublicKey();
-            callback(null, signingKey);
-        });
-    }
-
     /**
      * todo: refuse handshake if no token is provided instead of disconnecting after connection is established
      */
-    public handleConnection(socket: SocketClient) {
-        let token: string | undefined = socket.handshake.auth.token;
-        if (!token) {
-            /*this.config.get('NODE_ENV') === 'development' && */
-            // In development mode, we allow a token to be passed through header "access-token" (for postman)
-            const accessToken = socket.handshake.headers['access-token'];
-            token = typeof accessToken === 'string' ? accessToken : undefined;
+    public async handleConnection(socket: SocketClient) {
+        if (!this.sessions.isAllowedOrigin(socket.handshake.headers.origin)) {
+            this.logger.error(
+                `${socket.handshake.address} tried to connect from origin ${socket.handshake.headers.origin}`,
+            );
+            socket.disconnect();
+            return;
         }
 
+        const token = await this.getAccessTokenFromSocket(socket);
         if (!token) {
             this.logger.error(`${socket.handshake.address} tried to connect without a token`);
             socket.disconnect();
             return;
         }
-        jwt.verify(
-            token,
-            this.getKey.bind(this),
-            {
-                issuer: `${this.config.getOrThrow('PUBLIC_KEYCLOAK_URL')}/realms/${this.config.getOrThrow('KEYCLOAK_REALM')}`,
-                complete: true,
-            },
-            (err: jwt.VerifyErrors | null, decoded: jwt.Jwt | undefined) => {
-                if (err || !decoded?.payload) {
-                    this.logger.error(err);
-                    this.logger.debug(decoded);
+        let user: IReqUser;
+        try {
+            user = await this.tokenVerifier.offline(token);
+        } catch (error) {
+            this.logger.error(`${socket.handshake.address} tried to connect with an invalid token: ${String(error)}`);
+            socket.disconnect();
+            return;
+        }
 
-                    socket.disconnect();
-                    this.logger.error(`${socket.handshake.address} tried to connect with an invalid token`);
-                } else {
-                    const payload = decoded.payload as JwtPayload;
-                    const userId = payload.sub;
+        void socket.join(user.sub);
+        socket.data.user = user;
 
-                    if (typeof userId !== 'string') {
-                        this.logger.error(`Invalid or missing 'sub' in token payload: ${JSON.stringify(payload)}`);
-                        socket.disconnect();
-                        return;
-                    }
+        this.#activeUsers.set(user.sub, {
+            status: SocketUserStatusEnum.ONLINE,
+            isTyping: false,
+        });
+        this.server.emit(SocketEvents.USER_STATUS_UPDATE, this.activeUsers);
 
-                    if (!userId) {
-                        this.logger.error(`Invalid token payload: ${JSON.stringify(payload)}`);
-                        socket.disconnect();
-                        return;
-                    }
-
-                    void socket.join(userId);
-                    socket.data.user = payload;
-
-                    this.#activeUsers.set(userId, {
-                        status: SocketUserStatusEnum.ONLINE,
-                        isTyping: false,
-                    });
-                    this.server.emit(SocketEvents.USER_STATUS_UPDATE, this.activeUsers);
-
-                    this.logger.debug(
-                        `Socket ${socket.id} connected with user data: ${JSON.stringify(socket.data.user)} (${socket.handshake.address} - socket: ${socket.id})`,
-                    );
-                    socket.emit('welcome', `Hi ${userId}, welcome to Fidechat!`);
-                }
-            },
+        this.logger.debug(
+            `Socket ${socket.id} connected with user data: ${JSON.stringify(socket.data.user)} (${socket.handshake.address} - socket: ${socket.id})`,
         );
+        socket.emit('welcome', `Hi ${user.sub}, welcome to Fidechat!`);
+    }
+
+    /**
+     * The token comes from the session cookie (`SessionService.resolveAccessToken`); only outside
+     * production `auth.token` or the `access-token` header (Postman) are read.
+     */
+    private async getAccessTokenFromSocket(socket: SocketClient): Promise<string | undefined> {
+        return this.sessions.resolveAccessToken(socket.handshake.headers.cookie, () => {
+            const authToken: unknown = socket.handshake.auth.token;
+            const header = socket.handshake.headers['access-token'];
+            if (typeof authToken === 'string') return authToken;
+            return typeof header === 'string' ? header : undefined;
+        });
     }
 
     public emitToUser(userId: string, event: keyof ServerToClientEvents, data: any) {
