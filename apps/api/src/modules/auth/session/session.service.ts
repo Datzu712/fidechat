@@ -2,13 +2,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import {
     Injectable,
+    Logger,
     type OnModuleDestroy,
     type OnModuleInit,
     ServiceUnavailableException,
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@/common/logger';
 import { readCookie, SESSION_COOKIE } from './cookie.util';
 import { TokenVerifier } from '../token-verifier.service';
 

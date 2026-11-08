@@ -8,34 +8,20 @@ import compression from '@fastify/compress';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import Fastify, { type FastifyReply } from 'fastify';
 
-import { Logger } from './common/logger/logger.service';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './modules/app.module';
-import { requestLogger } from '@/common/logger/request.logger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { SpaFallbackFilter } from '@/common/spa-fallback.filter';
-
-const logger = new Logger('Fidechat', {
-    logLevels: ['debug', 'error', 'warn', 'verbose', 'log'],
-    folderPath: './logs',
-    allowConsole: ['warn', 'error', 'log', 'debug'],
-    allowWriteFiles: true,
-    outputTemplate: '{timestamp} - {level} {context} {message}',
-    indents: {
-        level: 7,
-        context: 22,
-    },
-});
 
 async function bootstrap() {
     // TRUST_PROXY: proxies (IPs/CIDRs) allowed to set X-Forwarded-For, so request.ip is the real client.
     const fastifyInstance = Fastify({ trustProxy: process.env.TRUST_PROXY || false });
-    fastifyInstance.addHook('onSend', async (req, reply, payload) => {
-        requestLogger(req, reply, payload);
-    });
 
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(fastifyInstance), {
-        logger,
+        bufferLogs: true,
     });
+    const logger = app.get(Logger);
+    app.useLogger(logger);
 
     // The CSP also covers the SPA: avatars and guild icons are arbitrary https URLs, and the demo runs
     // over plain http, where upgrade-insecure-requests would rewrite every asset to https.
@@ -81,6 +67,6 @@ async function bootstrap() {
 
     await app.listen(process.env.API_PORT || 3000, '0.0.0.0');
 
-    logger.log(`Application is running on: ${await app.getUrl()} as ${process.env.NODE_ENV} environment.`);
+    logger.log(`Application is running on: ${await app.getUrl()} as ${process.env.NODE_ENV} environment.`, 'Bootstrap');
 }
 void bootstrap();

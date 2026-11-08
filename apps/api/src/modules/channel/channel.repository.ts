@@ -1,8 +1,7 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { Logger } from '@/common/logger';
 import { AuditService } from '@/infrastructure/database/audit/audit.service';
 import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
 import { type Channel, channel } from '@/infrastructure/database/schema';
