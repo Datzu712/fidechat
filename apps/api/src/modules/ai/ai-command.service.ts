@@ -1,10 +1,9 @@
 /* eslint-disable complexity -- there is no complexity just configuring prompts */
 
 // ai-command.service.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { Logger } from '@/common/logger';
 import { UserRepository } from '../user/user.repository';
 import type { AppUser } from '@/infrastructure/database/schema';
 import { Message } from '../message/message.repository';
@@ -71,10 +70,7 @@ export class AICommandService implements OnModuleInit {
                 await this.userRepository.upsertUser(user);
                 this.logger.debug(`IA bot ${user.username} created/updated successfully`);
             } catch (error) {
-                this.logger.error(
-                    `Error creating/updating IA bot ${user.username}:`,
-                    error instanceof Error ? error.message : 'Unknown error',
-                );
+                this.logger.error(new Error(`Error creating/updating IA bot ${user.username}`, { cause: error }));
             }
         }
 

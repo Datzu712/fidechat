@@ -92,6 +92,8 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 **Env vars** are validated at boot by class-validator (`src/config/environment.ts`, applied through `validateEnv`) and also declared as the ambient `IEnvironmentVariables` in `types/global.d.ts`. A new variable must be added to **both** files, and to `.env.sample`.
 
+**Logging** goes through `nestjs-pino` (`src/config/logger.ts`) to stdout: JSON in production, pino-pretty elsewhere, one line per request, with the request bound to every log made while handling it. Use `Logger` from `@nestjs/common` (`new Logger(Ctx)`), and pass errors as `Error` objects (wrap with `{ cause }`) rather than as extra arguments: the last argument is taken as the context.
+
 **Feature modules (`src/modules/<feature>/`)** follow the pattern controller → service → repository:
 
 - Controllers apply a per-parameter `ValidationPipe` with class-validator `groups` (`'create'` / `'update'`) on DTOs. DTOs are hand-written on purpose and are not derived from Drizzle rows: the DB uses `null` where payloads use absent fields.

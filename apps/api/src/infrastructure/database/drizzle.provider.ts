@@ -1,9 +1,8 @@
-import type { Provider } from '@nestjs/common';
+import { Logger, type Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import { Logger } from '@/common/logger';
 import * as schema from './schema';
 
 /** Token DI del cliente Drizzle. Reemplaza al antiguo `DATABASE_CONNECTION` de oracledb. */

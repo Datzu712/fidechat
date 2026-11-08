@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
 
 import { validateEnv } from '@/common/utils/env.validation';
+import { loggerParams } from '@/config/logger';
 import { DatabaseModule } from '@/infrastructure/database/database.module';
 import { ChannelModule } from './channel/channel.module';
 import { AuthModule } from './auth/auth.module';
@@ -20,6 +22,7 @@ import { AIModule } from './ai/ai.module';
             isGlobal: true,
             validate: validateEnv,
         }),
+        LoggerModule.forRoot(loggerParams),
         DatabaseModule,
         ChannelModule,
         AuthModule,

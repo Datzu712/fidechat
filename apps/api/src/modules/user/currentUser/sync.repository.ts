@@ -1,7 +1,6 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 
-import { Logger } from '@/common/logger';
 import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
 import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema';
 import { GatewayService, type SocketUserMetadata } from '@/modules/gateway/gateway.service';

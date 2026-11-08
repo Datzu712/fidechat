@@ -1,6 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { Logger } from '@/common/logger';
 import { DB_USER, type DrizzleExecutor } from '../drizzle.provider';
 import { auditLog } from '../schema';
 

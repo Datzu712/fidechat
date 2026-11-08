@@ -94,7 +94,7 @@ export class MessageService {
                 await this.notifyMessageCreation(iaResponse, aiMessage.id, channel.guildId, createdAtStr);
             }
         } catch (error) {
-            this.logger.error('Error processing AI response', error);
+            this.logger.error(new Error('Error processing AI response', { cause: error }));
         } finally {
             this.gateway.stopTypingIA(targetModel.botId);
         }
@@ -129,8 +129,6 @@ export class MessageService {
         try {
             const message = await this.getMessage(id);
             if (!message) throw new NotFoundException('Message not found');
-
-            console.log(message);
 
             const result = await this.messageRepository.deleteMessage(id);
 

@@ -5,8 +5,7 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets';
-import { type OnModuleDestroy, type OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
-import { Logger } from '@/common/logger';
+import { Logger, type OnModuleDestroy, type OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { IAUserModels } from '../ai/ai-command.service';
 import { TokenVerifier } from '../auth/token-verifier.service';
 import { SessionService } from '../auth/session/session.service';
