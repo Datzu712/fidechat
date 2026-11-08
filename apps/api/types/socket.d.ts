@@ -3,7 +3,6 @@ import type { Channel } from '@/modules/channel/channel.repository';
 import type { Guild } from '@/modules/guild/guild.repository';
 import type { Message } from '@/modules/message/message.repository';
 import type { Server, Socket } from 'socket.io';
-import type { JwtPayload } from 'jsonwebtoken';
 
 declare interface ClientToServerEvents {
     ping: () => void;
@@ -15,7 +14,8 @@ declare interface InterServerEvents {
 }
 
 declare interface SocketData {
-    user?: JwtPayload;
+    /** Set by the gateway's handshake middleware: every connected socket has it. */
+    user?: IReqUser;
 }
 
 declare global {

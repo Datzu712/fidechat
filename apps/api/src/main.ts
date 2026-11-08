@@ -5,7 +5,6 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { VersioningType } from '@nestjs/common';
 import helmet from '@fastify/helmet';
 import compression from '@fastify/compress';
-import fastifyCSRF from '@fastify/csrf-protection';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import Fastify, { type FastifyReply } from 'fastify';
 
@@ -28,7 +27,8 @@ const logger = new Logger('Fidechat', {
 });
 
 async function bootstrap() {
-    const fastifyInstance = Fastify();
+    // TRUST_PROXY: proxies (IPs/CIDRs) allowed to set X-Forwarded-For, so request.ip is the real client.
+    const fastifyInstance = Fastify({ trustProxy: process.env.TRUST_PROXY || false });
     fastifyInstance.addHook('onSend', async (req, reply, payload) => {
         requestLogger(req, reply, payload);
     });
@@ -45,18 +45,12 @@ async function bootstrap() {
         },
     });
     void app.register(compression);
-    void app.register(fastifyCSRF);
 
     app.useWebSocketAdapter(new IoAdapter(app));
     app.enableVersioning({
         type: VersioningType.URI,
     });
     app.enableShutdownHooks();
-    app.enableCors({
-        credentials: true,
-        //origin: process.env.CORS_ORIGIN,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    });
     app.setGlobalPrefix('api');
 
     if (process.env.WEB_DIST_DIR) {
@@ -87,8 +81,6 @@ async function bootstrap() {
 
     await app.listen(process.env.API_PORT || 3000, '0.0.0.0');
 
-    logger.log(
-        `Application is running on: ${await app.getUrl()} as ${process.env.NODE_ENV} environment. (CORS: ${process.env.CORS_ORIGIN})`,
-    );
+    logger.log(`Application is running on: ${await app.getUrl()} as ${process.env.NODE_ENV} environment.`);
 }
 void bootstrap();

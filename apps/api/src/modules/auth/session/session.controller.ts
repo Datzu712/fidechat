@@ -1,4 +1,15 @@
-import { Controller, Get, HttpCode, Post, Query, Req, Res } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    HttpCode,
+    Post,
+    Query,
+    Req,
+    Res,
+    ServiceUnavailableException,
+    UseGuards,
+} from '@nestjs/common';
+import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthenticatedUser, Public } from '../auth.decorators';
@@ -8,6 +19,8 @@ import { LOGIN_STATE_COOKIE, readCookie, SESSION_COOKIE, serializeCookie } from 
 const AUTH_PATH = '/api/v1/auth';
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 
+// The public login endpoints are rate-limited per client IP (AuthModule's ThrottlerModule).
+@UseGuards(ThrottlerGuard)
 @Controller({ version: '1', path: '/auth' })
 export class SessionController {
     constructor(
@@ -48,7 +61,10 @@ export class SessionController {
 
         let sid: string | undefined;
         if (!error && code && state && state === expectedState) {
-            sid = await this.sessions.finishAuthCodeFlow(code, state, iss).catch(() => undefined);
+            sid = await this.sessions.finishAuthCodeFlow(code, state, iss).catch((reason: unknown) => {
+                if (reason instanceof ServiceUnavailableException) error = 'service_unavailable';
+                return undefined;
+            });
         }
 
         if (!sid) {
@@ -77,6 +93,7 @@ export class SessionController {
     }
 
     /** The caller's identity, or 401 without a session: the web app's "am I logged in?" check. */
+    @SkipThrottle()
     @Get('me')
     me(@AuthenticatedUser() user: IReqUser) {
         return { sub: user.sub, name: user.name, username: user.preferred_username, email: user.email };

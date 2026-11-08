@@ -40,9 +40,20 @@ describe('Gateway handshake E2E', () => {
         await app.close();
     });
 
-    // Known failure: GatewayService accepts the connection and only then calls `socket.disconnect()`
-    // (see the todo on `handleConnection`). The handshake should be refused instead, so an
-    // unauthenticated client never gets a `connect` event.
+    it('should refuse the handshake from another origin', async () => {
+        const { port } = app.getHttpServer().address() as AddressInfo;
+        const socket = io(`http://localhost:${port}`, {
+            transports: ['websocket'],
+            extraHeaders: { origin: 'http://localhost:6666' },
+            reconnection: false,
+        });
+
+        const outcome = await handshakeOutcome(socket);
+        socket.disconnect();
+
+        expect(outcome).toBe('refused');
+    });
+
     it('should refuse the handshake when no token is provided', async () => {
         const { port } = app.getHttpServer().address() as AddressInfo;
         const socket = io(`http://localhost:${port}`, {
