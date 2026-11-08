@@ -1,7 +1,7 @@
 import { index, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { appUser } from './app-user.schema';
-import { channel } from './channel.schema';
+import { appUser } from './app-user.schema.js';
+import { channel } from './channel.schema.js';
 
 /** Equivalente Postgres de la antigua tabla Oracle `MESSAGE`. */
 export const message = pgTable(

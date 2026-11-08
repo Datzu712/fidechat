@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-import * as schema from './schema';
+import * as schema from './schema/index.js';
 
 /** Token DI del cliente Drizzle. Reemplaza al antiguo `DATABASE_CONNECTION` de oracledb. */
 export const DRIZZLE = Symbol('DRIZZLE_CONNECTION');

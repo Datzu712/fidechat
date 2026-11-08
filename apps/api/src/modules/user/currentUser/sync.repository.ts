@@ -1,9 +1,9 @@
 import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema';
-import { GatewayService, type SocketUserMetadata } from '@/modules/gateway/gateway.service';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
+import { GatewayService, type SocketUserMetadata } from '@/modules/gateway/gateway.service.js';
 
 export interface SyncGuild {
     id: string;

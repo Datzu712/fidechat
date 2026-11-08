@@ -1,2 +1,2 @@
-export type * from './kc-types';
-export * from './kc-client';
+export type * from './kc-types.js';
+export * from './kc-client.js';

@@ -1,8 +1,8 @@
 import { Global, Inject, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
 import type { Pool } from 'pg';
 
-import { AuditService } from './audit/audit.service';
-import { DbUserProvider, DRIZZLE, DrizzleProvider, PG_POOL, PgPoolProvider } from './drizzle.provider';
+import { AuditService } from './audit/audit.service.js';
+import { DbUserProvider, DRIZZLE, DrizzleProvider, PG_POOL, PgPoolProvider } from './drizzle.provider.js';
 
 @Global()
 @Module({

@@ -1,8 +1,8 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ChannelDto } from './dto/channel.dto';
-import { ChannelRepository } from './channel.repository';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { UserRepository } from '../user/user.repository';
+import { ChannelDto } from './dto/channel.dto.js';
+import { ChannelRepository } from './channel.repository.js';
+import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { UserRepository } from '../user/user.repository.js';
 
 @Injectable()
 export class ChannelService {

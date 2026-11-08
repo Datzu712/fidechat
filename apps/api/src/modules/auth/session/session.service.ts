@@ -9,8 +9,8 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { readCookie, SESSION_COOKIE } from './cookie.util';
-import { TokenVerifier } from '../token-verifier.service';
+import { readCookie, SESSION_COOKIE } from './cookie.util.js';
+import { TokenVerifier } from '../token-verifier.service.js';
 
 interface TokenResponse {
     access_token: string;

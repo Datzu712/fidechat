@@ -1,8 +1,8 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { GuildDto } from './dto/guild.dto';
-import { GuildRepository } from './guild.repository';
+import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { GuildDto } from './dto/guild.dto.js';
+import { GuildRepository } from './guild.repository.js';
 
 @Injectable()
 export class GuildService {

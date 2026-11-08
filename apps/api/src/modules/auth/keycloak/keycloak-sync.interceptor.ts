@@ -1,7 +1,7 @@
 import { CallHandler, type ExecutionContext, Injectable, type NestInterceptor } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 
-import { UserService } from '@/modules/user/user.service';
+import { UserService } from '@/modules/user/user.service.js';
 
 @Injectable()
 export class KeycloakSyncInterceptor implements NestInterceptor {

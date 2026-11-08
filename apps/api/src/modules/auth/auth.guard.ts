@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
-import { IS_PUBLIC } from './auth.decorators';
-import { TokenVerifier } from './token-verifier.service';
-import { SessionService } from './session/session.service';
+import { IS_PUBLIC } from './auth.decorators.js';
+import { TokenVerifier } from './token-verifier.service.js';
+import { SessionService } from './session/session.service.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 

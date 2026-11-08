@@ -61,7 +61,7 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
 
-The scripts run Jest as `node --experimental-vm-modules .../jest.js`: Nest 12, uuid and jwks-rsa (jose) are ESM-only, and Jest can only `require()` them with that flag. Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
+The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js` extension. The tests, however, are compiled to CommonJS by ts-jest (Jest's ESM loader trips on a `require(esm)` cycle inside the Nest packages), and the scripts run Jest as `node --experimental-vm-modules .../jest.js` so it can `require()` the ESM-only Nest 12, uuid and jwks-rsa (jose). Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
 
 ```bash
 pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file

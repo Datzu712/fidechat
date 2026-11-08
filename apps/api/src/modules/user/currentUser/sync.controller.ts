@@ -1,6 +1,6 @@
-import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators.js';
 import { Controller, Get } from '@nestjs/common';
-import { SyncService } from './sync.service';
+import { SyncService } from './sync.service.js';
 
 @Controller({
     version: '1',

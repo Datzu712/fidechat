@@ -2,10 +2,10 @@ import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundExcep
 import { eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { AuditService } from '@/infrastructure/database/audit/audit.service';
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema';
-import { GuildDto } from './dto/guild.dto';
+import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
+import { GuildDto } from './dto/guild.dto.js';
 
 export type { Guild };
 

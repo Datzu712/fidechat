@@ -2,10 +2,10 @@ import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestj
 import { asc, eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { AuditService } from '@/infrastructure/database/audit/audit.service';
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { type Channel, channel } from '@/infrastructure/database/schema';
-import { ChannelDto } from './dto/channel.dto';
+import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { type Channel, channel } from '@/infrastructure/database/schema/index.js';
+import { ChannelDto } from './dto/channel.dto.js';
 
 export type { Channel };
 

@@ -6,10 +6,10 @@ import {
     WebSocketServer,
 } from '@nestjs/websockets';
 import { Logger, type OnModuleDestroy, type OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
-import { IAUserModels } from '../ai/ai-command.service';
-import { TokenVerifier } from '../auth/token-verifier.service';
-import { SessionService } from '../auth/session/session.service';
-import { readCookie, SESSION_COOKIE } from '../auth/session/cookie.util';
+import { IAUserModels } from '../ai/ai-command.service.js';
+import { TokenVerifier } from '../auth/token-verifier.service.js';
+import { SessionService } from '../auth/session/session.service.js';
+import { readCookie, SESSION_COOKIE } from '../auth/session/cookie.util.js';
 
 const sessionRoom = (sid: string) => `session:${sid}`;
 /** setTimeout's upper bound (~24.8 days). */

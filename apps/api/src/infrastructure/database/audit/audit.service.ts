@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { DB_USER, type DrizzleExecutor } from '../drizzle.provider';
-import { auditLog } from '../schema';
+import { DB_USER, type DrizzleExecutor } from '../drizzle.provider.js';
+import { auditLog } from '../schema/index.js';
 
 export type AuditableTable = 'app_user' | 'guild' | 'guild_users' | 'channel' | 'message';
 export type AuditOperation = 'INSERT' | 'UPDATE' | 'DELETE';

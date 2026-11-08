@@ -1,9 +1,9 @@
 import { relations } from 'drizzle-orm';
 
-import { appUser } from './app-user.schema';
-import { channel } from './channel.schema';
-import { guild, guildUsers } from './guild.schema';
-import { message } from './message.schema';
+import { appUser } from './app-user.schema.js';
+import { channel } from './channel.schema.js';
+import { guild, guildUsers } from './guild.schema.js';
+import { message } from './message.schema.js';
 
 export const appUserRelations = relations(appUser, ({ many }) => ({
     memberships: many(guildUsers),

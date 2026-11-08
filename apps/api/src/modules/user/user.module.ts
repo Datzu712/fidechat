@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserRepository } from './user.repository';
-import { SyncModule } from './currentUser/sync.module';
-import { GatewayModule } from '../gateway/gateway.module';
+import { UserService } from './user.service.js';
+import { UserRepository } from './user.repository.js';
+import { SyncModule } from './currentUser/sync.module.js';
+import { GatewayModule } from '../gateway/gateway.module.js';
 
 @Module({
     imports: [SyncModule, GatewayModule],

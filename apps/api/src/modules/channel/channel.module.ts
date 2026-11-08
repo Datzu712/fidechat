@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ChannelController } from './channel.controller';
-import { ChannelService } from './channel.service';
-import { ChannelRepository } from './channel.repository';
-import { UserRepository } from '../user/user.repository';
-import { GatewayModule } from '../gateway/gateway.module';
+import { ChannelController } from './channel.controller.js';
+import { ChannelService } from './channel.service.js';
+import { ChannelRepository } from './channel.repository.js';
+import { UserRepository } from '../user/user.repository.js';
+import { GatewayModule } from '../gateway/gateway.module.js';
 
 @Module({
     controllers: [ChannelController],

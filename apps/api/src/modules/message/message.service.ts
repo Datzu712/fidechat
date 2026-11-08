@@ -1,10 +1,10 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { Message, type MessageCreationAttributes, MessageRepository } from './message.repository';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { Channel, ChannelRepository } from '../channel/channel.repository';
-import { UserRepository } from '../user/user.repository';
+import { Message, type MessageCreationAttributes, MessageRepository } from './message.repository.js';
+import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { Channel, ChannelRepository } from '../channel/channel.repository.js';
+import { UserRepository } from '../user/user.repository.js';
 import dayjs from 'dayjs';
-import { AICommandService } from '../ai/ai-command.service';
+import { AICommandService } from '../ai/ai-command.service.js';
 
 @Injectable()
 export class MessageService {

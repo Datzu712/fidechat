@@ -12,9 +12,9 @@ import {
 import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { AuthenticatedUser, Public } from '../auth.decorators';
-import { LOGIN_TTL_SECONDS, SessionService } from './session.service';
-import { LOGIN_STATE_COOKIE, readCookie, SESSION_COOKIE, serializeCookie } from './cookie.util';
+import { AuthenticatedUser, Public } from '../auth.decorators.js';
+import { LOGIN_TTL_SECONDS, SessionService } from './session.service.js';
+import { LOGIN_STATE_COOKIE, readCookie, SESSION_COOKIE, serializeCookie } from './cookie.util.js';
 
 const AUTH_PATH = '/api/v1/auth';
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;

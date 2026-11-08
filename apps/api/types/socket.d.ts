@@ -1,7 +1,7 @@
-import type { AppUser, GuildUser } from '@/infrastructure/database/schema';
-import type { Channel } from '@/modules/channel/channel.repository';
-import type { Guild } from '@/modules/guild/guild.repository';
-import type { Message } from '@/modules/message/message.repository';
+import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
+import type { Channel } from '@/modules/channel/channel.repository.js';
+import type { Guild } from '@/modules/guild/guild.repository.js';
+import type { Message } from '@/modules/message/message.repository.js';
 import type { Server, Socket } from 'socket.io';
 
 declare interface ClientToServerEvents {
