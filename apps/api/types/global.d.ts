@@ -4,7 +4,7 @@ declare interface IEnvironmentVariables {
     API_PORT: number;
     SOCKET_NAMESPACE?: string;
     WEB_DIST_DIR?: string; // Built web SPA to serve from the API (production image only)
-    CORS_ORIGIN: string;
+    TRUST_PROXY?: string; // Comma-separated proxy IPs/CIDRs trusted for X-Forwarded-For
 
     // fidechat config
     DEFAULT_GUILD_ID?: string;

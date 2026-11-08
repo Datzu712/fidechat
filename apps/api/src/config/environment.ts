@@ -10,9 +10,6 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     KEYCLOAK_ADMIN!: string;
     KEYCLOAK_ADMIN_PASSWORD!: string;
 
-    @IsString()
-    CORS_ORIGIN!: string;
-
     // Keycloak
     @IsString()
     KEYCLOAK_URL!: string;
@@ -50,6 +47,10 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     @IsString()
     @IsOptional()
     WEB_DIST_DIR?: string | undefined;
+
+    @IsString()
+    @IsOptional()
+    TRUST_PROXY?: string | undefined;
 
     @IsString()
     PUBLIC_KEYCLOAK_URL!: string;

@@ -29,6 +29,11 @@ function sanitizeData(data: unknown): unknown {
     return data;
 }
 
+/** OAuth parameters in the login callback URL (`code`, `state`, `session_state`) are never logged. */
+function redactUrl(url: string): string {
+    return url.replace(/([?&](?:code|state|session_state)=)[^&]*/g, '$1[REDACTED]');
+}
+
 /**
  * Formats payload for logging regardless of type
  */
@@ -48,14 +53,15 @@ function formatPayload(payload: unknown): string {
 
 export function requestLogger(request: FastifyRequest, reply: FastifyReply, payload: unknown): void {
     try {
-        const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+        // request.ip honours TRUST_PROXY, so a client cannot spoof its address with X-Forwarded-For.
+        const clientIp = request.ip;
         const sanitizedRequestBody = sanitizeData(request.body);
         const formattedPayload = formatPayload(payload);
 
         const logData = {
             service: 'router',
             method: request.method,
-            url: request.url,
+            url: redactUrl(request.url),
             statusCode: reply.statusCode,
             clientIp,
             userAgent: request.headers['user-agent'] ?? 'unknown',

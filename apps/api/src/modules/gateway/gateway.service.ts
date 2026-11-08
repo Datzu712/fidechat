@@ -1,10 +1,20 @@
-import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { ConfigService } from '@nestjs/config';
-import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnGatewayInit,
+    WebSocketGateway,
+    WebSocketServer,
+} from '@nestjs/websockets';
+import { type OnModuleDestroy, type OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { Logger } from '@/common/logger';
 import { IAUserModels } from '../ai/ai-command.service';
 import { TokenVerifier } from '../auth/token-verifier.service';
 import { SessionService } from '../auth/session/session.service';
+import { readCookie, SESSION_COOKIE } from '../auth/session/cookie.util';
+
+const sessionRoom = (sid: string) => `session:${sid}`;
+/** setTimeout's upper bound (~24.8 days). */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 export enum SocketEvents {
     GUILD_CREATE = 'guildCreate',
@@ -33,16 +43,14 @@ export interface SocketUserMetadata {
 }
 
 @WebSocketGateway({
-    cors: {
-        origin: process.env.CORS_ORIGIN,
-        credentials: true,
-    },
     namespace: process.env.SOCKET_NAMESPACE,
     serveClient: false,
     transports: ['websocket'],
     allowUpgrades: true,
 })
-export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnGatewayDisconnect, OnModuleInit {
+export class GatewayService
+    implements OnGatewayInit, OnGatewayConnection, OnModuleDestroy, OnGatewayDisconnect, OnModuleInit
+{
     private readonly logger = new Logger('GatewayService');
     readonly #activeUsers = new Map<string, Omit<SocketUserMetadata, 'userId'>>();
 
@@ -66,7 +74,6 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
     public server!: SocketServer;
 
     constructor(
-        private readonly config: ConfigService<IEnvironmentVariables>,
         private readonly tokenVerifier: TokenVerifier,
         private readonly sessions: SessionService,
     ) {
@@ -81,34 +88,55 @@ export class GatewayService implements OnGatewayConnection, OnModuleDestroy, OnG
     }
 
     /**
-     * todo: refuse handshake if no token is provided instead of disconnecting after connection is established
+     * Authenticates every handshake before Socket.IO accepts it: a refused client gets `connect_error`
+     * and never a `connect`. Logging out closes that session's sockets.
      */
-    public async handleConnection(socket: SocketClient) {
-        if (!this.sessions.isAllowedOrigin(socket.handshake.headers.origin)) {
-            this.logger.error(
-                `${socket.handshake.address} tried to connect from origin ${socket.handshake.headers.origin}`,
+    public afterInit(server: SocketServer) {
+        server.use((socket, next) => {
+            this.authenticate(socket).then(
+                (user) => {
+                    socket.data.user = user;
+                    next();
+                },
+                (error: unknown) => next(error as Error), // authenticate() only throws Errors
             );
-            socket.disconnect();
-            return;
+        });
+        this.sessions.events.on('ended', (sid: string) => {
+            this.server.in(sessionRoom(sid)).disconnectSockets();
+        });
+    }
+
+    private async authenticate(socket: SocketClient): Promise<IReqUser> {
+        const { origin } = socket.handshake.headers;
+        if (!this.sessions.isAllowedOrigin(origin)) {
+            this.logger.error(`${socket.handshake.address} tried to connect from origin ${origin}`);
+            throw new Error('Origin not allowed');
         }
 
-        const token = await this.getAccessTokenFromSocket(socket);
-        if (!token) {
-            this.logger.error(`${socket.handshake.address} tried to connect without a token`);
-            socket.disconnect();
-            return;
-        }
-        let user: IReqUser;
+        // The client only sees a fixed reason: `Service unavailable` (Keycloak down, retry later) or
+        // `Unauthorized` (log in again).
         try {
-            user = await this.tokenVerifier.offline(token);
+            const token = await this.getAccessTokenFromSocket(socket);
+            if (!token) throw new Error('No token');
+            return await this.tokenVerifier.offline(token);
         } catch (error) {
-            this.logger.error(`${socket.handshake.address} tried to connect with an invalid token: ${String(error)}`);
-            socket.disconnect();
-            return;
+            this.logger.error(`${socket.handshake.address} handshake refused: ${String(error)}`);
+            throw new Error(error instanceof ServiceUnavailableException ? 'Service unavailable' : 'Unauthorized');
         }
+    }
+
+    /** Only authenticated sockets get here (see `afterInit`). */
+    public handleConnection(socket: SocketClient) {
+        const user = socket.data.user!;
 
         void socket.join(user.sub);
-        socket.data.user = user;
+        const sid = readCookie(socket.handshake.headers.cookie, SESSION_COOKIE);
+        if (sid) void socket.join(sessionRoom(sid));
+
+        // The token is only checked at the handshake: close the socket when it expires, so the client
+        // reconnects and is checked again (the session refreshes the token).
+        const expiry = setTimeout(() => socket.disconnect(), Math.min(user.exp * 1000 - Date.now(), MAX_TIMEOUT_MS));
+        socket.once('disconnect', () => clearTimeout(expiry));
 
         this.#activeUsers.set(user.sub, {
             status: SocketUserStatusEnum.ONLINE,

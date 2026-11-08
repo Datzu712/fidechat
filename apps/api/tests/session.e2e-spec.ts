@@ -205,12 +205,11 @@ describe('BFF session login E2E', () => {
         });
         // oxlint-disable-next-line promise/avoid-new -- socket.io-client only exposes callbacks
         const foreignOutcome = await new Promise<string>((resolve) => {
-            foreignSocket.on('welcome', () => resolve('welcome'));
-            foreignSocket.on('disconnect', () => resolve('disconnected'));
-            foreignSocket.on('connect_error', () => resolve('disconnected'));
+            foreignSocket.on('connect', () => resolve('connected'));
+            foreignSocket.on('connect_error', () => resolve('refused'));
         });
         foreignSocket.disconnect();
-        expect(foreignOutcome).toBe('disconnected');
+        expect(foreignOutcome).toBe('refused');
 
         const socket = io(`http://localhost:${port}`, {
             transports: ['websocket'],
@@ -223,9 +222,18 @@ describe('BFF session login E2E', () => {
             socket.on('disconnect', () => reject(new Error('Socket was disconnected')));
             socket.on('connect_error', reject);
         });
-        socket.disconnect();
         expect(welcome).toContain(testUserId);
 
+        // Logging out from another origin is refused too.
+        const foreignLogout = await app.inject({
+            method: 'POST',
+            url: '/api/v1/auth/logout',
+            headers: { cookie: sessionCookie, origin: FOREIGN_ORIGIN },
+        });
+        expect(foreignLogout.statusCode).toBe(403);
+
+        // oxlint-disable-next-line promise/avoid-new -- socket.io-client only exposes callbacks
+        const kicked = new Promise<string>((resolve) => socket.on('disconnect', resolve));
         const logout = await app.inject({
             method: 'POST',
             url: '/api/v1/auth/logout',
@@ -235,6 +243,9 @@ describe('BFF session login E2E', () => {
         const endSession = new URL(logout.json<{ url: string }>().url);
         expect(endSession.searchParams.get('id_token_hint')).toBeTruthy();
         expect(cookiePair(logout, SESSION_COOKIE)).toBe(`${SESSION_COOKIE}=`);
+
+        // The session's open sockets are closed by the server on logout.
+        expect(await kicked).toBe('io server disconnect');
 
         const afterLogout = await app.inject({
             method: 'GET',
@@ -249,5 +260,16 @@ describe('BFF session login E2E', () => {
             headers: { cookie: sessionCookie },
         });
         expect(meAfterLogout.statusCode).toBe(401);
+    });
+
+    // Last on purpose: it uses up this app's /auth rate limit.
+    it('should rate-limit the auth endpoints per client', async () => {
+        const statuses: number[] = [];
+        for (let i = 0; i < 30; i++) {
+            statuses.push((await app.inject({ method: 'GET', url: '/api/v1/auth/login' })).statusCode);
+        }
+
+        expect(statuses).toContain(302);
+        expect(statuses.at(-1)).toBe(429);
     });
 });
