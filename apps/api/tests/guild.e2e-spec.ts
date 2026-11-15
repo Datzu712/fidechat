@@ -12,7 +12,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 import { AppModule } from '../src/modules/app.module.js';
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
-import { SocketEvents } from '@/modules/gateway/gateway.service.js';
+import { SocketEvents } from '@fidechat/shared';
 import type { Guild } from '@/modules/guild/guild.repository.js';
 
 describe('Guild Creation E2E', () => {

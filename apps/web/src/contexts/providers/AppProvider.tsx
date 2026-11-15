@@ -9,15 +9,14 @@ import type {
     ChannelWithMessages,
     Message,
     ConnectedUser,
-    SocketUserStatus,
-} from '@/types';
-import {
-    type SyncAppStateResponse,
-    AppContextType,
-    AppContext,
-} from '../appContext';
+    UserStatus,
+    SyncPayload,
+    Guild,
+    Channel,
+} from '@fidechat/shared';
+import { AppContextType, AppContext } from '../appContext';
 import { useSocketEvents } from '@/hooks/useSocketsEvents';
-import { SocketEvents } from '@/constants/socketEvents';
+import { SocketEvents } from '@fidechat/shared';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -27,34 +26,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [serverMembers, setServerMembers] = useState<GuildMember[]>([]);
     const [connectedUsers, setConnectedUsers] = useState<ConnectedUser[]>([]);
 
-    const syncAppState = useApiMutation<SyncAppStateResponse, void>(
-        '/users/@me/sync',
-        {
-            onSuccess: (data) => {
-                if (!data) return;
+    const syncAppState = useApiMutation<SyncPayload, void>('/users/@me/sync', {
+        onSuccess: (data) => {
+            if (!data) return;
 
-                console.log(data);
+            console.log(data);
 
-                setConnectedUsers(data.connectedUsers || []);
-                setUsers(() => {
-                    const updatedUsers = data.users || [];
-                    if (
-                        data.currentUser &&
-                        !updatedUsers.some(
-                            (user) => user.id === data.currentUser?.id,
-                        )
-                    ) {
-                        updatedUsers.push(data.currentUser);
-                    }
-                    return updatedUsers;
-                });
-                setGuilds(data.guilds || []);
-                setChannels(data.channels || []);
-                setCurrentUser(data.currentUser || null);
-            },
-            method: 'GET',
+            setConnectedUsers(data.connectedUsers || []);
+            setUsers(() => {
+                const updatedUsers = data.users || [];
+                if (
+                    data.currentUser &&
+                    !updatedUsers.some(
+                        (user) => user.id === data.currentUser?.id,
+                    )
+                ) {
+                    updatedUsers.push(data.currentUser);
+                }
+                return updatedUsers;
+            });
+            setGuilds(data.guilds || []);
+            setChannels(data.channels || []);
+            setCurrentUser(data.currentUser || null);
         },
-    );
+        method: 'GET',
+    });
 
     const getServerChannels = useCallback(
         (serverId: string) => {
@@ -65,19 +61,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const { connected, socket } = useSocket();
 
-    const handleGuildCreate = useCallback((newGuild: GuildWithMembers) => {
-        setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
+    // The event carries the bare guild; its only member so far is the owner.
+    const handleGuildCreate = useCallback((newGuild: Guild) => {
+        setGuilds((prevGuilds) => [
+            ...prevGuilds,
+            { ...newGuild, members: [{ userId: newGuild.ownerId }] },
+        ]);
     }, []);
 
-    const handleChannelCreate = useCallback(
-        (newChannel: ChannelWithMessages) => {
-            setChannels((prevChannels) => [
-                ...prevChannels,
-                { ...newChannel, messages: [] },
-            ]);
-        },
-        [],
-    );
+    const handleChannelCreate = useCallback((newChannel: Channel) => {
+        setChannels((prevChannels) => [
+            ...prevChannels,
+            { ...newChannel, messages: [] },
+        ]);
+    }, []);
 
     const handleForceSync = useCallback(() => {
         syncAppState.mutate();
@@ -201,7 +198,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const getUserStatus = useCallback(
-        (userId: string): SocketUserStatus | undefined => {
+        (userId: string): UserStatus | undefined => {
             return connectedUsers.find((user) => user.userId === userId)
                 ?.status;
         },

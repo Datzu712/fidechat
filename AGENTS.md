@@ -29,7 +29,7 @@ Fidechat is a Discord clone. It is a pnpm + Turborepo monorepo formed by merging
 
 - `apps/api` (`@fidechat/api`): NestJS 12 on Fastify, PostgreSQL via Drizzle ORM, Keycloak auth, Socket.IO.
 - `apps/web` (`@fidechat/web`): Vite SPA, React 19, React Router, Tailwind v4, shadcn/Radix UI, TanStack Query. It has no server: the API is its BFF.
-- `packages/` is empty for now. **No code is shared between apps**, so types and socket event names are duplicated on both sides (see "Cross-app contracts").
+- `packages/shared` (`@fidechat/shared`): the contracts both apps import: socket events, wire shapes and request payloads (see "Cross-app contracts").
 
 ## Commands
 
@@ -37,7 +37,7 @@ Run from the repo root. Use `pnpm --filter @fidechat/api <script>` or `pnpm --fi
 
 ```bash
 pnpm install
-pnpm dev                 # both apps (api: nest --watch on 8080, web: vite on 3000, proxying /api and /socket.io to 8080)
+pnpm dev                 # turbo watch: both apps (api: nest --watch on 8080, web: vite on 3000, proxying /api and /socket.io to 8080)
 pnpm check              # lint + typecheck + format check: the definition of done
 pnpm build | lint | typecheck | test | format
 pnpm --filter @fidechat/api lint:fix     # also available for web
@@ -138,10 +138,13 @@ Components read this state through `useAppContext`. `MockDataProvider` is a left
 
 **UI.** `src/components/ui/` contains generated shadcn components (see `components.json`).
 
-## Cross-app contracts (keep in sync by hand)
+## Cross-app contracts (`packages/shared`)
 
-- **Socket events.** Defined in the api `SocketEvents` enum (`gateway.service.ts`) and the `ServerToClientEvents` payload types (`apps/api/types/socket.d.ts`). The web side mirrors them in `src/constants/socketEvents.ts` and the handler types in `src/hooks/useSocketsEvents.ts`. Adding an event means touching all four, plus the handler in `AppProvider`.
-- **Response shapes.** The api returns camelCase Drizzle rows. The web mirrors them in `src/types/*.d.ts`, and `SyncAppStateResponse` in `src/contexts/appContext.ts` mirrors `SyncRepository`.
+Anything both apps need lives in `@fidechat/shared`, never as a copy in either app. Its `src/` is grouped by kind, one declaration per file, with the kind as the suffix: `enums/*.enum.ts`, `types/*.type.ts` (aliases and unions) and `interfaces/{entities,socket,responses,payloads}/*.interface.ts`. Apps import only from the package root (`@fidechat/shared`). It holds no runtime dependencies: Drizzle rows, DTO classes and validation stay in the api.
+
+- **It is compiled.** `tsc` emits ESM to `dist/`, which is what both apps load, so `dev`, `lint` and `typecheck` depend on `^build`. `pnpm dev` runs `turbo watch dev`: an edit in `shared` rebuilds it, restarts the api (`@fidechat/api#dev` is `interruptible`) and Vite hot-reloads the web. With `futureFlags.watchUsingTaskInputs`, that task's `inputs` are only `package.json`, so turbo restarts it for dependency changes and leaves api source edits to `nest --watch` (an empty `inputs` list means "default" and would restart it on every edit).
+- **Socket events.** `SocketEvents` plus the `ServerToClientEvents` / `ClientToServerEvents` maps. Adding an event means touching the enum, the map and the handler in `AppProvider`.
+- **Wire shapes.** Entities are the JSON the api sends: `T | null` for nullable columns and `createdAt` as an ISO string, not the Drizzle `Date`. Payload interfaces are implemented by the api DTOs (`class GuildDto implements GuildPayload`).
 
 <!-- BEGIN:turborepo-agent-rules -->
 

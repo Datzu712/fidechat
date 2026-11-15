@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import { UserRepository } from './user.repository.js';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { SocketEvents } from '@fidechat/shared';
+import { GatewayService } from '../gateway/gateway.service.js';
 import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
 
 @Injectable()

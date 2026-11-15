@@ -66,7 +66,8 @@ fidechat/
 ├── apps/
 │   ├── api/          # NestJS backend   (@fidechat/api)
 │   └── web/          # Vite SPA frontend (@fidechat/web)
-├── packages/         # shared code (empty for now)
+├── packages/
+│   └── shared/       # contracts shared by both apps (@fidechat/shared)
 ├── legacy/           # reproducible environments for v1 and v2
 ├── docker/           # demo realm and seed for compose.yaml
 ├── docs/             # history-map.md (hashes ↔ original repos), screenshots/

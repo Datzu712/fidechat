@@ -1,3 +1,4 @@
+/** Socket.IO event names. Server to client unless noted otherwise. */
 export enum SocketEvents {
     GUILD_CREATE = 'guildCreate',
     CHANNEL_CREATE = 'channelCreate',

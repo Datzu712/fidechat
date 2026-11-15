@@ -1,0 +1,22 @@
+{
+    "name": "@fidechat/shared",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Contracts shared by the Fidechat api and web app: socket events, wire shapes and payloads",
+    "license": "MIT",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "lint": "oxlint --type-aware",
+        "typecheck": "tsc --noEmit -p tsconfig.json"
+    },
+    "devDependencies": {
+        "typescript": "^6.0.3"
+    }
+}

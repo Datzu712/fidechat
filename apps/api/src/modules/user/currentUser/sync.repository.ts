@@ -3,7 +3,9 @@ import { and, eq, inArray, ne } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
 import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
-import { GatewayService, type SocketUserMetadata } from '@/modules/gateway/gateway.service.js';
+import type { ConnectedUser } from '@fidechat/shared';
+
+import { GatewayService } from '@/modules/gateway/gateway.service.js';
 
 export interface SyncGuild {
     id: string;
@@ -35,7 +37,7 @@ export interface SyncPayload {
     channels: SyncChannel[];
     currentUser: { id: string; username: string; email: string; isBot: boolean; avatarUrl: string | null };
     users: Array<{ id: string; username: string; avatarUrl: string | null; isBot: boolean }>;
-    connectedUsers: SocketUserMetadata[];
+    connectedUsers: ConnectedUser[];
 }
 
 /**

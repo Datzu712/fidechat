@@ -3,7 +3,6 @@ export interface Message {
     content: string;
     authorId: string;
     channelId: string;
-    createdAt: Date;
+    /** ISO 8601: dates travel as strings over JSON. */
+    createdAt: string;
 }
-
-export type MessageCreationAttributes = Omit<Message, 'id' | 'createdAt'>;

@@ -1,6 +1,7 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { SocketEvents } from '@fidechat/shared';
+import { GatewayService } from '../gateway/gateway.service.js';
 import { GuildDto } from './dto/guild.dto.js';
 import { GuildRepository } from './guild.repository.js';
 

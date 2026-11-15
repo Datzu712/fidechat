@@ -7,7 +7,7 @@
     "scripts": {
         "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
         "build": "turbo run build",
-        "dev": "turbo run dev",
+        "dev": "turbo watch dev",
         "lint": "turbo run lint",
         "test": "turbo run test",
         "test:e2e": "turbo run test:e2e",

@@ -1,6 +1,7 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { Message, type MessageCreationAttributes, MessageRepository } from './message.repository.js';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service.js';
+import { SocketEvents } from '@fidechat/shared';
+import { GatewayService } from '../gateway/gateway.service.js';
 import { Channel, ChannelRepository } from '../channel/channel.repository.js';
 import { UserRepository } from '../user/user.repository.js';
 import dayjs from 'dayjs';

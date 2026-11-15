@@ -10,16 +10,14 @@ import { UserStatusMenu } from '@/components/user-status-menu';
 import useAppContext from '@/hooks/useAppContext';
 import logout from '@/lib/logout';
 import useSocket from '@/hooks/useSocket';
-import { SocketEvents } from '@/constants/socketEvents';
+import { SocketEvents, type UserStatus } from '@fidechat/shared';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
     const { socket, connected } = useSocket();
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [userStatus, setUserStatus] = useState<
-        'online' | 'idle' | 'dnd' | 'offline'
-    >('online');
+    const [userStatus, setUserStatus] = useState<UserStatus>('online');
     const {
         currentUser,
         guilds: servers,

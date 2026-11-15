@@ -1,6 +1,6 @@
-import { SocketUserStatus } from '@/types';
+import type { UserStatus } from '@fidechat/shared';
 
-export const getUserStatusPriority = (status: SocketUserStatus) => {
+export const getUserStatusPriority = (status: UserStatus | undefined) => {
     switch (status) {
         case 'online':
             return 0;

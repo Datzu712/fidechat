@@ -1,3 +1,4 @@
+import type { UserStatus } from '@fidechat/shared';
 import { Check, Circle, Moon, Minus } from 'lucide-react';
 import {
     DropdownMenu,
@@ -27,11 +28,9 @@ const statusOptions = [
     },
 ];
 
-type Status = 'online' | 'idle' | 'dnd' | 'offline';
-
 interface UserStatusMenuProps {
-    status: Status;
-    onStatusChange: (status: Status) => void;
+    status: UserStatus;
+    onStatusChange: (status: UserStatus) => void;
 }
 
 export function UserStatusMenu({
@@ -61,7 +60,7 @@ export function UserStatusMenu({
                             key={option.value}
                             className="px-3 py-2 cursor-pointer flex items-center gap-3 text-sm"
                             onClick={() =>
-                                onStatusChange(option.value as Status)
+                                onStatusChange(option.value as UserStatus)
                             }
                         >
                             <Icon className={`h-4 w-4 ${option.color}`} />

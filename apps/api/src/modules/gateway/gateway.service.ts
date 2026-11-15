@@ -6,6 +6,7 @@ import {
     WebSocketServer,
 } from '@nestjs/websockets';
 import { Logger, type OnModuleDestroy, type OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
+import { type ConnectedUser, type ServerToClientEvents, SocketEvents } from '@fidechat/shared';
 import { IAUserModels } from '../ai/ai-command.service.js';
 import { TokenVerifier } from '../auth/token-verifier.service.js';
 import { SessionService } from '../auth/session/session.service.js';
@@ -15,30 +16,12 @@ const sessionRoom = (sid: string) => `session:${sid}`;
 /** setTimeout's upper bound (~24.8 days). */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
-export enum SocketEvents {
-    GUILD_CREATE = 'guildCreate',
-    CHANNEL_CREATE = 'channelCreate',
-    MESSAGE_CREATE = 'messageCreate',
-    MESSAGE_UPDATE = 'messageUpdate',
-    MESSAGE_DELETE = 'messageDelete',
-    MEMBER_ADD = 'memberAdd',
-    FORCE_SYNC = 'forceSync',
-    USER_STATUS_UPDATE = 'userStatusUpdate',
-    UPDATE_CURRENT_STATUS = 'updateCurrentClientStatus', // client -> server
-}
-export type SocketUserStatus = 'online' | 'idle' | 'dnd';
-export enum SocketUserStatusEnum {
+/** Internal presence values; the wire type is the shared `UserStatus`. */
+enum SocketUserStatusEnum {
     ONLINE = 'online',
     IDLE = 'idle',
     DND = 'dnd',
     OFFLINE = 'offline',
-}
-
-export interface SocketUserMetadata {
-    userId: string;
-    status: SocketUserStatus;
-    typingInChannel?: string;
-    isTyping: boolean;
 }
 
 @WebSocketGateway({
@@ -51,7 +34,7 @@ export class GatewayService
     implements OnGatewayInit, OnGatewayConnection, OnModuleDestroy, OnGatewayDisconnect, OnModuleInit
 {
     private readonly logger = new Logger('GatewayService');
-    readonly #activeUsers = new Map<string, Omit<SocketUserMetadata, 'userId'>>();
+    readonly #activeUsers = new Map<string, Omit<ConnectedUser, 'userId'>>();
 
     /**
      * Retrieves a list of active users and their statuses.
@@ -62,7 +45,7 @@ export class GatewayService
      * - `userId`: The unique identifier of the user.
      * - `status`: The current status of the user.
      */
-    get activeUsers(): SocketUserMetadata[] {
+    get activeUsers(): ConnectedUser[] {
         return Array.from(this.#activeUsers.entries()).map(([userId, data]) => ({
             userId,
             ...data,
@@ -199,7 +182,7 @@ export class GatewayService
         this.logger.log('WebSocket server closed...');
     }
 
-    public handleUserStatusUpdate(socket: SocketClient, metadata: SocketUserMetadata) {
+    public handleUserStatusUpdate(socket: SocketClient, metadata: Partial<ConnectedUser>) {
         if (!socket.data.user) {
             socket.disconnect();
             return;
@@ -215,7 +198,7 @@ export class GatewayService
 
     public onModuleInit() {
         this.server.on('connection', (socket: SocketClient) => {
-            socket.on(SocketEvents.UPDATE_CURRENT_STATUS, (data: SocketUserMetadata) => {
+            socket.on(SocketEvents.UPDATE_CURRENT_STATUS, (data) => {
                 this.logger.debug(`User ${socket.id} updated status to: ${JSON.stringify(data)}`);
 
                 this.handleUserStatusUpdate(socket, data);
