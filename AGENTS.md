@@ -59,7 +59,7 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 ### Tests
 
-The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env` (including `OPENAI_API_KEY`, since env validation fails without it).
+The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env`. The AI keys are optional: without them the bots stay off. `tests/ai-bots.spec.ts` is a plain unit test that needs no infrastructure.
 
 The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js` extension. The tests, however, are compiled to CommonJS by ts-jest (Jest's ESM loader trips on a `require(esm)` cycle inside the Nest packages), and the scripts run Jest as `node --experimental-vm-modules .../jest.js` so it can `require()` the ESM-only Nest 12, uuid and jwks-rsa (jose). Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
 
@@ -116,7 +116,7 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 - Presence is `PresenceService`, an in-memory map that broadcasts its own changes and assumes a single API instance.
 - Inbound events are manual `socket.on` listeners, not `@SubscribeMessage`, because the global guard and interceptor assume HTTP.
 
-**AI bots (`src/modules/ai/`).** Three bot users with hard-coded UUIDs (`IAUserModels`) are upserted on module init and are always shown online. When a non-bot message matches a bot's name pattern, `MessageService` generates the reply asynchronously (fire-and-forget) through OpenAI and toggles the bot's typing status.
+**AI bots (`src/modules/ai/`).** Three bots are defined as data in `BOTS` (`bots.ts`: hard-coded user UUIDs, trigger regex, system prompt); their users are upserted on module init and are always shown online. When a non-bot message matches a bot's trigger, `MessageService` loads the last 30 channel messages and generates the reply asynchronously (fire-and-forget) through the Vercel AI SDK, toggling the bot's typing status. The model comes from `AI_MODEL` (`provider:model`, `anthropic` or `openai`, default `anthropic:claude-haiku-5-5`); without that provider's key the bots stay off.
 
 ## Web architecture (`apps/web`)
 

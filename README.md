@@ -120,12 +120,11 @@ The ports are fixed, because the Keycloak realm's redirect URIs use them, and
 the demo users and data live in `docker/`.
 
 > [!NOTE]
-> **AI bots and `OPENAI_API_KEY`.** The api needs the variable to boot, so
-> `compose.yaml` passes the placeholder `not-set` when it is missing; the bots
-> still show up online, but stay silent. To give them a real key, set
-> `OPENAI_API_KEY` in the shell or in a root `.env` (git-ignored, so it is the
-> right place for it). Even with a valid key the bots do not answer yet: v3
-> still asks for `gpt-3.5-turbo`, which OpenAI has retired. (ima changed it to the sdk from vercel in the next prs i hope)
+> **AI bots.** They are optional: without a key they show up online but stay
+> silent. To turn them on, set `ANTHROPIC_API_KEY` in the shell or in a root
+> `.env` (git-ignored, so it is the right place for it). The model defaults to
+> `anthropic:claude-haiku-5-5`; set `AI_MODEL=openai:<model>` and
+> `OPENAI_API_KEY` to use OpenAI instead.
 
 ## Infrastructure services
 
