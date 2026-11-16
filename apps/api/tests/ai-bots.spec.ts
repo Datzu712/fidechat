@@ -1,5 +1,6 @@
 import { BOTS, detectBot, detectNamedBots } from '@/modules/ai/bots.js';
 import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH } from '@/modules/ai/prompt.js';
+import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
 
 describe('detectBot', () => {
     it.each([
@@ -78,4 +79,21 @@ describe('detectNamedBots', () => {
         expect(detectNamedBots('pedro y chayanne').map((b) => b.user.username)).toEqual(['chayanne', 'pedro_pascal']));
     it('returns all three when all are named', () => expect(detectNamedBots('gpt, chayanne y pedro')).toHaveLength(3));
     it('returns [] when none is named', () => expect(detectNamedBots('hola a todos')).toEqual([]));
+});
+
+describe('SpontaneousCaps', () => {
+    const MIN = 60_000;
+    it('allows the first spontaneous reply', () => expect(new SpontaneousCaps().canSpeak('c1', 'b1', 0)).toBe(true));
+    it('blocks the same bot in the same channel for 10 minutes', () => {
+        const caps = new SpontaneousCaps();
+        caps.record('c1', 'b1', 0);
+        expect(caps.canSpeak('c1', 'b1', 10 * MIN - 1)).toBe(false);
+        expect(caps.canSpeak('c1', 'b1', 10 * MIN)).toBe(true);
+    });
+    it('tracks channels and bots independently', () => {
+        const caps = new SpontaneousCaps();
+        caps.record('c1', 'b1', 0);
+        expect(caps.canSpeak('c2', 'b1', 1)).toBe(true);
+        expect(caps.canSpeak('c1', 'b2', 1)).toBe(true);
+    });
 });
