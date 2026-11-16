@@ -10,7 +10,7 @@ import { io, type Socket } from 'socket.io-client';
 
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
 
-import { IAUserModels } from '../src/modules/ai/ai-command.service.js';
+import { BOTS } from '../src/modules/ai/bots.js';
 import { AppModule } from '../src/modules/app.module.js';
 
 /** Resolves with the next `event` payload that matches, or rejects after 3s. */
@@ -122,7 +122,7 @@ describe('Presence and membership E2E', () => {
         });
         expect(res.statusCode).toBe(200);
         const { connectedUsers } = res.json<SyncPayload>();
-        const botId = IAUserModels[0].id;
+        const botId = BOTS[0].user.id;
         expect(entryOf(connectedUsers, bob.id)).toEqual({ userId: bob.id, status: 'online', isTyping: false });
         expect(entryOf(connectedUsers, botId)).toEqual({ userId: botId, status: 'online', isTyping: false });
     });

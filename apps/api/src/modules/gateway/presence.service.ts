@@ -1,7 +1,7 @@
 import { type ConnectedUser, SocketEvents } from '@fidechat/shared';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { IAUserModels } from '../ai/ai-command.service.js';
+import { BOTS } from '../ai/bots.js';
 import { SocketEmitter } from './socket-emitter.js';
 import { parseStatusUpdate } from './status-update.util.js';
 
@@ -15,7 +15,7 @@ export class PresenceService {
     readonly #activeUsers = new Map<string, Omit<ConnectedUser, 'userId'>>();
 
     constructor(private readonly emitter: SocketEmitter) {
-        for (const user of IAUserModels) {
+        for (const { user } of BOTS) {
             this.#activeUsers.set(user.id, {
                 status: 'online',
                 isTyping: false,
@@ -69,7 +69,7 @@ export class PresenceService {
     }
 
     public startBotTyping(botId: string, channelId: string) {
-        const user = IAUserModels.find((user) => user.id === botId);
+        const user = BOTS.find((bot) => bot.user.id === botId)?.user;
         if (!user) {
             this.logger.error(`IA user with ID ${botId} not found`);
             return;
@@ -84,7 +84,7 @@ export class PresenceService {
     }
 
     public stopBotTyping(botId: string) {
-        const user = IAUserModels.find((user) => user.id === botId);
+        const user = BOTS.find((bot) => bot.user.id === botId)?.user;
         if (!user) {
             this.logger.error(`IA user with ID ${botId} not found`);
             return;
