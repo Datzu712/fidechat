@@ -182,6 +182,52 @@ describe('BotConversationService', () => {
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
         expect(route).toHaveBeenCalledTimes(1);
+
+        // Let pedro post, so the cycle reaches the reaction.
+        await jest.advanceTimersByTimeAsync(typing(replyOf(pedro)));
+        expect(route.mock.calls.filter(([, , exclude]) => exclude !== undefined)).toHaveLength(0);
+    });
+
+    it('a human message during the read pause skips an unnamed second speaker', async () => {
+        const { say, route, reply } = setup();
+        route.mockResolvedValueOnce([
+            { bot: chayanne, kind: 'addressed' },
+            { bot: pedro, kind: 'addressed' },
+        ]);
+
+        say('¿quién baila mejor?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)));
+        say('esperen');
+        await jest.advanceTimersByTimeAsync(READ_PAUSE);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
+    });
+
+    it('a human message during the read pause still lets a named second speaker answer', async () => {
+        const { say, route, reply } = setup();
+        route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);
+
+        say('pedro, ¿y tú qué bailas?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)));
+        say('jaja');
+        await jest.advanceTimersByTimeAsync(READ_PAUSE);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
+    });
+
+    it('a human message during the reaction read pause skips the reaction', async () => {
+        const { say, route, reply } = setup();
+        route
+            .mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }])
+            .mockResolvedValueOnce([{ bot: pedro, kind: 'spontaneous' }]);
+
+        say('chayanne, ¿qué música ponemos?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)));
+        expect(route).toHaveBeenCalledTimes(2);
+        say('esperen');
+        await jest.advanceTimersByTimeAsync(READ_PAUSE);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
     });
 
     it('a human message while routing still lets the named bot answer', async () => {
@@ -336,7 +382,7 @@ describe('BotConversationService', () => {
     });
 
     it('stops a running cycle on module destroy', async () => {
-        const { service, say, route, reply } = setup();
+        const { service, say, route, reply, messageRepository } = setup();
         route.mockResolvedValueOnce([
             { bot: chayanne, kind: 'addressed' },
             { bot: pedro, kind: 'addressed' },
@@ -352,5 +398,6 @@ describe('BotConversationService', () => {
 
         expect(reply).toHaveBeenCalledTimes(1);
         expect(route).toHaveBeenCalledTimes(1);
+        expect(messageRepository.createMessage).not.toHaveBeenCalled();
     });
 });
