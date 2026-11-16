@@ -10,7 +10,7 @@ export interface AIBot {
     temperature: number;
 }
 
-/** Order matters: when a message names several bots, the first one replies. */
+/** Order matters: bots named in the same message reply in this order, and `detectBot` returns the first. */
 export const BOTS: AIBot[] = [
     {
         user: {

@@ -83,12 +83,14 @@ export class PresenceService {
         this.broadcast();
     }
 
-    public stopBotTyping(botId: string) {
+    /** Only clears the indicator if the bot is still typing in `channelId`, not already in another channel. */
+    public stopBotTyping(botId: string, channelId: string) {
         const user = BOTS.find((bot) => bot.user.id === botId)?.user;
         if (!user) {
             this.logger.error(`IA user with ID ${botId} not found`);
             return;
         }
+        if (this.#activeUsers.get(user.id)?.typingInChannel !== channelId) return;
 
         this.#activeUsers.set(user.id, {
             status: 'online',

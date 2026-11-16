@@ -1,28 +1,20 @@
 import { SocketEvents } from '@fidechat/shared';
-import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
-import { AIService } from '../ai/ai.service.js';
-import { detectBot } from '../ai/bots.js';
-import { Channel, ChannelRepository } from '../channel/channel.repository.js';
-import { PresenceService } from '../gateway/presence.service.js';
+import { ChannelRepository } from '../channel/channel.repository.js';
 import { SocketEmitter } from '../gateway/socket-emitter.js';
 import { UserRepository } from '../user/user.repository.js';
+import { BotConversationService } from './bot-conversation.service.js';
 import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
-
-/** How many channel messages a bot reads before replying. */
-const AI_HISTORY_LIMIT = 30;
 
 @Injectable()
 export class MessageService {
-    private readonly logger = new Logger('MessageService');
-
     constructor(
         private readonly messageRepository: MessageRepository,
         private readonly emitter: SocketEmitter,
-        private readonly presence: PresenceService,
         private readonly channelRepository: ChannelRepository,
         private readonly userRepository: UserRepository,
-        private readonly ai: AIService,
+        private readonly conversation: BotConversationService,
     ) {}
 
     private async notifyMessageCreation(
@@ -60,7 +52,7 @@ export class MessageService {
             await this.notifyMessageCreation(data, result.id, channel.guildId, createdAtStr);
 
             if (!author.isBot) {
-                void this.handleAIResponse(data, channel);
+                this.conversation.onHumanMessage(channel, result.id, data.content);
             }
 
             return result;
@@ -69,32 +61,6 @@ export class MessageService {
                 throw new InternalServerErrorException('Failed to create message', { cause: error });
             }
             throw error;
-        }
-    }
-
-    private async handleAIResponse(originalMessage: MessageCreationAttributes, channel: Channel): Promise<void> {
-        if (!this.ai.enabled) return;
-
-        const bot = detectBot(originalMessage.content);
-        if (!bot) return;
-
-        this.presence.startBotTyping(bot.user.id, channel.id);
-
-        try {
-            // The triggering message is already stored, so it is the last entry.
-            const history = await this.messageRepository.getRecentMessages(channel.id, AI_HISTORY_LIMIT);
-            const content = await this.ai.reply(bot, history);
-            if (!content) return;
-
-            const createdAt = new Date();
-            const reply = { content, channelId: channel.id, authorId: bot.user.id };
-            const aiMessage = await this.messageRepository.createMessage({ ...reply, createdAt });
-
-            await this.notifyMessageCreation(reply, aiMessage.id, channel.guildId, createdAt.toISOString());
-        } catch (error) {
-            this.logger.error(new Error(`Error generating the ${bot.user.username} reply`, { cause: error }));
-        } finally {
-            this.presence.stopBotTyping(bot.user.id);
         }
     }
 
