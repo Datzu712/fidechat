@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { AuthModule } from '../auth/auth.module.js';
 import { HandshakeAuthenticator } from './handshake-authenticator.js';
 import { PresenceService } from './presence.service.js';

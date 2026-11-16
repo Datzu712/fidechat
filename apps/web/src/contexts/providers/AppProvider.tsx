@@ -1,7 +1,3 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import useSocket from '@/hooks/useSocket';
-import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import type {
     AppUser,
     GuildMember,
@@ -13,9 +9,14 @@ import type {
     SyncPayload,
     Channel,
 } from '@fidechat/shared';
-import { AppContextType, AppContext } from '../appContext';
-import { useSocketEvents } from '@/hooks/useSocketsEvents';
 import { SocketEvents } from '@fidechat/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import useSocket from '@/hooks/useSocket';
+import { useSocketEvents } from '@/hooks/useSocketsEvents';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+
+import { AppContextType, AppContext } from '../appContext';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<AppUser | null>(null);

@@ -1,7 +1,9 @@
+import type { ChannelPayload } from '@fidechat/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useToast } from '@/hooks/useToast';
+
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -18,11 +20,10 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
+import { useToast } from '@/hooks/useToast';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import type { ChannelPayload } from '@fidechat/shared';
+import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Channel name is required').max(100),

@@ -1,12 +1,12 @@
 import '@/styles/serverPage.css';
-
-import { useNavigate, useParams } from 'react-router';
-import useAuth from '@/hooks/useAuth';
-import useAppContext from '@/hooks/useAppContext';
-import { ChatArea } from '@/components/chat-area';
 import { Bot, PlusCircle, Lock } from 'lucide-react';
-import { CreateChannelModal } from '@/components/create-channel-modal';
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+
+import { ChatArea } from '@/components/chat-area';
+import { CreateChannelModal } from '@/components/create-channel-modal';
+import useAppContext from '@/hooks/useAppContext';
+import useAuth from '@/hooks/useAuth';
 
 export default function ServerPage() {
     const navigate = useNavigate();

@@ -1,6 +1,6 @@
+import { SocketEvents } from '@fidechat/shared';
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { SocketEvents } from '@fidechat/shared';
 import { SocketEmitter } from '../gateway/socket-emitter.js';
 import { GuildDto } from './dto/guild.dto.js';
 import { GuildRepository } from './guild.repository.js';

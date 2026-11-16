@@ -1,9 +1,10 @@
+import type { AppUser } from '@fidechat/shared';
+import { Crown } from 'lucide-react';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserAvatar } from '@/components/user-avatar';
-import { Crown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import useAppContext from '@/hooks/useAppContext';
-import type { AppUser } from '@fidechat/shared';
+import { cn } from '@/lib/utils';
 import { getUserStatusPriority } from '@/lib/utils/getUserDisplayPriority';
 
 interface MembersSidebarProps {

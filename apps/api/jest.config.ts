@@ -1,6 +1,7 @@
-import { createDefaultPreset, pathsToModuleNameMapper } from 'ts-jest';
-import tsconfig from './tsconfig.json' with { type: 'json' };
 import type { Config } from 'jest';
+import { createDefaultPreset, pathsToModuleNameMapper } from 'ts-jest';
+
+import tsconfig from './tsconfig.json' with { type: 'json' };
 
 // Jest carga este archivo con el type stripping nativo de Node, que exige el
 // atributo `type: 'json'` para importar JSON.

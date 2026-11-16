@@ -1,4 +1,7 @@
+import type { Guild } from '@fidechat/shared';
+import { Loader2, Search } from 'lucide-react';
 import { useState } from 'react';
+
 import {
     Dialog,
     DialogContent,
@@ -7,8 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useApiData } from '@/lib/hooks/useApiQuery';
-import type { Guild } from '@fidechat/shared';
-import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DiscoverServersModalProps {

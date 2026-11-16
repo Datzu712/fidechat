@@ -1,16 +1,17 @@
 import 'dotenv/config';
-
 import type { AddressInfo } from 'node:net';
-import { Test, type TestingModule } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+
 import { VersioningType } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Test, type TestingModule } from '@nestjs/testing';
 import type { LightMyRequestResponse } from 'fastify';
 import { io } from 'socket.io-client';
 
-import { AppModule } from '../src/modules/app.module.js';
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
 import { LOGIN_STATE_COOKIE, SESSION_COOKIE } from '@/modules/auth/session/cookie.util.js';
+
+import { AppModule } from '../src/modules/app.module.js';
 
 /** Returns the `name=value` pair of a cookie the response set, ready to send back in a Cookie header. */
 function cookiePair(response: LightMyRequestResponse, name: string): string | undefined {

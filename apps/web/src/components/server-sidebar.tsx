@@ -1,21 +1,22 @@
+import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { cn } from '@/lib/utils';
+
+import { CreateServerModal } from '@/components/create-server-modal';
+import { DiscoverServersModal } from '@/components/discover-servers-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
     TooltipProvider,
 } from '@/components/ui/tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { PlusCircle } from 'lucide-react';
-import { CreateServerModal } from '@/components/create-server-modal';
-import { DiscoverServersModal } from '@/components/discover-servers-modal';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import useAppContext from '@/hooks/useAppContext';
 import useAuth from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);

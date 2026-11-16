@@ -3,7 +3,7 @@ services:
   # Una sola instancia de Postgres con dos bases: `keycloak` y `fidechat` (la de
   # la app). La segunda la crea sql/init-databases.sh en el primer arranque.
   postgres:
-    image: postgres:latest
+    image: postgres:18
     env_file:
       - .env
     container_name: fidechat-keycloak-postgres
@@ -20,7 +20,7 @@ services:
       timeout: 3s
       retries: 3
     volumes:
-      - pg_keycloak_data_local:/var/lib/postgresql/data
+      - pg_keycloak_data_local:/var/lib/postgresql
       - ./sql/init-databases.sh:/docker-entrypoint-initdb.d/00-init-databases.sh:ro
 
   keycloak:

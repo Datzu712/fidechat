@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
+
 import useAuth from '@/hooks/useAuth';
 
 /** The API runs the Keycloak login (BFF) and comes back to the web app with a session cookie. */

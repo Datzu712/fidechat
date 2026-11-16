@@ -1,6 +1,5 @@
 import './globals.css';
 import '@fontsource-variable/inter';
-
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -11,14 +10,14 @@ import {
     useLocation,
 } from 'react-router';
 
-import RootLayout from './root-layout';
 import AuthLayout from './pages/auth-layout';
-import LoginPage from './pages/login';
-import ServersLayout from './pages/servers-layout';
-import ServersPage from './pages/servers';
-import ServerLayout from './pages/server-layout';
-import ServerPage from './pages/server';
 import ChannelPage from './pages/channel';
+import LoginPage from './pages/login';
+import ServerPage from './pages/server';
+import ServerLayout from './pages/server-layout';
+import ServersPage from './pages/servers';
+import ServersLayout from './pages/servers-layout';
+import RootLayout from './root-layout';
 
 /** `/` goes through the login, keeping the query: a failed login comes back as `/?login_error=...`. */
 function HomeRedirect() {

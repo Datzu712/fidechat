@@ -1,5 +1,6 @@
 import type { UserStatus } from '@fidechat/shared';
 import { Check, Circle, Moon, Minus } from 'lucide-react';
+
 import {
     DropdownMenu,
     DropdownMenuContent,

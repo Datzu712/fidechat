@@ -1,17 +1,17 @@
 import './instrumentation.js';
-
+import compression from '@fastify/compress';
+import helmet from '@fastify/helmet';
+import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { VersioningType } from '@nestjs/common';
-import helmet from '@fastify/helmet';
-import compression from '@fastify/compress';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import Fastify, { type FastifyReply } from 'fastify';
-
 import { Logger } from 'nestjs-pino';
-import { AppModule } from './modules/app.module.js';
-import { IoAdapter } from '@nestjs/platform-socket.io';
+
 import { SpaFallbackFilter } from '@/common/spa-fallback.filter.js';
+
+import { AppModule } from './modules/app.module.js';
 
 async function bootstrap() {
     // TRUST_PROXY: proxies (IPs/CIDRs) allowed to set X-Forwarded-For, so request.ip is the real client.

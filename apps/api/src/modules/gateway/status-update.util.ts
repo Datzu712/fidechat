@@ -1,5 +1,5 @@
-import { isUUID } from 'class-validator';
 import { type StatusUpdate, USER_STATUSES, type UserStatus } from '@fidechat/shared';
+import { isUUID } from 'class-validator';
 
 /**
  * Client status updates are untrusted: keep only the fields a client may change, and only with valid values.
