@@ -123,9 +123,9 @@ the demo users and data live in `docker/`.
 > **AI bots.** They are optional: without a key they show up online but stay
 > silent. To turn them on, set `ANTHROPIC_API_KEY` in the shell or in a root
 > `.env` (git-ignored, so it is the right place for it). The model defaults to
-> `anthropic:claude-haiku-5-5`; set `AI_MODEL=openai:<model>` and
-> `OPENAI_API_KEY` to use OpenAI instead, or `AI_MODEL=ollama:<model>` (no
-> key) to use an Ollama running on the host.
+> `anthropic:claude-haiku-5-5`; set `AI_MODEL=openai:gpt-6-luna` (the
+> recommended OpenAI model) and `OPENAI_API_KEY` to use OpenAI instead, or
+> `AI_MODEL=ollama:<model>` (no key) to use an Ollama running on the host.
 
 ## Infrastructure services
 
