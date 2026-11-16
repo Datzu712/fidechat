@@ -41,6 +41,16 @@ describe('buildPromptMessages', () => {
             { role: 'user', content: 'pedro_pascal: yo también' },
         ]);
     });
+
+    it('drops its own messages at the start and end, since Anthropic needs the prompt to start and end on a user turn', () => {
+        const history = [
+            { authorId: chayanne.user.id, authorName: 'chayanne', content: 'old reply' },
+            { authorId: 'u1', authorName: 'juan', content: 'hola chayanne' },
+            { authorId: chayanne.user.id, authorName: 'chayanne', content: 'racing reply' },
+        ];
+
+        expect(buildPromptMessages(chayanne, history)).toEqual([{ role: 'user', content: 'juan: hola chayanne' }]);
+    });
 });
 
 describe('cleanReply', () => {

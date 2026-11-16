@@ -8,6 +8,9 @@ import { UserRepository } from '../user/user.repository.js';
 import { type AIBot, BOTS } from './bots.js';
 import { buildPromptMessages, type ChannelHistoryEntry, cleanReply } from './prompt.js';
 
+// The SDK prints warnings with console.warn, outside pino; `reply` logs them through the Nest logger instead.
+globalThis.AI_SDK_LOG_WARNINGS = false;
+
 const DEFAULT_AI_MODEL = 'anthropic:claude-haiku-5-5';
 const PROVIDER_KEYS = { anthropic: 'ANTHROPIC_API_KEY', openai: 'OPENAI_API_KEY' } as const;
 type ProviderId = keyof typeof PROVIDER_KEYS;
@@ -58,16 +61,26 @@ export class AIService implements OnModuleInit {
     async reply(bot: AIBot, history: ChannelHistoryEntry[]): Promise<string | null> {
         if (!this.enabled) return null;
 
-        const { text } = await generateText({
+        const { text, finishReason, warnings } = await generateText({
             model: this.registry.languageModel(this.modelId as `${ProviderId}:${string}`),
             instructions: bot.systemPrompt,
             messages: buildPromptMessages(bot, history),
             temperature: bot.temperature,
+            // Recent Claude models think by default, and thinking counts against maxOutputTokens.
+            reasoning: 'none',
             maxOutputTokens: 500,
             maxRetries: 2,
             abortSignal: AbortSignal.timeout(30_000),
         });
 
-        return cleanReply(bot, text) || null;
+        for (const warning of warnings ?? []) {
+            this.logger.debug(`AI SDK warning: ${JSON.stringify(warning)}`);
+        }
+
+        const reply = cleanReply(bot, text);
+        if (!reply || finishReason === 'length') {
+            this.logger.warn(`${bot.user.username} reply finished with ${finishReason} (${reply.length} chars)`);
+        }
+        return reply || null;
     }
 }
