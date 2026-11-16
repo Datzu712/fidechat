@@ -74,7 +74,8 @@ export class BotConversationService implements OnModuleDestroy {
     }
 
     private async runCycle(channel: Channel, conversation: ChannelConversation): Promise<void> {
-        if (this.destroyed) return;
+        // A newer message's timer will queue its own cycle, and that one takes the pending messages after their silence.
+        if (this.destroyed || conversation.timer !== undefined || conversation.pending.length === 0) return;
 
         const pending = conversation.pending;
         conversation.pending = [];
@@ -114,7 +115,7 @@ export class BotConversationService implements OnModuleDestroy {
             if (conversation.interrupted) break;
 
             if (kind === 'spontaneous') {
-                if (index > 0 && !(await this.stillPicked(channel, ids, bot))) continue;
+                if (index > 0 && !(await this.stillPicked(channel, conversation, ids, bot))) continue;
                 this.caps.record(channel.id, bot.user.id, Date.now());
             }
             if (await this.speak(channel, bot)) spoken.push(bot);
@@ -154,11 +155,16 @@ export class BotConversationService implements OnModuleDestroy {
         );
     }
 
-    /** Re-asks the router with the latest history whether `bot` should still speak. */
-    private async stillPicked(channel: Channel, ids: ReadonlySet<string>, bot: AIBot): Promise<boolean> {
+    /** Re-asks the router with the latest history whether `bot` should still speak; never after a human interrupts. */
+    private async stillPicked(
+        channel: Channel,
+        conversation: ChannelConversation,
+        ids: ReadonlySet<string>,
+        bot: AIBot,
+    ): Promise<boolean> {
         const history = await this.messageRepository.getRecentMessages(channel.id, ROUTER_HISTORY_LIMIT);
         const decision = await this.ai.route(history, ids);
-        return decision?.some((pick) => pick.bot === bot) ?? false;
+        return !conversation.interrupted && (decision?.some((pick) => pick.bot === bot) ?? false);
     }
 
     /** Generates, stores and broadcasts one reply. Returns whether a message was posted. */

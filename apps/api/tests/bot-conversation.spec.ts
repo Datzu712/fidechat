@@ -156,6 +156,54 @@ describe('BotConversationService', () => {
         expect(reply.mock.calls.map(([bot]) => bot)).not.toContain(pedro);
     });
 
+    it('a cycle queued behind a running one waits for the debounce of newer messages', async () => {
+        const { say, route, reply } = setup();
+        route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);
+        const firstReply = Promise.withResolvers<string | null>();
+        reply.mockImplementationOnce(async () => firstReply.promise);
+
+        say('chayanne, ¿qué cantas?');
+        await jest.advanceTimersByTimeAsync(2500);
+        const h2 = say('otra cosa');
+        // H2's timer fires while the first cycle is still replying, so its cycle is queued behind it.
+        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(500);
+        const h3 = say('y otra más');
+
+        firstReply.resolve('¡Torero!');
+        await jest.advanceTimersByTimeAsync(0);
+        expect(route).toHaveBeenCalledTimes(1);
+
+        await jest.advanceTimersByTimeAsync(2499);
+        expect(route).toHaveBeenCalledTimes(1);
+
+        await jest.advanceTimersByTimeAsync(1);
+        await jest.advanceTimersByTimeAsync(5000);
+        expect(route).toHaveBeenCalledTimes(2);
+        expect([...route.mock.calls[1][1]]).toEqual([h2, h3]);
+        expect(route.mock.calls.filter(([, ids]) => ids.size === 0)).toHaveLength(0);
+    });
+
+    it('a human message during the re-ask stops a spontaneous second speaker', async () => {
+        const { say, route, reply } = setup();
+        route.mockResolvedValueOnce([
+            { bot: chayanne, kind: 'addressed' },
+            { bot: pedro, kind: 'spontaneous' },
+        ]);
+        const reask = Promise.withResolvers<PlannedSpeaker[] | null>();
+        route.mockImplementationOnce(async () => reask.promise);
+
+        say('chayanne, ¿qué series ves?');
+        await jest.advanceTimersByTimeAsync(2500);
+        expect(route).toHaveBeenCalledTimes(2);
+
+        say('esperen');
+        reask.resolve([{ bot: pedro, kind: 'spontaneous' }]);
+        await jest.advanceTimersByTimeAsync(0);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
+    });
+
     it('caps spontaneous replies across cycles', async () => {
         const { say, route, reply } = setup();
         route.mockImplementation(async (_history, _ids, exclude = []) =>
