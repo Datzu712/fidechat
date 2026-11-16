@@ -1,3 +1,5 @@
+import { SocketEvents } from '@fidechat/shared';
+import { Logger, type OnModuleDestroy } from '@nestjs/common';
 import {
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -5,10 +7,9 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets';
-import { Logger, type OnModuleDestroy } from '@nestjs/common';
-import { SocketEvents } from '@fidechat/shared';
-import { SessionService } from '../auth/session/session.service.js';
+
 import { readCookie, SESSION_COOKIE } from '../auth/session/cookie.util.js';
+import { SessionService } from '../auth/session/session.service.js';
 import { HandshakeAuthenticator } from './handshake-authenticator.js';
 import { PresenceService } from './presence.service.js';
 import { SocketEmitter } from './socket-emitter.js';

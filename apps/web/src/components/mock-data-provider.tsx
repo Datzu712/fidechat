@@ -1,6 +1,7 @@
-import logout from '@/lib/logout';
 import type React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
+
+import logout from '@/lib/logout';
 
 export type User = {
     id: string;

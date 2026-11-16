@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from 'react-router';
-import useAuth from '@/hooks/useAuth';
+
 import { useMockData } from '@/components/mock-data-provider';
 import { ServerSidebar } from '@/components/server-sidebar';
+import useAuth from '@/hooks/useAuth';
 
 export default function ChannelsLayout() {
     const { status } = useAuth();

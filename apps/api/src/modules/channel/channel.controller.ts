@@ -1,7 +1,9 @@
 import { Body, Controller, Param, Post, ValidationPipe } from '@nestjs/common';
+
 import { AuthenticatedUser } from '@/modules/auth/auth.decorators.js';
-import { ChannelDto } from './dto/channel.dto.js';
+
 import { ChannelService } from './channel.service.js';
+import { ChannelDto } from './dto/channel.dto.js';
 
 @Controller({
     version: '1',

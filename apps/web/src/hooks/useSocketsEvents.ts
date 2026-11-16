@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
 import type { ServerToClientEvents } from '@fidechat/shared';
+import { useEffect } from 'react';
+
 import type { AppSocket } from '@/contexts/socketContext';
 
 type SocketEventHandlers = Partial<ServerToClientEvents>;

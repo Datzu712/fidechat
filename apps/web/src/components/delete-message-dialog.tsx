@@ -1,3 +1,6 @@
+import type { Message } from '@fidechat/shared';
+
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -6,9 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
-import type { Message } from '@fidechat/shared';
 
 interface MessagePreviewProps {
     message: Message;

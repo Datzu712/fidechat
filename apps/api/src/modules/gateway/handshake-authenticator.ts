@@ -1,6 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { TokenVerifier } from '../auth/token-verifier.service.js';
+
 import { SessionService } from '../auth/session/session.service.js';
+import { TokenVerifier } from '../auth/token-verifier.service.js';
 
 /** Checks a Socket.IO handshake: an allowed origin and a valid access token. */
 @Injectable()

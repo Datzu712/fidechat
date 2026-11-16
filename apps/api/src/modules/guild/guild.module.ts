@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { GuildController } from './guild.controller.js';
-import { GuildService } from './guild.service.js';
-import { GuildRepository } from './guild.repository.js';
+
 import { GatewayModule } from '../gateway/gateway.module.js';
+import { GuildController } from './guild.controller.js';
+import { GuildRepository } from './guild.repository.js';
+import { GuildService } from './guild.service.js';
 
 @Module({
     controllers: [GuildController],

@@ -1,9 +1,10 @@
+import { SocketEvents } from '@fidechat/shared';
 import { Injectable } from '@nestjs/common';
 
-import { UserRepository } from './user.repository.js';
-import { SocketEvents } from '@fidechat/shared';
-import { SocketEmitter } from '../gateway/socket-emitter.js';
 import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
+
+import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { UserRepository } from './user.repository.js';
 
 @Injectable()
 export class UserService {

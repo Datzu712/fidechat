@@ -1,15 +1,16 @@
 import 'dotenv/config';
 import './helpers/production-env.js';
-
 import type { AddressInfo } from 'node:net';
-import { Test, type TestingModule } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+
 import { VersioningType } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { io, type Socket } from 'socket.io-client';
 
-import { AppModule } from '../src/modules/app.module.js';
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
+
+import { AppModule } from '../src/modules/app.module.js';
 
 /** Resolves with `welcome` when the gateway accepts the socket, or `disconnected` when it drops it. */
 async function socketOutcome(socket: Socket): Promise<'welcome' | 'disconnected'> {

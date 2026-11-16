@@ -1,26 +1,28 @@
-import React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { DeleteMessageDialog } from './delete-message-dialog';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { AnimatePresence, motion } from 'framer-motion';
-import useSocket from '@/hooks/useSocket';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import { SocketEvents } from '@fidechat/shared';
-import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
-import { UserAvatar } from '@/components/user-avatar';
-import { MobileMembersToggle } from '@/components/mobile-members-toggle';
-import useAppContext from '@/hooks/useAppContext';
 import type {
     AppUser,
     ChannelWithMessages,
     MessagePayload,
 } from '@fidechat/shared';
-import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
+import React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { MobileMembersToggle } from '@/components/mobile-members-toggle';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserAvatar } from '@/components/user-avatar';
+import useAppContext from '@/hooks/useAppContext';
+import useSocket from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
+
+import { DeleteMessageDialog } from './delete-message-dialog';
 
 // todo: refactor this component in sub components D:
 export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {

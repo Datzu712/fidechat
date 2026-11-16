@@ -1,10 +1,10 @@
 import 'dotenv/config';
-
 import type { AddressInfo } from 'node:net';
-import { Test, type TestingModule } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+
 import { VersioningType } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { io, type Socket } from 'socket.io-client';
 
 import { AppModule } from '../src/modules/app.module.js';

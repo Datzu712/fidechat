@@ -1,12 +1,14 @@
+import { useEffect, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
+
 /**
  * Todos:
  * - [ ] Manage reconnection sync issues. (the API refreshes the session token on each handshake)
  */
 import useAuth from '@/hooks/useAuth';
-import { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import { type AppSocket, SocketContext } from '../socketContext';
 import { apiClient } from '@/lib/api/client';
+
+import { type AppSocket, SocketContext } from '../socketContext';
 
 /** Delay before checking the session again while Keycloak or the API is unavailable. */
 const RETRY_MS = 5000;

@@ -1,6 +1,6 @@
+import type {} from '@fastify/static'; // Types reply.sendFile.
 import { type ArgumentsHost, Catch, type ExceptionFilter, NotFoundException } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type {} from '@fastify/static'; // Types reply.sendFile.
 
 /**
  * Used only when the API serves the web build (`WEB_DIST_DIR`): a GET or HEAD outside `/api`, for a

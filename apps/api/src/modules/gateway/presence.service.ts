@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { type ConnectedUser, SocketEvents } from '@fidechat/shared';
+import { Injectable, Logger } from '@nestjs/common';
+
 import { IAUserModels } from '../ai/ai-command.service.js';
-import { parseStatusUpdate } from './status-update.util.js';
 import { SocketEmitter } from './socket-emitter.js';
+import { parseStatusUpdate } from './status-update.util.js';
 
 /**
  * Who is online, in memory (assumes a single API instance). The AI bots are always online. Every change

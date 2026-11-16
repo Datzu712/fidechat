@@ -1,5 +1,6 @@
 import { type AxiosRequestConfig } from 'axios';
 import { useCallback } from 'react';
+
 import { useToast } from '../../hooks/useToast';
 import { apiClient } from '../api/client';
 

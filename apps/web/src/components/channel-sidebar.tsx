@@ -1,16 +1,17 @@
+import { SocketEvents, type UserStatus } from '@fidechat/shared';
+import { Hash, LogOut, Plus, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { cn } from '@/lib/utils';
+
+import { CreateChannelModal } from '@/components/create-channel-modal';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Hash, LogOut, Plus, Settings } from 'lucide-react';
-import { CreateChannelModal } from '@/components/create-channel-modal';
 import { UserAvatar } from '@/components/user-avatar';
 import { UserStatusMenu } from '@/components/user-status-menu';
 import useAppContext from '@/hooks/useAppContext';
-import logout from '@/lib/logout';
 import useSocket from '@/hooks/useSocket';
-import { SocketEvents, type UserStatus } from '@fidechat/shared';
+import logout from '@/lib/logout';
+import { cn } from '@/lib/utils';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
     const { socket, connected } = useSocket();

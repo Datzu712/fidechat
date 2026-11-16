@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+
 import {
     Injectable,
     Logger,
@@ -9,8 +10,9 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { readCookie, SESSION_COOKIE } from './cookie.util.js';
+
 import { TokenVerifier } from '../token-verifier.service.js';
+import { readCookie, SESSION_COOKIE } from './cookie.util.js';
 
 interface TokenResponse {
     access_token: string;

@@ -3,16 +3,16 @@
 /* eslint-disable promise/avoid-new */
 /* eslint-disable max-nested-callbacks */
 import 'dotenv/config';
-
-import { Test, type TestingModule } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { type Channel, type GuildWithMembers, type Message, SocketEvents } from '@fidechat/shared';
 import { VersioningType } from '@nestjs/common';
-import { io, type Socket } from 'socket.io-client';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { io, type Socket } from 'socket.io-client';
+
+import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
 
 import { AppModule } from '../src/modules/app.module.js';
-import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
-import { type Channel, type GuildWithMembers, type Message, SocketEvents } from '@fidechat/shared';
 
 describe('Guild Creation E2E', () => {
     let app: NestFastifyApplication;

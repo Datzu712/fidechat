@@ -6,9 +6,11 @@ import {
     type UseQueryOptions,
     UseMutationOptions,
 } from '@tanstack/react-query';
-import { ApiRequestOptions, useApi } from './useApi';
 import { AxiosError } from 'axios';
+
 import useAuth from '@/hooks/useAuth';
+
+import { ApiRequestOptions, useApi } from './useApi';
 
 type UseApiDataOptions<K> = {
     queryOptions?: Omit<UseQueryOptions<K>, 'queryKey' | 'queryFn'>;

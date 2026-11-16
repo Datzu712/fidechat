@@ -1,8 +1,9 @@
+import { Users } from 'lucide-react';
 import { useState } from 'react';
+
+import { MembersSidebar } from '@/components/members-sidebar';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Users } from 'lucide-react';
-import { MembersSidebar } from '@/components/members-sidebar';
 
 interface MobileMembersToggleProps {
     serverId: string;

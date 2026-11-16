@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
 import type { ServerToClientEvents } from '@fidechat/shared';
+import { Injectable, Logger } from '@nestjs/common';
 
 /** Outbound events. Each socket joins a room named after its user id, so a user id is also a room. */
 @Injectable()

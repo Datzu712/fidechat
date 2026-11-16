@@ -1,5 +1,6 @@
-import { ChatArea } from '@/components/chat-area';
 import { useParams } from 'react-router';
+
+import { ChatArea } from '@/components/chat-area';
 import useAppContext from '@/hooks/useAppContext';
 import useAuth from '@/hooks/useAuth';
 

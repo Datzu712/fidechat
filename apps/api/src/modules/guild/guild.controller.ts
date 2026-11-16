@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
+
 import { AuthenticatedUser } from '@/modules/auth/auth.decorators.js';
+
 import { GuildDto } from './dto/guild.dto.js';
 import { GuildService } from './guild.service.js';
 

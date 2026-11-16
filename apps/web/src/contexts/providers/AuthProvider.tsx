@@ -1,5 +1,6 @@
-import { type ReactNode, useEffect, useState } from 'react';
 import type { AuthMe } from '@fidechat/shared';
+import { type ReactNode, useEffect, useState } from 'react';
+
 import { AuthContext, type AuthStatus } from '../authContext';
 
 /**

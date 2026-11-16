@@ -1,10 +1,10 @@
-import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { SocketEvents } from '@fidechat/shared';
+import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { ChannelDto } from './dto/channel.dto.js';
-import { ChannelRepository } from './channel.repository.js';
 import { SocketEmitter } from '../gateway/socket-emitter.js';
 import { UserRepository } from '../user/user.repository.js';
+import { ChannelRepository } from './channel.repository.js';
+import { ChannelDto } from './dto/channel.dto.js';
 
 @Injectable()
 export class ChannelService {

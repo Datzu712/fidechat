@@ -1,7 +1,8 @@
-import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
+
 import { CreateServerModal } from '@/components/create-server-modal';
+import { Button } from '@/components/ui/button';
 import useAppContext from '@/hooks/useAppContext';
 
 export function NoServerSelected() {

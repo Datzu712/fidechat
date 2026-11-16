@@ -1,7 +1,8 @@
+import { Outlet, useParams } from 'react-router';
+
 import { ChannelSidebar } from '@/components/channel-sidebar';
 // Import the MembersSidebar component
 import { MembersSidebar } from '@/components/members-sidebar';
-import { Outlet, useParams } from 'react-router';
 import useAuth from '@/hooks/useAuth';
 
 export default function ServerLayout() {

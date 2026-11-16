@@ -1,11 +1,12 @@
-import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
 import { SocketEvents } from '@fidechat/shared';
-import { SocketEmitter } from '../gateway/socket-emitter.js';
-import { PresenceService } from '../gateway/presence.service.js';
-import { Channel, ChannelRepository } from '../channel/channel.repository.js';
-import { UserRepository } from '../user/user.repository.js';
+import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+
 import { AICommandService } from '../ai/ai-command.service.js';
+import { Channel, ChannelRepository } from '../channel/channel.repository.js';
+import { PresenceService } from '../gateway/presence.service.js';
+import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { UserRepository } from '../user/user.repository.js';
+import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
 
 @Injectable()
 export class MessageService {

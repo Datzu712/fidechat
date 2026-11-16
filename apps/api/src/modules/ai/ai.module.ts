@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AICommandService } from './ai-command.service.js';
+
 import { UserModule } from '../user/user.module.js';
+import { AICommandService } from './ai-command.service.js';
 
 @Module({
     imports: [UserModule],

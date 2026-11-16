@@ -1,6 +1,8 @@
+import type { GuildPayload } from '@fidechat/shared';
 import type React from 'react';
-
 import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -9,14 +11,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import type { GuildPayload } from '@fidechat/shared';
-import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
-import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/useToast';
+import { useApiMutation } from '@/lib/hooks/useApiQuery';
+import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
+
+import { Checkbox } from './ui/checkbox';
 
 interface CreateServerModalProps {
     isOpen: boolean;

@@ -1,16 +1,17 @@
 import 'dotenv/config';
-
 import type { AddressInfo } from 'node:net';
-import { Test, type TestingModule } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { VersioningType } from '@nestjs/common';
-import { IoAdapter } from '@nestjs/platform-socket.io';
-import { io, type Socket } from 'socket.io-client';
-import { type AppUser, type ConnectedUser, type GuildMember, SocketEvents, type SyncPayload } from '@fidechat/shared';
 
-import { AppModule } from '../src/modules/app.module.js';
+import { type AppUser, type ConnectedUser, type GuildMember, SocketEvents, type SyncPayload } from '@fidechat/shared';
+import { VersioningType } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { io, type Socket } from 'socket.io-client';
+
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
+
 import { IAUserModels } from '../src/modules/ai/ai-command.service.js';
+import { AppModule } from '../src/modules/app.module.js';
 
 /** Resolves with the next `event` payload that matches, or rejects after 3s. */
 async function nextEvent<T>(socket: Socket, event: string, matches: (data: T) => boolean = () => true): Promise<T> {

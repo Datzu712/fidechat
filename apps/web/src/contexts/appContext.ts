@@ -1,4 +1,3 @@
-import { createContext } from 'react';
 import type {
     Channel,
     AppUser,
@@ -10,6 +9,7 @@ import type {
     UserStatus,
 } from '@fidechat/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
+import { createContext } from 'react';
 
 export type AppContextType = {
     currentUser: AppUser | null;
