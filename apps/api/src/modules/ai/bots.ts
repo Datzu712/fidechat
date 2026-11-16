@@ -10,7 +10,7 @@ export interface AIBot {
     temperature: number;
 }
 
-/** Order matters: bots named in the same message reply in this order, and `detectBot` returns the first. */
+/** Bots named in the same message reply in this order. */
 export const BOTS: AIBot[] = [
     {
         user: {
@@ -65,10 +65,6 @@ export const BOTS: AIBot[] = [
         temperature: 0.8,
     },
 ];
-
-export function detectBot(content: string): AIBot | null {
-    return BOTS.find((bot) => bot.trigger.test(content)) ?? null;
-}
 
 export function detectNamedBots(content: string): AIBot[] {
     return BOTS.filter((bot) => bot.trigger.test(content));

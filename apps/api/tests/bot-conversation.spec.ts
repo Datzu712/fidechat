@@ -60,7 +60,7 @@ function setup() {
         return id;
     };
 
-    return { service, say, route, reply, messages };
+    return { service, say, ai, route, reply, messages };
 }
 
 describe('BotConversationService', () => {
@@ -156,6 +156,38 @@ describe('BotConversationService', () => {
         expect(reply.mock.calls.map(([bot]) => bot)).not.toContain(pedro);
     });
 
+    it('a human message during a reply still lets the named bots answer, but skips the reaction', async () => {
+        const { say, route, reply } = setup();
+        route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);
+        const firstReply = Promise.withResolvers<string | null>();
+        reply.mockImplementationOnce(async () => firstReply.promise);
+
+        say('pedro y chayanne, ¿quién baila mejor?');
+        await jest.advanceTimersByTimeAsync(2500);
+        say('jaja');
+        firstReply.resolve('¡yo, mi amor!');
+        await jest.advanceTimersByTimeAsync(0);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
+        expect(route).toHaveBeenCalledTimes(1);
+    });
+
+    it('a human message while routing still lets the named bot answer', async () => {
+        const { say, route, reply } = setup();
+        const decision = Promise.withResolvers<PlannedSpeaker[] | null>();
+        route.mockImplementationOnce(async () => decision.promise);
+
+        say('chayanne, ¿qué cantas?');
+        await jest.advanceTimersByTimeAsync(2500);
+        expect(route).toHaveBeenCalledTimes(1);
+
+        say('jaja');
+        decision.resolve([]);
+        await jest.advanceTimersByTimeAsync(0);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
+    });
+
     it('a cycle queued behind a running one waits for the debounce of newer messages', async () => {
         const { say, route, reply } = setup();
         route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);
@@ -204,6 +236,36 @@ describe('BotConversationService', () => {
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
     });
 
+    it('a spontaneous second speaker speaks when the re-ask confirms it', async () => {
+        const { say, route, reply } = setup();
+        route
+            .mockResolvedValueOnce([
+                { bot: chayanne, kind: 'addressed' },
+                { bot: pedro, kind: 'spontaneous' },
+            ])
+            .mockResolvedValueOnce([{ bot: pedro, kind: 'spontaneous' }]);
+
+        say('chayanne, ¿qué series ves?');
+        await jest.advanceTimersByTimeAsync(2500);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
+    });
+
+    it('a spontaneous second speaker stays silent when the re-ask drops it', async () => {
+        const { say, route, reply } = setup();
+        route
+            .mockResolvedValueOnce([
+                { bot: chayanne, kind: 'addressed' },
+                { bot: pedro, kind: 'spontaneous' },
+            ])
+            .mockResolvedValueOnce([]);
+
+        say('chayanne, ¿qué series ves?');
+        await jest.advanceTimersByTimeAsync(2500);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
+    });
+
     it('caps spontaneous replies across cycles', async () => {
         const { say, route, reply } = setup();
         route.mockImplementation(async (_history, _ids, exclude = []) =>
@@ -230,5 +292,35 @@ describe('BotConversationService', () => {
 
         expect(route).not.toHaveBeenCalled();
         expect(reply).not.toHaveBeenCalled();
+    });
+
+    it('answers the named bot without routing when the router is disabled', async () => {
+        const { say, ai, route, reply } = setup();
+        ai.routerEnabled = false;
+
+        say('chayanne hola');
+        await jest.advanceTimersByTimeAsync(2500);
+
+        expect(route).not.toHaveBeenCalled();
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
+    });
+
+    it('stops a running cycle on module destroy', async () => {
+        const { service, say, route, reply } = setup();
+        route.mockResolvedValueOnce([
+            { bot: chayanne, kind: 'addressed' },
+            { bot: pedro, kind: 'addressed' },
+        ]);
+        const firstReply = Promise.withResolvers<string | null>();
+        reply.mockImplementationOnce(async () => firstReply.promise);
+
+        say('¿quién baila mejor?');
+        await jest.advanceTimersByTimeAsync(2500);
+        service.onModuleDestroy();
+        firstReply.resolve('¡yo, mi amor!');
+        await jest.advanceTimersByTimeAsync(0);
+
+        expect(reply).toHaveBeenCalledTimes(1);
+        expect(route).toHaveBeenCalledTimes(1);
     });
 });

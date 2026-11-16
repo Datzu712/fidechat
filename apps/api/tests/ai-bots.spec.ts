@@ -1,31 +1,7 @@
-import { BOTS, detectBot, detectNamedBots } from '@/modules/ai/bots.js';
+import { BOTS, detectNamedBots } from '@/modules/ai/bots.js';
 import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH } from '@/modules/ai/prompt.js';
 import { buildRouterPrompt, planSpeakers } from '@/modules/ai/router.js';
 import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
-
-describe('detectBot', () => {
-    it.each([
-        ['hola chatgpt', 'Chat yipiyi'],
-        ['chat gpt ayuda', 'Chat yipiyi'],
-        ['GPT?', 'Chat yipiyi'],
-        ['yipiyi', 'Chat yipiyi'],
-        ['Chayanne canta', 'chayanne'],
-        ['chayane', 'chayanne'],
-        ['Pedro Pascal hola', 'pedro_pascal'],
-        ['pedro', 'pedro_pascal'],
-        ['PASCAL', 'pedro_pascal'],
-    ])('%s -> %s', (content, username) => {
-        expect(detectBot(content)?.user.username).toBe(username);
-    });
-
-    it.each(['chat', 'vamos a chatear', 'pascalina', 'hola a todos'])('%s -> null', (content) => {
-        expect(detectBot(content)).toBeNull();
-    });
-
-    it('picks the first bot in BOTS order when several are named', () => {
-        expect(detectBot('pedro y chayanne')?.user.username).toBe('chayanne');
-    });
-});
 
 describe('buildPromptMessages', () => {
     const chayanne = BOTS[1];
@@ -80,6 +56,24 @@ describe('detectNamedBots', () => {
         expect(detectNamedBots('pedro y chayanne').map((b) => b.user.username)).toEqual(['chayanne', 'pedro_pascal']));
     it('returns all three when all are named', () => expect(detectNamedBots('gpt, chayanne y pedro')).toHaveLength(3));
     it('returns [] when none is named', () => expect(detectNamedBots('hola a todos')).toEqual([]));
+
+    it.each([
+        ['hola chatgpt', 'Chat yipiyi'],
+        ['chat gpt ayuda', 'Chat yipiyi'],
+        ['GPT?', 'Chat yipiyi'],
+        ['yipiyi', 'Chat yipiyi'],
+        ['Chayanne canta', 'chayanne'],
+        ['chayane', 'chayanne'],
+        ['Pedro Pascal hola', 'pedro_pascal'],
+        ['pedro', 'pedro_pascal'],
+        ['PASCAL', 'pedro_pascal'],
+    ])('%s -> %s', (content, username) => {
+        expect(detectNamedBots(content).map((b) => b.user.username)).toEqual([username]);
+    });
+
+    it.each(['chat', 'vamos a chatear', 'pascalina'])('%s -> []', (content) => {
+        expect(detectNamedBots(content)).toEqual([]);
+    });
 });
 
 describe('SpontaneousCaps', () => {
@@ -107,6 +101,7 @@ describe('buildRouterPrompt', () => {
         const lines = buildRouterPrompt(history, new Set(['m24'])).split('\n');
         expect(lines[0]).toBe('ana: msg 5');
         expect(lines.at(-1)).toBe('[NUEVO] ana: msg 24');
+        expect(lines.join('\n')).not.toContain('Acaban de responder');
     });
 
     it('names the excluded bots when asking for a reaction', () =>
@@ -189,4 +184,17 @@ describe('planSpeakers', () => {
             { bot: pedro, kind: 'addressed' },
             { bot: chayanne, kind: 'addressed' },
         ]));
+
+    it('never trims a named bot, dropping router picks instead', () => {
+        const speakers = planSpeakers(
+            [
+                { bot: gpt, kind: 'addressed' },
+                { bot: pedro, kind: 'addressed' },
+            ],
+            [chayanne],
+            yes,
+        );
+        expect(speakers.map((speaker) => speaker.bot)).toContain(chayanne);
+        expect(speakers).toHaveLength(2);
+    });
 });

@@ -21,7 +21,7 @@ const AI_HISTORY_LIMIT = 30;
 interface ChannelConversation {
     timer?: NodeJS.Timeout;
     pending: Array<{ id: string; content: string }>;
-    /** Set by every human message, so a running cycle stops before its next turn. */
+    /** Set by every human message, so a running cycle skips the remaining turns of bots nobody named. */
     interrupted: boolean;
     /** Cycles run one after another, never overlapping. */
     chain: Promise<void>;
@@ -91,7 +91,7 @@ export class BotConversationService implements OnModuleDestroy {
                 this.caps.canSpeak(channel.id, bot.user.id, Date.now()),
             );
 
-            const spoken = await this.takeTurns(channel, conversation, ids, speakers);
+            const spoken = await this.takeTurns(channel, conversation, ids, speakers, named);
             if (decision !== null && spoken.length > 0) {
                 const reactor = await this.react(channel, conversation, ids, spoken);
                 if (reactor) spoken.push(reactor);
@@ -103,16 +103,21 @@ export class BotConversationService implements OnModuleDestroy {
         }
     }
 
-    /** The planned speakers reply one after another, until a human interrupts. Returns who posted a reply. */
+    /**
+     * The planned speakers reply one after another. A human interrupt skips the remaining bots nobody named, but named
+     * bots still answer. Returns who posted a reply.
+     */
     private async takeTurns(
         channel: Channel,
         conversation: ChannelConversation,
         ids: ReadonlySet<string>,
         speakers: PlannedSpeaker[],
+        named: readonly AIBot[],
     ): Promise<AIBot[]> {
         const spoken: AIBot[] = [];
         for (const [index, { bot, kind }] of speakers.entries()) {
-            if (conversation.interrupted) break;
+            if (this.destroyed) break;
+            if (conversation.interrupted && !named.includes(bot)) continue;
 
             if (kind === 'spontaneous') {
                 if (index > 0 && !(await this.stillPicked(channel, conversation, ids, bot))) continue;
@@ -130,7 +135,7 @@ export class BotConversationService implements OnModuleDestroy {
         ids: ReadonlySet<string>,
         spoken: AIBot[],
     ): Promise<AIBot | null> {
-        if (conversation.interrupted) return null;
+        if (this.destroyed || conversation.interrupted) return null;
 
         const history = await this.messageRepository.getRecentMessages(channel.id, ROUTER_HISTORY_LIMIT);
         const decision = (await this.ai.route(history, ids, spoken)) ?? [];

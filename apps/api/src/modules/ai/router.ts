@@ -64,7 +64,7 @@ export function buildRouterPrompt(
 
 /**
  * Router `addressed` first, then named bots the router missed, then `spontaneous` ones under their cap. A named bot
- * is always addressed. The turn is trimmed from the tail to `max(2, named.length)` speakers.
+ * is always addressed and never trimmed: bots nobody named are dropped from the tail down to `max(2, named.length)`.
  */
 export function planSpeakers(
     decision: PlannedSpeaker[] | null,
@@ -87,5 +87,6 @@ export function planSpeakers(
         if (pick.kind === 'spontaneous' && canSpeakSpontaneously(pick.bot)) add(pick.bot, 'spontaneous');
     }
 
-    return speakers.slice(0, Math.max(MAX_UNNAMED_SPEAKERS, named.length));
+    let unnamedSlots = Math.max(MAX_UNNAMED_SPEAKERS, named.length) - named.length;
+    return speakers.filter(({ bot }) => named.includes(bot) || unnamedSlots-- > 0);
 }
