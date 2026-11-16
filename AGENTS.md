@@ -97,7 +97,7 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 **Feature modules (`src/modules/<feature>/`)** follow the pattern controller → service → repository:
 
 - Controllers apply a per-parameter `ValidationPipe` with class-validator `groups` (`'create'` / `'update'`) on DTOs. DTOs are hand-written on purpose and are not derived from Drizzle rows: the DB uses `null` where payloads use absent fields.
-- Services hold business rules and emit realtime events through `GatewayService`.
+- Services hold business rules and emit realtime events through `SocketEmitter`.
 - Repositories hold **all** SQL. They wrap unexpected errors in `InternalServerErrorException` and rethrow `NotFoundException` unchanged.
 
 **Data layer (`src/infrastructure/database/`).**
@@ -108,12 +108,13 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 - **Auditing is manual.** A write to `app_user`, `guild`, `guild_users`, `channel` or `message` should call `AuditService.record(tx, {...})` inside the same `db.transaction`, so the audit row commits or rolls back together with the change. `recordSafe` is only for writes outside a transaction. Repository helpers accept `DrizzleExecutor` (`DrizzleDB | DrizzleTx`) so they can compose into a caller's transaction.
 - `sql/legacy-oracle/` is the old Oracle PL/SQL, kept for reference only. Its README maps each old package or trigger to the TypeScript that replaced it.
 
-**Realtime (`src/modules/gateway/gateway.service.ts`).**
+**Realtime (`src/modules/gateway/`).**
 
-- A single `@WebSocketGateway` shares the HTTP port, with an optional namespace set by `SOCKET_NAMESPACE`.
-- A handshake middleware (`afterInit`) checks the `Origin` and verifies the token (the session cookie; outside production also `auth.token` or an `access-token` header for Postman), so a refused client gets `connect_error`. The server closes a socket when its token expires and when its session logs out; the client then reconnects if the session is still valid.
-- Each socket joins a room named after its user id (`sub`). Services fan out to users with `emitToUser`/`emitToUsers`. For guild-wide events they first look up member ids with `UserRepository.getGuildUsers`; there are no guild or channel rooms.
-- Presence (`#activeUsers`) is an in-memory map, which assumes a single API instance.
+- `SocketGateway` is the single `@WebSocketGateway` and only handles the socket lifecycle. It shares the HTTP port, with an optional namespace set by `SOCKET_NAMESPACE`.
+- The handshake middleware, installed in `afterInit`, is `HandshakeAuthenticator`: it checks the `Origin` and verifies the token (the session cookie; outside production also `auth.token` or an `access-token` header for Postman), so a refused client gets `connect_error`. The server closes a socket when its token expires and when its session logs out; the client then reconnects if the session is still valid.
+- Each socket joins a room named after its user id (`sub`). Services fan out to users with `SocketEmitter.emitToUser`/`emitToUsers`. For guild-wide events they first look up member ids with `UserRepository.getGuildUsers`; there are no guild or channel rooms.
+- Presence is `PresenceService`, an in-memory map that broadcasts its own changes and assumes a single API instance.
+- Inbound events are manual `socket.on` listeners, not `@SubscribeMessage`, because the global guard and interceptor assume HTTP.
 
 **AI bots (`src/modules/ai/`).** Three bot users with hard-coded UUIDs (`IAUserModels`) are upserted on module init and are always shown online. When a non-bot message matches a bot's name pattern, `MessageService` generates the reply asynchronously (fire-and-forget) through OpenAI and toggles the bot's typing status.
 

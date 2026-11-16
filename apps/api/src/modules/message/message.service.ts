@@ -1,7 +1,8 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
 import { SocketEvents } from '@fidechat/shared';
-import { GatewayService } from '../gateway/gateway.service.js';
+import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { PresenceService } from '../gateway/presence.service.js';
 import { Channel, ChannelRepository } from '../channel/channel.repository.js';
 import { UserRepository } from '../user/user.repository.js';
 import { AICommandService } from '../ai/ai-command.service.js';
@@ -12,7 +13,8 @@ export class MessageService {
 
     constructor(
         private readonly messageRepository: MessageRepository,
-        private readonly gateway: GatewayService,
+        private readonly emitter: SocketEmitter,
+        private readonly presence: PresenceService,
         private readonly channelRepository: ChannelRepository,
         private readonly userRepository: UserRepository,
         private readonly ai: AICommandService,
@@ -26,7 +28,7 @@ export class MessageService {
     ): Promise<void> {
         const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
 
-        this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, {
+        this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, {
             id: messageId,
             ...messageData,
             createdAt,
@@ -69,7 +71,7 @@ export class MessageService {
         const targetModel = this.ai.parseAICommand(originalMessage.content);
         if (!targetModel) return;
 
-        this.gateway.startTypingIA(targetModel.botId, channel.id);
+        this.presence.startBotTyping(targetModel.botId, channel.id);
 
         try {
             const iaResponse = await this.ai.processAICommand({
@@ -92,7 +94,7 @@ export class MessageService {
         } catch (error) {
             this.logger.error(new Error('Error processing AI response', { cause: error }));
         } finally {
-            this.gateway.stopTypingIA(targetModel.botId);
+            this.presence.stopBotTyping(targetModel.botId);
         }
     }
 
@@ -109,7 +111,7 @@ export class MessageService {
 
             if (result.success) {
                 const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
-                this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_UPDATE, { id, content });
+                this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_UPDATE, { id, content });
             }
 
             return result;
@@ -130,7 +132,7 @@ export class MessageService {
 
             if (result.success) {
                 const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
-                this.gateway.emitToUsers(guildMembers, SocketEvents.MESSAGE_DELETE, {
+                this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_DELETE, {
                     id,
                     channelId: message.channelId,
                 });

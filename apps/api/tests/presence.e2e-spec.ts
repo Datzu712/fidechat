@@ -6,10 +6,11 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { VersioningType } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { io, type Socket } from 'socket.io-client';
-import { type AppUser, type ConnectedUser, type GuildMember, SocketEvents } from '@fidechat/shared';
+import { type AppUser, type ConnectedUser, type GuildMember, SocketEvents, type SyncPayload } from '@fidechat/shared';
 
 import { AppModule } from '../src/modules/app.module.js';
 import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
+import { IAUserModels } from '../src/modules/ai/ai-command.service.js';
 
 /** Resolves with the next `event` payload that matches, or rejects after 3s. */
 async function nextEvent<T>(socket: Socket, event: string, matches: (data: T) => boolean = () => true): Promise<T> {
@@ -112,6 +113,19 @@ describe('Presence and membership E2E', () => {
         await app.close();
     });
 
+    it('should report connected users and the always-online bots in the sync payload', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/api/v1/users/@me/sync',
+            headers: { authorization: `Bearer ${alice.token}` },
+        });
+        expect(res.statusCode).toBe(200);
+        const { connectedUsers } = res.json<SyncPayload>();
+        const botId = IAUserModels[0].id;
+        expect(entryOf(connectedUsers, bob.id)).toEqual({ userId: bob.id, status: 'online', isTyping: false });
+        expect(entryOf(connectedUsers, botId)).toEqual({ userId: botId, status: 'online', isTyping: false });
+    });
+
     it('should take the status owner from the token, not from the payload', async () => {
         const update = nextEvent<ConnectedUser[]>(
             aliceSocket,
@@ -156,5 +170,23 @@ describe('Presence and membership E2E', () => {
 
         const { user } = await memberAdd;
         expect(user).toEqual({ id: carol.id, username: expect.any(String), avatarUrl: null, isBot: false });
+    });
+
+    it('should broadcast that a user went offline when their socket disconnects', async () => {
+        const dave = await createUser('dave');
+        await touch(dave.token);
+        const online = nextEvent<ConnectedUser[]>(aliceSocket, SocketEvents.USER_STATUS_UPDATE, (users) =>
+            Boolean(entryOf(users, dave.id)),
+        );
+        const daveSocket = await connect(dave.token);
+        await online;
+
+        const offline = nextEvent<ConnectedUser[]>(
+            aliceSocket,
+            SocketEvents.USER_STATUS_UPDATE,
+            (users) => !entryOf(users, dave.id),
+        );
+        daveSocket.disconnect();
+        expect(entryOf(await offline, dave.id)).toBeUndefined();
     });
 });
