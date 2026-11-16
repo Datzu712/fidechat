@@ -116,7 +116,7 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 - Presence is `PresenceService`, an in-memory map that broadcasts its own changes and assumes a single API instance.
 - Inbound events are manual `socket.on` listeners, not `@SubscribeMessage`, because the global guard and interceptor assume HTTP.
 
-**AI bots (`src/modules/ai/`).** Three bots are defined as data in `BOTS` (`bots.ts`: hard-coded user UUIDs, trigger regex, system prompt); their users are upserted on module init and are always shown online. When a non-bot message matches a bot's trigger, `MessageService` loads the last 30 channel messages and generates the reply asynchronously (fire-and-forget) through the Vercel AI SDK, toggling the bot's typing status. The model comes from `AI_MODEL` (`provider:model`, `anthropic` or `openai`, default `anthropic:claude-haiku-5-5`); without that provider's key the bots stay off.
+**AI bots (`src/modules/ai/`).** Three bots are defined as data in `BOTS` (`bots.ts`: hard-coded user UUIDs, trigger regex, system prompt); their users are upserted on module init and are always shown online. When a non-bot message matches a bot's trigger, `MessageService` loads the last 30 channel messages and generates the reply asynchronously (fire-and-forget) through the Vercel AI SDK, toggling the bot's typing status. The model comes from `AI_MODEL` (`provider:model`: `anthropic`, `openai`, or `ollama` through its OpenAI-compatible API at `OLLAMA_BASE_URL`; default `anthropic:claude-haiku-5-5`); without that provider's key the bots stay off (Ollama needs none).
 
 ## Web architecture (`apps/web`)
 

@@ -30,6 +30,7 @@
     "dependencies": {
         "@ai-sdk/anthropic": "^4.0.105",
         "@ai-sdk/openai": "^4.0.118",
+        "@ai-sdk/openai-compatible": "^3.0.92",
         "@fastify/compress": "^9.3.0",
         "@fastify/helmet": "^13.2.0",
         "@fastify/static": "^10.1.8",

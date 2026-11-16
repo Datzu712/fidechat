@@ -64,7 +64,9 @@ export class EnvironmentVariables implements IEnvironmentVariables {
 
     // AI bots
     @IsOptional()
-    @Matches(/^(anthropic|openai):.+$/, { message: 'AI_MODEL must look like anthropic:<model> or openai:<model>' })
+    @Matches(/^(anthropic|openai|ollama):.+$/, {
+        message: 'AI_MODEL must look like anthropic:<model>, openai:<model> or ollama:<model>',
+    })
     AI_MODEL?: string;
 
     @IsOptional()
@@ -74,4 +76,8 @@ export class EnvironmentVariables implements IEnvironmentVariables {
     @IsOptional()
     @IsString()
     OPENAI_API_KEY?: string;
+
+    @IsOptional()
+    @IsString()
+    OLLAMA_BASE_URL?: string;
 }

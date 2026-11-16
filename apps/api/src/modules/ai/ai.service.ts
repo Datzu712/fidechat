@@ -1,5 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createProviderRegistry, generateText } from 'ai';
@@ -12,7 +13,9 @@ import { buildPromptMessages, type ChannelHistoryEntry, cleanReply } from './pro
 globalThis.AI_SDK_LOG_WARNINGS = false;
 
 const DEFAULT_AI_MODEL = 'anthropic:claude-haiku-5-5';
-const PROVIDER_KEYS = { anthropic: 'ANTHROPIC_API_KEY', openai: 'OPENAI_API_KEY' } as const;
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434/v1';
+/** The env var holding each provider's API key; Ollama runs locally and needs none. */
+const PROVIDER_KEYS = { anthropic: 'ANTHROPIC_API_KEY', openai: 'OPENAI_API_KEY', ollama: null } as const;
 type ProviderId = keyof typeof PROVIDER_KEYS;
 
 @Injectable()
@@ -29,11 +32,17 @@ export class AIService implements OnModuleInit {
         // AI_MODEL is validated at boot (environment.ts), so the provider is one of PROVIDER_KEYS.
         this.modelId = config.get('AI_MODEL') || DEFAULT_AI_MODEL;
         const provider = this.modelId.split(':')[0] as ProviderId;
-        this.missingKey = config.get(PROVIDER_KEYS[provider]) ? null : PROVIDER_KEYS[provider];
+        const keyName = PROVIDER_KEYS[provider];
+        this.missingKey = keyName && !config.get(keyName) ? keyName : null;
 
         this.registry = createProviderRegistry({
             anthropic: createAnthropic({ apiKey: config.get('ANTHROPIC_API_KEY') }),
             openai: createOpenAI({ apiKey: config.get('OPENAI_API_KEY') }),
+            // Ollama serves an OpenAI-compatible API under /v1.
+            ollama: createOpenAICompatible({
+                name: 'ollama',
+                baseURL: config.get('OLLAMA_BASE_URL') || DEFAULT_OLLAMA_BASE_URL,
+            }),
         });
     }
 

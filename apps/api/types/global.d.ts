@@ -30,6 +30,7 @@ declare interface IEnvironmentVariables {
     AI_MODEL?: string; // provider:model, defaults to anthropic:claude-haiku-5-5
     ANTHROPIC_API_KEY?: string;
     OPENAI_API_KEY?: string;
+    OLLAMA_BASE_URL?: string; // defaults to http://localhost:11434/v1
 }
 
 declare interface IReqUser {

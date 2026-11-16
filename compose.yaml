@@ -110,6 +110,10 @@ services:
             AI_MODEL: ${AI_MODEL:-anthropic:claude-haiku-5-5}
             ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
             OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+            # With AI_MODEL=ollama:<model>, reaches an Ollama running on the host.
+            OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         ports:
             - '4300:8080'
         depends_on:
