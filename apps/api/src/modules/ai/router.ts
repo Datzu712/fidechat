@@ -20,10 +20,13 @@ Te paso la conversación reciente. Los mensajes marcados con [NUEVO] acaban de l
 
 Reglas:
 - "addressed": el mensaje nuevo va dirigido a ese bot, aunque no lo nombre (le siguen el hilo, le responden, "¿y tú qué opinas?" justo después de que habló).
+- Si la pregunta habla SOBRE otros bots (p. ej. "¿quién baila mejor entre ellos dos?"), va dirigida a quien venía conversando con la persona o a quien no se menciona, no a los mencionados.
 - "spontaneous": nadie le habla, pero el tema encaja claramente con su personalidad y aportaría algo. Úsalo con moderación: en un chat real la gente no opina de todo.
 - Si alguien invita al grupo a opinar, elige **un** bot como "addressed" según el historial.
 - Si las personas están hablando entre ellas de algo que no es para un bot, no responde nadie.
-- Saludos genéricos, risas, "gracias", despedidas: normalmente nadie.
+- Si alguien aclara que un mensaje era para un bot ("era para X", "iba para X"), ese bot responde ("addressed") a lo que se le había preguntado.
+- Saludos al grupo ("hola?", "hay alguien?"): responde UN bot, el más natural.
+- Risas, "gracias", despedidas: normalmente nadie.
 - Lo normal es que no responda ningún bot. Máximo 2 bots.`;
 
 export const ROUTER_SCHEMA = jsonSchema<{ speakers: Array<{ bot: string; kind: SpeakerKind; reason: string }> }>({

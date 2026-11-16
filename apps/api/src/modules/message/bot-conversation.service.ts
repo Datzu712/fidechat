@@ -12,11 +12,26 @@ import { UserRepository } from '../user/user.repository.js';
 import { MessageRepository } from './message.repository.js';
 
 /** Silence after the last human message before the bots decide whether to speak. */
-const DEBOUNCE_MS = 2500;
+const DEBOUNCE_MS = 1500;
 /** How many channel messages the router reads. */
 const ROUTER_HISTORY_LIMIT = 20;
 /** How many channel messages a bot reads before replying. */
 const AI_HISTORY_LIMIT = 30;
+/** Typing speed a bot reply is paced at, so it appears roughly when a person would have finished typing it. */
+const TYPING_CHARS_PER_SECOND = 27;
+const MAX_TYPING_MS = 5000;
+/** Pause before a bot answers another bot's reply, as if reading it. */
+const READ_PAUSE_MS = 1200;
+
+/** How much longer the typing indicator stays once generation took `generationMs`. */
+export function typingDelayMs(length: number, generationMs: number): number {
+    return Math.max(0, Math.min((length / TYPING_CHARS_PER_SECOND) * 1000, MAX_TYPING_MS) - generationMs);
+}
+
+async function sleep(ms: number): Promise<void> {
+    // oxlint-disable-next-line promise/avoid-new -- a plain setTimeout, so Jest fake timers control it
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 interface ChannelConversation {
     timer?: NodeJS.Timeout;
@@ -115,9 +130,14 @@ export class BotConversationService implements OnModuleDestroy {
         named: readonly AIBot[],
     ): Promise<AIBot[]> {
         const spoken: AIBot[] = [];
+        // Destroy stops every remaining turn; a human interrupt only the turns of bots nobody named.
+        const silenced = (bot: AIBot) => this.destroyed || (conversation.interrupted && !named.includes(bot));
         for (const [index, { bot, kind }] of speakers.entries()) {
-            if (this.destroyed) break;
-            if (conversation.interrupted && !named.includes(bot)) continue;
+            if (silenced(bot)) continue;
+            if (index > 0) {
+                await sleep(READ_PAUSE_MS);
+                if (silenced(bot)) continue;
+            }
 
             if (kind === 'spontaneous') {
                 if (index > 0 && !(await this.stillPicked(channel, conversation, ids, bot))) continue;
@@ -144,6 +164,10 @@ export class BotConversationService implements OnModuleDestroy {
         );
         // oxlint-disable-next-line typescript/no-unnecessary-condition -- a human message may arrive while `route` runs
         if (!reaction || conversation.interrupted) return null;
+
+        await sleep(READ_PAUSE_MS);
+        // oxlint-disable-next-line typescript/no-unnecessary-condition -- a human message or destroy may happen during the pause
+        if (conversation.interrupted || this.destroyed) return null;
 
         this.caps.record(channel.id, reaction.bot.user.id, Date.now());
         return (await this.speak(channel, reaction.bot)) ? reaction.bot : null;
@@ -172,13 +196,20 @@ export class BotConversationService implements OnModuleDestroy {
         return !conversation.interrupted && (decision?.some((pick) => pick.bot === bot) ?? false);
     }
 
-    /** Generates, stores and broadcasts one reply. Returns whether a message was posted. */
+    /**
+     * Generates, stores and broadcasts one reply. The typing indicator stays on until the reply is posted, paced like
+     * typing. Returns whether a message was posted.
+     */
     private async speak(channel: Channel, bot: AIBot): Promise<boolean> {
         this.presence.startBotTyping(bot.user.id, channel.id);
+        const startedAt = Date.now();
         try {
             const history = await this.messageRepository.getRecentMessages(channel.id, AI_HISTORY_LIMIT);
             const content = await this.ai.reply(bot, history);
             if (!content) return false;
+
+            await sleep(typingDelayMs(content.length, Date.now() - startedAt));
+            if (this.destroyed) return false;
 
             const createdAt = new Date();
             const reply = { content, channelId: channel.id, authorId: bot.user.id };

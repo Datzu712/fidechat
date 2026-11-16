@@ -7,11 +7,16 @@ import type { PlannedSpeaker } from '@/modules/ai/router.js';
 import type { Channel } from '@/modules/channel/channel.repository.js';
 import type { PresenceService } from '@/modules/gateway/presence.service.js';
 import type { SocketEmitter } from '@/modules/gateway/socket-emitter.js';
-import { BotConversationService } from '@/modules/message/bot-conversation.service.js';
+import { BotConversationService, typingDelayMs } from '@/modules/message/bot-conversation.service.js';
 import type { MessageCreationAttributes, MessageRepository } from '@/modules/message/message.repository.js';
 import type { UserRepository } from '@/modules/user/user.repository.js';
 
 const [, chayanne, pedro] = BOTS;
+const DEBOUNCE = 1500;
+const READ_PAUSE = 1200;
+/** How long the typing indicator holds `text` when generation was instant (fake timers), rounded up to whole ms. */
+const typing = (text: string) => Math.ceil(typingDelayMs(text.length, 0));
+const replyOf = (bot: PlannedSpeaker['bot']) => `reply from ${bot.user.username}`;
 const channel: Channel = { id: 'c1', guildId: 'g1', name: 'general', description: null, position: 0 };
 
 type Route = (
@@ -60,8 +65,15 @@ function setup() {
         return id;
     };
 
-    return { service, say, ai, route, reply, messages };
+    return { service, say, ai, route, reply, messages, messageRepository };
 }
+
+describe('typingDelayMs', () => {
+    it('holds a 54-char message for 2 s when generation was instant', () => expect(typingDelayMs(54, 0)).toBe(2000));
+    it('subtracts the generation time', () => expect(typingDelayMs(54, 1500)).toBe(500));
+    it('caps at 5 s', () => expect(typingDelayMs(1000, 0)).toBe(5000));
+    it('never goes negative', () => expect(typingDelayMs(10, 3000)).toBe(0));
+});
 
 describe('BotConversationService', () => {
     beforeAll(() => Logger.overrideLogger(false));
@@ -74,14 +86,14 @@ describe('BotConversationService', () => {
         jest.useRealTimers();
     });
 
-    it('waits for 2.5 s of silence before routing', async () => {
+    it('waits for 1.5 s of silence before routing', async () => {
         const { say, route } = setup();
 
         say('hola');
         await jest.advanceTimersByTimeAsync(1000);
         say('¿cómo están?');
 
-        await jest.advanceTimersByTimeAsync(2499);
+        await jest.advanceTimersByTimeAsync(1499);
         expect(route).not.toHaveBeenCalled();
 
         await jest.advanceTimersByTimeAsync(1);
@@ -93,7 +105,7 @@ describe('BotConversationService', () => {
         route.mockResolvedValue(null);
 
         say('chayanne hola');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
 
         expect(reply).toHaveBeenCalledTimes(1);
         expect(reply.mock.calls[0][0]).toBe(chayanne);
@@ -107,7 +119,7 @@ describe('BotConversationService', () => {
         ]);
 
         say('¿quién baila mejor?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
         const pedroHistory = reply.mock.calls[1][1];
@@ -124,7 +136,7 @@ describe('BotConversationService', () => {
         ]);
 
         say('¿qué música ponemos?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
         expect(route).toHaveBeenCalledTimes(2);
@@ -141,7 +153,7 @@ describe('BotConversationService', () => {
         reply.mockImplementationOnce(async () => firstReply.promise);
 
         say('¿quién baila mejor?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         expect(reply).toHaveBeenCalledTimes(1);
 
         say('esperen, otra cosa');
@@ -151,7 +163,7 @@ describe('BotConversationService', () => {
         expect(reply).toHaveBeenCalledTimes(1);
         expect(route).toHaveBeenCalledTimes(1);
 
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         expect(route).toHaveBeenCalledTimes(2);
         expect(reply.mock.calls.map(([bot]) => bot)).not.toContain(pedro);
     });
@@ -163,10 +175,10 @@ describe('BotConversationService', () => {
         reply.mockImplementationOnce(async () => firstReply.promise);
 
         say('pedro y chayanne, ¿quién baila mejor?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         say('jaja');
         firstReply.resolve('¡yo, mi amor!');
-        await jest.advanceTimersByTimeAsync(0);
+        await jest.advanceTimersByTimeAsync(typing('¡yo, mi amor!') + READ_PAUSE);
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
         expect(route).toHaveBeenCalledTimes(1);
@@ -178,7 +190,7 @@ describe('BotConversationService', () => {
         route.mockImplementationOnce(async () => decision.promise);
 
         say('chayanne, ¿qué cantas?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         expect(route).toHaveBeenCalledTimes(1);
 
         say('jaja');
@@ -195,10 +207,10 @@ describe('BotConversationService', () => {
         reply.mockImplementationOnce(async () => firstReply.promise);
 
         say('chayanne, ¿qué cantas?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         const h2 = say('otra cosa');
         // H2's timer fires while the first cycle is still replying, so its cycle is queued behind it.
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         await jest.advanceTimersByTimeAsync(500);
         const h3 = say('y otra más');
 
@@ -206,7 +218,7 @@ describe('BotConversationService', () => {
         await jest.advanceTimersByTimeAsync(0);
         expect(route).toHaveBeenCalledTimes(1);
 
-        await jest.advanceTimersByTimeAsync(2499);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE - 1);
         expect(route).toHaveBeenCalledTimes(1);
 
         await jest.advanceTimersByTimeAsync(1);
@@ -226,7 +238,7 @@ describe('BotConversationService', () => {
         route.mockImplementationOnce(async () => reask.promise);
 
         say('chayanne, ¿qué series ves?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
         expect(route).toHaveBeenCalledTimes(2);
 
         say('esperen');
@@ -246,7 +258,7 @@ describe('BotConversationService', () => {
             .mockResolvedValueOnce([{ bot: pedro, kind: 'spontaneous' }]);
 
         say('chayanne, ¿qué series ves?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
     });
@@ -261,7 +273,7 @@ describe('BotConversationService', () => {
             .mockResolvedValueOnce([]);
 
         say('chayanne, ¿qué series ves?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
 
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
     });
@@ -273,14 +285,32 @@ describe('BotConversationService', () => {
         );
 
         say('vi The Last of Us anoche');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         await jest.advanceTimersByTimeAsync(60_000);
         say('qué buena serie');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
 
         expect(route.mock.calls.filter(([, , exclude = []]) => exclude.length === 0)).toHaveLength(2);
         expect(reply).toHaveBeenCalledTimes(1);
         expect(reply.mock.calls[0][0]).toBe(pedro);
+    });
+
+    it('posts a reply only after its typing delay', async () => {
+        const { say, route, reply, messageRepository } = setup();
+        route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);
+        // 54 characters: two seconds of typing.
+        reply.mockResolvedValueOnce('¡Hola, mi amor! Qué alegría verte por aquí esta noche.');
+
+        say('chayanne hola');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
+        expect(reply).toHaveBeenCalledTimes(1);
+        expect(messageRepository.createMessage).not.toHaveBeenCalled();
+
+        await jest.advanceTimersByTimeAsync(1999);
+        expect(messageRepository.createMessage).not.toHaveBeenCalled();
+
+        await jest.advanceTimersByTimeAsync(1);
+        expect(messageRepository.createMessage).toHaveBeenCalledTimes(1);
     });
 
     it('does nothing after module destroy', async () => {
@@ -299,7 +329,7 @@ describe('BotConversationService', () => {
         ai.routerEnabled = false;
 
         say('chayanne hola');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
 
         expect(route).not.toHaveBeenCalled();
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne]);
@@ -315,10 +345,10 @@ describe('BotConversationService', () => {
         reply.mockImplementationOnce(async () => firstReply.promise);
 
         say('¿quién baila mejor?');
-        await jest.advanceTimersByTimeAsync(2500);
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
         service.onModuleDestroy();
         firstReply.resolve('¡yo, mi amor!');
-        await jest.advanceTimersByTimeAsync(0);
+        await jest.advanceTimersByTimeAsync(typing('¡yo, mi amor!') + READ_PAUSE);
 
         expect(reply).toHaveBeenCalledTimes(1);
         expect(route).toHaveBeenCalledTimes(1);

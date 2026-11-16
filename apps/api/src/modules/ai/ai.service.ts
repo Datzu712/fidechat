@@ -84,7 +84,7 @@ export class AIService implements OnModuleInit {
             temperature: bot.temperature,
             // Recent Claude models think by default, and thinking counts against maxOutputTokens.
             reasoning: 'none',
-            maxOutputTokens: 500,
+            maxOutputTokens: 150,
             maxRetries: 2,
             abortSignal: AbortSignal.timeout(30_000),
         });
