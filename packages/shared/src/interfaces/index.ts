@@ -9,4 +9,5 @@ export type * from './responses/auth-me.interface.js';
 export type * from './responses/sync.interface.js';
 export type * from './socket/client-to-server-events.interface.js';
 export type * from './socket/connected-user.interface.js';
+export type * from './socket/status-update.interface.js';
 export type * from './socket/server-to-client-events.interface.js';

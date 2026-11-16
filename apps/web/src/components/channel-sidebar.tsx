@@ -28,7 +28,6 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     useEffect(() => {
         if (connected && currentUser) {
             socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-                userId: currentUser.id,
                 status: userStatus,
             });
         }

@@ -42,10 +42,10 @@ export class UserService {
         const guildMembers = (await this.userRepo.getGuildUsers(this.userRepo.DEFAULT_GUILD_ID)).map((user) => user.id);
 
         if (result.wasAddedToGuild) {
-            const appUser: AppUser = {
+            // Every guild member receives this, so it must not carry the email.
+            const appUser: Omit<AppUser, 'email'> = {
                 id: kcUser.sub,
                 username,
-                email: kcUser.email,
                 avatarUrl: pictureUrl,
                 isBot: false,
             };
