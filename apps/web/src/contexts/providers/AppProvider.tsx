@@ -11,7 +11,6 @@ import type {
     ConnectedUser,
     UserStatus,
     SyncPayload,
-    Guild,
     Channel,
 } from '@fidechat/shared';
 import { AppContextType, AppContext } from '../appContext';
@@ -61,12 +60,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const { connected, socket } = useSocket();
 
-    // The event carries the bare guild; its only member so far is the owner.
-    const handleGuildCreate = useCallback((newGuild: Guild) => {
-        setGuilds((prevGuilds) => [
-            ...prevGuilds,
-            { ...newGuild, members: [{ userId: newGuild.ownerId }] },
-        ]);
+    const handleGuildCreate = useCallback((newGuild: GuildWithMembers) => {
+        setGuilds((prevGuilds) => [...prevGuilds, newGuild]);
     }, []);
 
     const handleChannelCreate = useCallback((newChannel: Channel) => {

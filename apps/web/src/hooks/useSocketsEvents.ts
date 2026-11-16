@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { Socket } from 'socket.io-client';
 import type { ServerToClientEvents } from '@fidechat/shared';
+import type { AppSocket } from '@/contexts/socketContext';
 
 type SocketEventHandlers = Partial<ServerToClientEvents>;
 
 export function useSocketEvents(
-    socket: React.RefObject<Socket | null>,
+    socket: React.RefObject<AppSocket | null>,
     connected: boolean,
     handlers: SocketEventHandlers,
 ) {
@@ -17,7 +17,13 @@ export function useSocketEvents(
             `Registering the following events: ${Object.keys(handlers).join(', ')}`,
         );
 
-        Object.entries(handlers).forEach(([event, handler]) => {
+        // Object.keys loses the key type; the handlers map is keyed by event name.
+        const events = Object.keys(handlers) as Array<
+            keyof ServerToClientEvents
+        >;
+
+        events.forEach((event) => {
+            const handler = handlers[event];
             if (handler) {
                 currentSocket.on(event, handler);
             }
@@ -26,7 +32,7 @@ export function useSocketEvents(
         return () => {
             if (currentSocket) {
                 // Remover solo los eventos que fueron registrados
-                Object.keys(handlers).forEach((event) => {
+                events.forEach((event) => {
                     currentSocket.off(event);
                 });
             }

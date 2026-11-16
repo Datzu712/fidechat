@@ -16,14 +16,6 @@ const sessionRoom = (sid: string) => `session:${sid}`;
 /** setTimeout's upper bound (~24.8 days). */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
-/** Internal presence values; the wire type is the shared `UserStatus`. */
-enum SocketUserStatusEnum {
-    ONLINE = 'online',
-    IDLE = 'idle',
-    DND = 'dnd',
-    OFFLINE = 'offline',
-}
-
 @WebSocketGateway({
     namespace: process.env.SOCKET_NAMESPACE,
     serveClient: false,
@@ -63,7 +55,7 @@ export class GatewayService
 
         for (const user of IAUserModels) {
             this.#activeUsers.set(user.id, {
-                status: SocketUserStatusEnum.ONLINE,
+                status: 'online',
                 isTyping: false,
             });
         }
@@ -121,7 +113,7 @@ export class GatewayService
         socket.once('disconnect', () => clearTimeout(expiry));
 
         this.#activeUsers.set(user.sub, {
-            status: SocketUserStatusEnum.ONLINE,
+            status: 'online',
             isTyping: false,
         });
         this.server.emit(SocketEvents.USER_STATUS_UPDATE, this.activeUsers);
@@ -145,15 +137,23 @@ export class GatewayService
         });
     }
 
-    public emitToUser(userId: string, event: keyof ServerToClientEvents, data: any) {
-        this.server.to(userId).emit(event, data);
+    public emitToUser<E extends keyof ServerToClientEvents>(
+        userId: string,
+        event: E,
+        ...args: Parameters<ServerToClientEvents[E]>
+    ) {
+        this.server.to(userId).emit(event, ...args);
     }
 
     public emitForceSync(userId: string) {
         this.server.to(userId).emit(SocketEvents.FORCE_SYNC);
     }
 
-    public emitToUsers(userIds: string[], event: keyof ServerToClientEvents, data: any) {
+    public emitToUsers<E extends keyof ServerToClientEvents>(
+        userIds: string[],
+        event: E,
+        ...args: Parameters<ServerToClientEvents[E]>
+    ) {
         if (!userIds.length) {
             this.logger.error('User IDs are required to emit to users!');
             return;
@@ -162,7 +162,7 @@ export class GatewayService
         this.logger.debug(`Emitting event ${event} to users: ${userIds.join(', ')}`);
 
         userIds.forEach((userId) => {
-            this.server.to(userId).emit(event, data);
+            this.server.to(userId).emit(event, ...args);
         });
     }
 
@@ -214,7 +214,7 @@ export class GatewayService
         }
 
         this.#activeUsers.set(user.id, {
-            status: SocketUserStatusEnum.ONLINE,
+            status: 'online',
             isTyping: true,
             typingInChannel: channelId,
         });
@@ -231,7 +231,7 @@ export class GatewayService
         }
 
         this.#activeUsers.set(user.id, {
-            status: SocketUserStatusEnum.ONLINE,
+            status: 'online',
             isTyping: false,
             typingInChannel: undefined,
         });

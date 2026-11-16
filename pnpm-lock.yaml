@@ -229,9 +229,6 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
-      dayjs:
-        specifier: ^1.11.23
-        version: 1.11.23
       dotenv:
         specifier: ^18.0.9
         version: 18.0.9
@@ -4555,9 +4552,6 @@ packages:
 
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
-
-  dayjs@1.11.23:
-    resolution: {integrity: sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -10779,8 +10773,6 @@ snapshots:
   date-fns@4.4.0: {}
 
   dateformat@4.6.3: {}
-
-  dayjs@1.11.23: {}
 
   debug@4.4.3(supports-color@8.1.1):
     dependencies:

@@ -1,12 +1,12 @@
 import type { SocketEvents } from '../../enums/index.js';
 import type { AppUser } from '../entities/app-user.interface.js';
 import type { Channel } from '../entities/channel.interface.js';
-import type { Guild, GuildMember } from '../entities/guild.interface.js';
+import type { GuildMember, GuildWithMembers } from '../entities/guild.interface.js';
 import type { Message } from '../entities/message.interface.js';
 import type { ConnectedUser } from './connected-user.interface.js';
 
 export interface ServerToClientEvents {
-    [SocketEvents.GUILD_CREATE]: (guild: Guild) => void;
+    [SocketEvents.GUILD_CREATE]: (guild: GuildWithMembers) => void;
     [SocketEvents.CHANNEL_CREATE]: (channel: Channel) => void;
     [SocketEvents.MESSAGE_CREATE]: (message: Message) => void;
     [SocketEvents.MESSAGE_UPDATE]: (data: Pick<Message, 'id' | 'content'>) => void;
