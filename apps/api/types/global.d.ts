@@ -28,6 +28,7 @@ declare interface IEnvironmentVariables {
 
     // AI bots
     AI_MODEL?: string; // provider:model, defaults to anthropic:claude-haiku-5-5
+    AI_ROUTER?: 'on' | 'off'; // defaults to on
     ANTHROPIC_API_KEY?: string;
     OPENAI_API_KEY?: string;
     OLLAMA_BASE_URL?: string; // defaults to http://localhost:11434/v1

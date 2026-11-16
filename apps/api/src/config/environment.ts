@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Matches, Min } from 'class-validator';
+import { IsEnum, IsIn, IsNumber, IsOptional, IsString, Matches, Min } from 'class-validator';
 
 export enum Environment {
     Development = 'development',
@@ -68,6 +68,10 @@ export class EnvironmentVariables implements IEnvironmentVariables {
         message: 'AI_MODEL must look like anthropic:<model>, openai:<model> or ollama:<model>',
     })
     AI_MODEL?: string;
+
+    @IsOptional()
+    @IsIn(['on', 'off'])
+    AI_ROUTER?: 'on' | 'off';
 
     @IsOptional()
     @IsString()

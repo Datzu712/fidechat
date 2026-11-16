@@ -3,11 +3,12 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createProviderRegistry, generateText } from 'ai';
+import { createProviderRegistry, generateText, Output } from 'ai';
 
 import { UserRepository } from '../user/user.repository.js';
 import { type AIBot, BOTS } from './bots.js';
 import { buildPromptMessages, type ChannelHistoryEntry, cleanReply } from './prompt.js';
+import { buildRouterPrompt, type PlannedSpeaker, ROUTER_INSTRUCTIONS, ROUTER_SCHEMA } from './router.js';
 
 // The SDK prints warnings with console.warn, outside pino; `reply` logs them through the Nest logger instead.
 globalThis.AI_SDK_LOG_WARNINGS = false;
@@ -23,6 +24,7 @@ export class AIService implements OnModuleInit {
     private readonly logger = new Logger(AIService.name);
     private readonly modelId: string;
     private readonly missingKey: string | null;
+    private readonly routerOn: boolean;
     private readonly registry;
 
     constructor(
@@ -31,6 +33,7 @@ export class AIService implements OnModuleInit {
     ) {
         // AI_MODEL is validated at boot (environment.ts), so the provider is one of PROVIDER_KEYS.
         this.modelId = config.get('AI_MODEL') || DEFAULT_AI_MODEL;
+        this.routerOn = config.get('AI_ROUTER') !== 'off';
         const provider = this.modelId.split(':')[0] as ProviderId;
         const keyName = PROVIDER_KEYS[provider];
         this.missingKey = keyName && !config.get(keyName) ? keyName : null;
@@ -48,6 +51,10 @@ export class AIService implements OnModuleInit {
 
     get enabled(): boolean {
         return this.missingKey === null;
+    }
+
+    get routerEnabled(): boolean {
+        return this.enabled && this.routerOn;
     }
 
     async onModuleInit() {
@@ -91,5 +98,42 @@ export class AIService implements OnModuleInit {
             this.logger.warn(`${bot.user.username} reply finished with ${finishReason} (${reply.length} chars)`);
         }
         return reply || null;
+    }
+
+    /** Asks the model which bots should speak. Returns `null` when the router is off or on any error. */
+    async route(
+        history: ChannelHistoryEntry[],
+        newIds: ReadonlySet<string>,
+        exclude: readonly AIBot[] = [],
+    ): Promise<PlannedSpeaker[] | null> {
+        if (!this.routerEnabled) return null;
+
+        try {
+            const { output, usage, warnings } = await generateText({
+                model: this.registry.languageModel(this.modelId as `${ProviderId}:${string}`),
+                instructions: ROUTER_INSTRUCTIONS,
+                prompt: buildRouterPrompt(history, newIds, exclude),
+                output: Output.object({ schema: ROUTER_SCHEMA }),
+                reasoning: 'none',
+                maxOutputTokens: 300,
+                maxRetries: 2,
+                abortSignal: AbortSignal.timeout(30_000),
+            });
+
+            for (const warning of warnings ?? []) {
+                this.logger.debug(`AI SDK warning: ${JSON.stringify(warning)}`);
+            }
+            this.logger.debug(`Router used ${usage.inputTokens} input and ${usage.outputTokens} output tokens`);
+
+            const planned: PlannedSpeaker[] = [];
+            for (const { bot: username, kind } of output.speakers) {
+                const bot = BOTS.find((candidate) => candidate.user.username === username);
+                if (bot && !exclude.includes(bot)) planned.push({ bot, kind });
+            }
+            return planned;
+        } catch (error) {
+            this.logger.warn(new Error('AI router failed', { cause: error }));
+            return null;
+        }
     }
 }
