@@ -131,6 +131,29 @@ describe('planSpeakers', () => {
             { bot: chayanne, kind: 'addressed' },
         ]));
 
+    it('does not repeat a bot that both the router and the named list picked', () =>
+        expect(planSpeakers([{ bot: chayanne, kind: 'addressed' }], [chayanne], yes)).toEqual([
+            { bot: chayanne, kind: 'addressed' },
+        ]));
+
+    it('orders named bots the router called spontaneous by BOTS order', () =>
+        expect(
+            planSpeakers(
+                [
+                    { bot: pedro, kind: 'spontaneous' },
+                    { bot: chayanne, kind: 'spontaneous' },
+                ],
+                [chayanne, pedro],
+                yes,
+            ),
+        ).toEqual([
+            { bot: chayanne, kind: 'addressed' },
+            { bot: pedro, kind: 'addressed' },
+        ]));
+
+    it('orders named bots by BOTS order even if they arrive out of order', () =>
+        expect(planSpeakers([], [pedro, chayanne], yes).map((speaker) => speaker.bot)).toEqual([chayanne, pedro]));
+
     it('drops spontaneous speakers over their cap', () =>
         expect(planSpeakers([{ bot: pedro, kind: 'spontaneous' }], [], () => false)).toEqual([]));
 

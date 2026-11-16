@@ -78,7 +78,7 @@ export function planSpeakers(
     };
 
     for (const pick of picks) {
-        if (pick.kind === 'addressed' || named.includes(pick.bot)) add(pick.bot, 'addressed');
+        if (pick.kind === 'addressed') add(pick.bot, 'addressed');
     }
     for (const bot of BOTS) {
         if (named.includes(bot)) add(bot, 'addressed');
