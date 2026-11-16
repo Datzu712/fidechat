@@ -1,4 +1,4 @@
-import { BOTS, detectBot } from '@/modules/ai/bots.js';
+import { BOTS, detectBot, detectNamedBots } from '@/modules/ai/bots.js';
 import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH } from '@/modules/ai/prompt.js';
 
 describe('detectBot', () => {
@@ -71,4 +71,11 @@ describe('cleanReply', () => {
     it('returns empty for blank output', () => {
         expect(cleanReply(chayanne, '   ')).toBe('');
     });
+});
+
+describe('detectNamedBots', () => {
+    it('returns every named bot in BOTS order', () =>
+        expect(detectNamedBots('pedro y chayanne').map((b) => b.user.username)).toEqual(['chayanne', 'pedro_pascal']));
+    it('returns all three when all are named', () => expect(detectNamedBots('gpt, chayanne y pedro')).toHaveLength(3));
+    it('returns [] when none is named', () => expect(detectNamedBots('hola a todos')).toEqual([]));
 });
