@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { MessageController } from './message.controller';
-import { MessageRepository } from './message.repository';
-import { MessageService } from './message.service';
-import { GatewayModule } from '../gateway/gateway.module';
-import { ChannelModule } from '../channel/channel.module';
-import { UserModule } from '../user/user.module';
-import { AIModule } from '../ai/ai.module';
+import { MessageController } from './message.controller.js';
+import { MessageRepository } from './message.repository.js';
+import { MessageService } from './message.service.js';
+import { GatewayModule } from '../gateway/gateway.module.js';
+import { ChannelModule } from '../channel/channel.module.js';
+import { UserModule } from '../user/user.module.js';
+import { AIModule } from '../ai/ai.module.js';
 
 @Module({
     controllers: [MessageController],

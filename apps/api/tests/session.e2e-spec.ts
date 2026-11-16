@@ -8,9 +8,9 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { LightMyRequestResponse } from 'fastify';
 import { io } from 'socket.io-client';
 
-import { AppModule } from '../src/modules/app.module';
-import { KeycloakClient } from '@/infrastructure/keycloak';
-import { LOGIN_STATE_COOKIE, SESSION_COOKIE } from '@/modules/auth/session/cookie.util';
+import { AppModule } from '../src/modules/app.module.js';
+import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
+import { LOGIN_STATE_COOKIE, SESSION_COOKIE } from '@/modules/auth/session/cookie.util.js';
 
 /** Returns the `name=value` pair of a cookie the response set, ready to send back in a Cookie header. */
 function cookiePair(response: LightMyRequestResponse, name: string): string | undefined {

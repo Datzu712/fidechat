@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import { CreateChannelPayload } from '@/types';
+import type { ChannelPayload } from '@fidechat/shared';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Channel name is required').max(100),
@@ -57,7 +57,7 @@ export function CreateChannelModal({
 
     const { mutate, isPending: isLoading } = useApiMutation<
         void,
-        CreateChannelPayload
+        ChannelPayload
     >(`/guilds/${serverId}/channels`, {
         onSuccess: (_, variables) => {
             toast({

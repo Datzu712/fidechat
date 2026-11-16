@@ -2,10 +2,10 @@ import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestj
 import { asc, eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { AuditService } from '@/infrastructure/database/audit/audit.service';
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { type Channel, channel } from '@/infrastructure/database/schema';
-import { ChannelDto } from './dto/channel.dto';
+import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { type Channel, channel } from '@/infrastructure/database/schema/index.js';
+import { ChannelDto } from './dto/channel.dto.js';
 
 export type { Channel };
 
@@ -18,12 +18,11 @@ export class ChannelRepository {
         private readonly audit: AuditService,
     ) {}
 
-    /** Reemplaza a `PKG_CHANNEL.CREATE_CHANNEL`. */
-    async createChannel(guildId: string, dto: ChannelDto, actorId?: string): Promise<{ id: string; success: boolean }> {
+    async createChannel(guildId: string, dto: ChannelDto, actorId?: string): Promise<Channel> {
         try {
             const channelId = v4();
 
-            await this.db.transaction(async (tx) => {
+            return await this.db.transaction(async (tx) => {
                 const [created] = await tx
                     .insert(channel)
                     .values({
@@ -42,21 +41,15 @@ export class ChannelRepository {
                     after: created,
                     actorId,
                 });
-            });
 
-            return { id: channelId, success: true };
+                return created;
+            });
         } catch (error) {
             this.logger.error(error);
             throw new InternalServerErrorException('Failed to create channel');
         }
     }
 
-    /**
-     * Reemplaza a `PKG_CHANNEL.GET_CHANNEL`.
-     *
-     * Devuelve `null` cuando no existe, en vez de lanzar: quien llama decide si
-     * eso es un 404 (asi lo hacia ya `MessageService`).
-     */
     async getChannel(id: string): Promise<Channel | null> {
         try {
             const found = (await this.db.select().from(channel).where(eq(channel.id, id)).limit(1)).at(0);
@@ -67,7 +60,6 @@ export class ChannelRepository {
         }
     }
 
-    /** Reemplaza a `PKG_CHANNEL.GET_GUILD_CHANNELS`. */
     async getGuildChannels(guildId: string): Promise<Channel[]> {
         try {
             return await this.db

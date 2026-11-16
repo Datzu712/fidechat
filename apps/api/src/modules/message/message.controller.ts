@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Param, Patch, Post, ValidationPipe } from '@nestjs/common';
-import { AuthenticatedUser } from '@/modules/auth/auth.decorators';
-import { MessageService } from './message.service';
-import { MessageDto } from './dto/message.dto';
+import { AuthenticatedUser } from '@/modules/auth/auth.decorators.js';
+import { MessageService } from './message.service.js';
+import { MessageDto } from './dto/message.dto.js';
 @Controller({
     version: '1',
     path: 'guilds/:guildId/channels/:channelId/messages',

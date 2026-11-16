@@ -8,7 +8,11 @@ const { compilerOptions } = tsconfig;
 
 // TS 6 exige `rootDir` explicito. Se pasa solo a ts-jest: ponerlo en
 // tsconfig.json haria que nest build emita dist/src/main.js.
-const tsJestTransformCfg = createDefaultPreset({ tsconfig: { rootDir: '.' } }).transform;
+// The api runs as ESM, but the tests are compiled to CommonJS: jest's ESM loader evaluates the CommonJS
+// Nest packages (e.g. @nestjs/throttler) in a require(esm) cycle with @nestjs/common and refuses to load.
+const tsJestTransformCfg = createDefaultPreset({
+    tsconfig: { rootDir: '.', module: 'commonjs', moduleResolution: 'bundler' },
+}).transform;
 
 const config: Config = {
     testEnvironment: 'node',
@@ -22,7 +26,12 @@ const config: Config = {
     // tsconfig ya no define `baseUrl` (tsgolint no lo soporta), asi que los
     // paths son relativos al tsconfig y jest los ancla con el prefijo.
     modulePaths: ['<rootDir>'],
-    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
+    moduleNameMapper: {
+        // ESM specifiers carry the emitted `.js` extension; map them back to the `.ts` sources.
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@/(.*)\\.js$': '<rootDir>/src/$1',
+        ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
+    },
     forceExit: true, // todo: remove this when jest issue is resolved
 };
 

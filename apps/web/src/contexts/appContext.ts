@@ -6,17 +6,10 @@ import type {
     GuildWithMembers,
     ChannelWithMessages,
     ConnectedUser,
-    SocketUserStatus,
-} from '@/types';
+    SyncPayload,
+    UserStatus,
+} from '@fidechat/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
-
-export type SyncAppStateResponse = {
-    guilds: GuildWithMembers[];
-    channels: ChannelWithMessages[];
-    currentUser: AppUser;
-    users: Omit<AppUser, 'email'>[];
-    connectedUsers: ConnectedUser[];
-};
 
 export type AppContextType = {
     currentUser: AppUser | null;
@@ -29,11 +22,11 @@ export type AppContextType = {
     setChannels: React.Dispatch<React.SetStateAction<ChannelWithMessages[]>>;
     serverMembers: GuildMember[];
     setServerMembers: React.Dispatch<React.SetStateAction<GuildMember[]>>;
-    syncAppState: UseMutationResult<SyncAppStateResponse, Error, void>;
+    syncAppState: UseMutationResult<SyncPayload, Error, void>;
     getServerChannels: (serverId: string) => Channel[];
     connectedUsers: ConnectedUser[];
     setConnectedUsers: React.Dispatch<React.SetStateAction<ConnectedUser[]>>;
-    getUserStatus: (userId: string) => SocketUserStatus | undefined;
+    getUserStatus: (userId: string) => UserStatus | undefined;
     getUserById: (userId: string) => Omit<AppUser, 'email'> | undefined;
 };
 

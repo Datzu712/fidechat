@@ -4,9 +4,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { UserRepository } from '../user/user.repository';
-import type { AppUser } from '@/infrastructure/database/schema';
-import { Message } from '../message/message.repository';
+import { UserRepository } from '../user/user.repository.js';
+import type { AppUser } from '@/infrastructure/database/schema/index.js';
+import { Message } from '../message/message.repository.js';
 
 export interface AICommandResult {
     success: boolean;

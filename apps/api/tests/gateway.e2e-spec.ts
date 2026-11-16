@@ -7,7 +7,7 @@ import { VersioningType } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { io, type Socket } from 'socket.io-client';
 
-import { AppModule } from '../src/modules/app.module';
+import { AppModule } from '../src/modules/app.module.js';
 
 async function handshakeOutcome(socket: Socket): Promise<'connected' | 'refused'> {
     // oxlint-disable-next-line promise/avoid-new -- socket.io-client only exposes callbacks

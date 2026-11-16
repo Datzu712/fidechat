@@ -10,26 +10,32 @@ WORKDIR /repo
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile --filter @fidechat/api...
 
 # ---- build ----
 FROM deps AS builder
 COPY turbo.json ./
+COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
-RUN pnpm --filter @fidechat/api build
+# `...` builds @fidechat/shared first: both apps import its compiled dist.
+RUN pnpm --filter @fidechat/api... build
 
 # ---- web SPA: the API serves it, so the browser and the BFF cookie share one origin ----
 FROM base AS web-builder
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile --filter @fidechat/web...
+COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
-RUN pnpm --filter @fidechat/web build
+RUN pnpm --filter @fidechat/web... build
 
 # ---- dependencias solo de produccion ----
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile --prod --filter @fidechat/api...
 
 # ---- runner ----
@@ -45,6 +51,9 @@ COPY --from=prod-deps /repo/node_modules ./node_modules
 COPY --from=prod-deps /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /repo/apps/api/dist ./apps/api/dist
 COPY --from=builder /repo/apps/api/package.json ./apps/api/package.json
+# apps/api/node_modules/@fidechat/shared is a link to this directory.
+COPY --from=builder /repo/packages/shared/package.json ./packages/shared/package.json
+COPY --from=builder /repo/packages/shared/dist ./packages/shared/dist
 COPY --from=web-builder /repo/apps/web/dist ./apps/web/dist
 ENV WEB_DIST_DIR=/app/apps/web/dist
 

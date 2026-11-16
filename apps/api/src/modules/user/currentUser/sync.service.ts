@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { SyncRepository } from './sync.repository';
-import { GatewayService } from '@/modules/gateway/gateway.service';
+import { SyncRepository } from './sync.repository.js';
+import { GatewayService } from '@/modules/gateway/gateway.service.js';
 
 @Injectable()
 export class SyncService {

@@ -10,10 +10,9 @@ import { VersioningType } from '@nestjs/common';
 import { io, type Socket } from 'socket.io-client';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
-import { AppModule } from '../src/modules/app.module';
-import { KeycloakClient } from '@/infrastructure/keycloak';
-import { SocketEvents } from '@/modules/gateway/gateway.service';
-import type { Guild } from '@/modules/guild/guild.repository';
+import { AppModule } from '../src/modules/app.module.js';
+import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
+import { type Channel, type GuildWithMembers, type Message, SocketEvents } from '@fidechat/shared';
 
 describe('Guild Creation E2E', () => {
     let app: NestFastifyApplication;
@@ -140,17 +139,79 @@ describe('Guild Creation E2E', () => {
             expect(response.statusCode).toBe(201);
 
             // Wait for and verify socket event
-            const guildCreateEvent = await Promise.race<Guild>([
+            const guildCreateEvent = await Promise.race<GuildWithMembers>([
                 guildCreateEventPromise,
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Socket event timeout')), 5000)),
             ]);
 
-            expect(guildCreateEvent).toBeDefined();
-            expect(guildCreateEvent.name).toBe(TEST_GUILD.name);
-            expect(guildCreateEvent.isPublic).toBe(TEST_GUILD.isPublic);
-            expect(guildCreateEvent.iconUrl).toBe(TEST_GUILD.iconUrl);
-            expect(guildCreateEvent.ownerId).toBeDefined();
-            expect(guildCreateEvent.id).toBeDefined();
+            // The event carries the full wire shape, including the owner as the only member.
+            expect(guildCreateEvent).toEqual({
+                id: expect.any(String),
+                name: TEST_GUILD.name,
+                isPublic: TEST_GUILD.isPublic,
+                iconUrl: TEST_GUILD.iconUrl,
+                description: null,
+                ownerId: testUserId,
+                members: [{ userId: testUserId }],
+            });
+        });
+
+        it('should emit the created channel and message with their wire shapes', async () => {
+            socketClient = io(`http://localhost:${process.env.API_PORT || 8081}`, {
+                auth: { token: userAccessToken },
+                transports: ['websocket'],
+            });
+            await new Promise<void>((resolve, reject) => {
+                socketClient.on('connect', () => resolve());
+                socketClient.on('connect_error', reject);
+            });
+
+            const nextEvent = async <T>(event: SocketEvents) =>
+                Promise.race<T>([
+                    new Promise<T>((resolve) => socketClient.once(event, resolve)),
+                    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${event} timeout`)), 5000)),
+                ]);
+            const headers = { authorization: `Bearer ${userAccessToken}`, 'content-type': 'application/json' };
+
+            const guildRes = await app.inject({ method: 'POST', url: '/api/v1/guilds', headers, payload: TEST_GUILD });
+            const guildId = guildRes.json<{ id: string }>().id;
+
+            // No description and no position: the event must carry the stored defaults, not the raw body.
+            const channelEvent = nextEvent<Channel>(SocketEvents.CHANNEL_CREATE);
+            const channelRes = await app.inject({
+                method: 'POST',
+                url: `/api/v1/guilds/${guildId}/channels`,
+                headers,
+                payload: { name: 'wire-shape' },
+            });
+            expect(channelRes.statusCode).toBe(201);
+            const channel = await channelEvent;
+            expect(channel).toEqual({
+                id: expect.any(String),
+                name: 'wire-shape',
+                description: null,
+                position: 0,
+                guildId,
+            });
+
+            const messageEvent = nextEvent<Message>(SocketEvents.MESSAGE_CREATE);
+            const messageRes = await app.inject({
+                method: 'POST',
+                url: `/api/v1/guilds/${guildId}/channels/${channel.id}/messages`,
+                headers,
+                payload: { content: 'hello' },
+            });
+            expect(messageRes.statusCode).toBe(201);
+            const message = await messageEvent;
+            expect(message).toEqual({
+                id: expect.any(String),
+                content: 'hello',
+                authorId: testUserId,
+                channelId: channel.id,
+                createdAt: expect.any(String),
+            });
+            // ISO 8601 in UTC, so every client parses the same instant.
+            expect(new Date(message.createdAt).toISOString()).toBe(message.createdAt);
         });
 
         it('should reject guild creation without authentication', async () => {

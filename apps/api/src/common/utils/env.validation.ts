@@ -1,4 +1,4 @@
-import { EnvironmentVariables } from '@/config/environment';
+import { EnvironmentVariables } from '@/config/environment.js';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, type ValidatorOptions } from 'class-validator';
 

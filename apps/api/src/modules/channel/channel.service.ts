@@ -1,8 +1,10 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ChannelDto } from './dto/channel.dto';
-import { ChannelRepository } from './channel.repository';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { UserRepository } from '../user/user.repository';
+import { SocketEvents } from '@fidechat/shared';
+
+import { ChannelDto } from './dto/channel.dto.js';
+import { ChannelRepository } from './channel.repository.js';
+import { GatewayService } from '../gateway/gateway.service.js';
+import { UserRepository } from '../user/user.repository.js';
 
 @Injectable()
 export class ChannelService {
@@ -14,18 +16,13 @@ export class ChannelService {
 
     public async createChannel(guildId: string, dto: ChannelDto) {
         try {
-            const result = await this.channelRepository.createChannel(guildId, dto);
+            const created = await this.channelRepository.createChannel(guildId, dto);
 
             const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
 
-            this.gateway.emitToUsers(guildMembers, SocketEvents.CHANNEL_CREATE, {
-                // eslint-disable-next-line @typescript-eslint/no-misused-spread -- its just a dto bro
-                ...dto,
-                id: result.id,
-                guildId,
-            });
+            this.gateway.emitToUsers(guildMembers, SocketEvents.CHANNEL_CREATE, created);
 
-            return result;
+            return { id: created.id, success: true };
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new InternalServerErrorException('Failed to create channel', { cause: error });
@@ -33,44 +30,4 @@ export class ChannelService {
             throw error;
         }
     }
-
-    // public async getChannel(id: string) {
-    //     return this.channelRepository.getChannel(id);
-    // }
-
-    // public async updateChannel(id: string, dto: Partial<ChannelDto>) {
-    //     try {
-    //         const result = await this.channelRepository.updateChannel(id, dto);
-
-    //         if (result.success) {
-    //             const channel = await this.getChannel(id);
-    //             this.gateway.emitToGuild(channel.guildId, SocketEvents.CHANNEL_UPDATED, { id, ...dto });
-    //         }
-
-    //         return result;
-    //     } catch (error) {
-    //         if (!(error instanceof HttpException)) {
-    //             throw new InternalServerErrorException('Failed to update channel', { cause: error });
-    //         }
-    //         throw error;
-    //     }
-    // }
-
-    // public async deleteChannel(id: string) {
-    //     try {
-    //         const channel = await this.getChannel(id);
-    //         const result = await this.channelRepository.deleteChannel(id);
-
-    //         if (result.success) {
-    //             this.gateway.emitToGuild(channel.guildId, SocketEvents.CHANNEL_DELETED, { id });
-    //         }
-
-    //         return result;
-    //     } catch (error) {
-    //         if (!(error instanceof HttpException)) {
-    //             throw new InternalServerErrorException('Failed to delete channel', { cause: error });
-    //         }
-    //         throw error;
-    //     }
-    // }
 }

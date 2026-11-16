@@ -1,6 +1,6 @@
 import { index, integer, pgTable, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { guild } from './guild.schema';
+import { guild } from './guild.schema.js';
 
 /** Equivalente Postgres de la antigua tabla Oracle `CHANNEL`. */
 export const channel = pgTable(

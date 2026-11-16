@@ -1,10 +1,10 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { Message, type MessageCreationAttributes, MessageRepository } from './message.repository';
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { Channel, ChannelRepository } from '../channel/channel.repository';
-import { UserRepository } from '../user/user.repository';
-import dayjs from 'dayjs';
-import { AICommandService } from '../ai/ai-command.service';
+import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
+import { SocketEvents } from '@fidechat/shared';
+import { GatewayService } from '../gateway/gateway.service.js';
+import { Channel, ChannelRepository } from '../channel/channel.repository.js';
+import { UserRepository } from '../user/user.repository.js';
+import { AICommandService } from '../ai/ai-command.service.js';
 
 @Injectable()
 export class MessageService {
@@ -18,10 +18,6 @@ export class MessageService {
         private readonly ai: AICommandService,
     ) {}
 
-    private formatDate(date: Date): string {
-        return `${dayjs(date).format('YYYY-MM-DDTHH:mm:ss.SSS')}000`;
-    }
-
     private async notifyMessageCreation(
         messageData: MessageCreationAttributes,
         messageId: string,
@@ -34,7 +30,7 @@ export class MessageService {
             id: messageId,
             ...messageData,
             createdAt,
-        } satisfies Omit<Message, 'createdAt'> & { createdAt: string });
+        });
     }
 
     async createMessage(data: MessageCreationAttributes) {
@@ -47,7 +43,7 @@ export class MessageService {
 
         try {
             const createAt = new Date();
-            const createdAtStr = this.formatDate(createAt);
+            const createdAtStr = createAt.toISOString();
 
             const result = await this.messageRepository.createMessage({
                 ...data,
@@ -84,7 +80,7 @@ export class MessageService {
 
             if (iaResponse) {
                 const createAt = new Date();
-                const createdAtStr = this.formatDate(createAt);
+                const createdAtStr = createAt.toISOString();
 
                 const aiMessage = await this.messageRepository.createMessage({
                     ...iaResponse,

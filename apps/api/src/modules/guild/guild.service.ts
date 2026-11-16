@@ -1,8 +1,9 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { GatewayService, SocketEvents } from '../gateway/gateway.service';
-import { GuildDto } from './dto/guild.dto';
-import { GuildRepository } from './guild.repository';
+import { SocketEvents } from '@fidechat/shared';
+import { GatewayService } from '../gateway/gateway.service.js';
+import { GuildDto } from './dto/guild.dto.js';
+import { GuildRepository } from './guild.repository.js';
 
 @Injectable()
 export class GuildService {
@@ -13,12 +14,12 @@ export class GuildService {
 
     public async createGuild(ownerId: string, dto: GuildDto) {
         try {
-            const result = await this.guildRepository.createGuild(ownerId, dto);
+            const created = await this.guildRepository.createGuild(ownerId, dto);
 
-            // eslint-disable-next-line @typescript-eslint/no-misused-spread -- silly rule
-            this.gateway.emitToUser(ownerId, SocketEvents.GUILD_CREATE, { ...dto, ownerId, id: result.id });
+            // The repository adds the owner as the only member in the same transaction.
+            this.gateway.emitToUser(ownerId, SocketEvents.GUILD_CREATE, { ...created, members: [{ userId: ownerId }] });
 
-            return result;
+            return { id: created.id, success: true };
         } catch (error) {
             if (!(error instanceof HttpException)) {
                 throw new InternalServerErrorException('Failed to create guild', { cause: error });

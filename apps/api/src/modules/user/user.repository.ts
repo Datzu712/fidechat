@@ -2,9 +2,9 @@ import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestj
 import { ConfigService } from '@nestjs/config';
 import { eq } from 'drizzle-orm';
 
-import { AuditService } from '@/infrastructure/database/audit/audit.service';
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { type AppUser, appUser, guildUsers } from '@/infrastructure/database/schema';
+import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { type AppUser, appUser, guildUsers } from '@/infrastructure/database/schema/index.js';
 
 export interface UpsertUserInput {
     id: string;

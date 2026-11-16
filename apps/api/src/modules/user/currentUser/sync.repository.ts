@@ -1,42 +1,11 @@
 import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema';
-import { GatewayService, type SocketUserMetadata } from '@/modules/gateway/gateway.service';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
+import type { SyncPayload } from '@fidechat/shared';
 
-export interface SyncGuild {
-    id: string;
-    name: string;
-    iconUrl: string | null;
-    isPublic: boolean;
-    description: string | null;
-    ownerId: string;
-    members: Array<{ userId: string }>;
-}
-
-export interface SyncChannel {
-    id: string;
-    name: string;
-    description: string | null;
-    position: number;
-    guildId: string;
-    messages: Array<{
-        id: string;
-        content: string;
-        authorId: string;
-        channelId: string;
-        createdAt: Date;
-    }>;
-}
-
-export interface SyncPayload {
-    guilds: SyncGuild[];
-    channels: SyncChannel[];
-    currentUser: { id: string; username: string; email: string; isBot: boolean; avatarUrl: string | null };
-    users: Array<{ id: string; username: string; avatarUrl: string | null; isBot: boolean }>;
-    connectedUsers: SocketUserMetadata[];
-}
+import { GatewayService } from '@/modules/gateway/gateway.service.js';
 
 /**
  * Reemplaza al paquete `pkg_sync_data` de Oracle.
@@ -115,7 +84,13 @@ export class SyncRepository {
                     .where(and(inArray(guildUsers.guildId, guildIds), ne(appUser.id, userId))),
             ]);
 
-            return { guilds, channels, currentUser, users, connectedUsers };
+            // Drizzle reads timestamps as Date; the wire shape is an ISO string.
+            const wireChannels = channels.map((c) => ({
+                ...c,
+                messages: c.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() })),
+            }));
+
+            return { guilds, channels: wireChannels, currentUser, users, connectedUsers };
         } catch (error) {
             this.logger.error(error);
 

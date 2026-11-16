@@ -1,6 +1,6 @@
 import { boolean, index, pgTable, primaryKey, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { appUser } from './app-user.schema';
+import { appUser } from './app-user.schema.js';
 
 /** Equivalente Postgres de la antigua tabla Oracle `GUILD`. */
 export const guild = pgTable(

@@ -3,7 +3,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useAppContext from '@/hooks/useAppContext';
-import { AppUser } from '@/types';
+import type { AppUser } from '@fidechat/shared';
 import { getUserStatusPriority } from '@/lib/utils/getUserDisplayPriority';
 
 interface MembersSidebarProps {

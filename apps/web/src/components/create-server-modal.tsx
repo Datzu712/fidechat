@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
-import type { CreateGuildPayload } from '@/types';
+import type { GuildPayload } from '@fidechat/shared';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/useToast';
@@ -30,7 +30,7 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const { mutate } = useApiMutation<void, CreateGuildPayload>('/guilds');
+    const { mutate } = useApiMutation<void, GuildPayload>('/guilds');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

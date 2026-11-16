@@ -1,4 +1,4 @@
-import type { CreateUserData, KeycloakTokenResponse, KeycloakUser } from './kc-types';
+import type { CreateUserData, KeycloakTokenResponse, KeycloakUser } from './kc-types.js';
 
 export interface KeycloakClientOptions {
     url: string;

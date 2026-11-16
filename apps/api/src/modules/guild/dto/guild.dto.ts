@@ -1,3 +1,4 @@
+import type { GuildPayload } from '@fidechat/shared';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 /**
@@ -7,7 +8,7 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-valida
  * usa `null` para las columnas opcionales, mientras que el payload usa campos
  * ausentes.
  */
-export class GuildDto {
+export class GuildDto implements GuildPayload {
     @IsString({ groups: ['create', 'update'] })
     @IsNotEmpty({ groups: ['create'] })
     name!: string;

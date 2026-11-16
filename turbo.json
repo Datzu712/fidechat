@@ -3,14 +3,25 @@
     "ui": "tui",
     "envMode": "loose",
     "globalDependencies": [".env", "**/.env.*local"],
+    "futureFlags": {
+        "watchUsingTaskInputs": true
+    },
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
             "outputs": ["dist/**"]
         },
         "dev": {
+            "dependsOn": ["^build"],
             "cache": false,
             "persistent": true
+        },
+        "@fidechat/api#dev": {
+            "dependsOn": ["^build"],
+            "cache": false,
+            "persistent": true,
+            "interruptible": true,
+            "inputs": ["package.json"]
         },
         "start": {
             "dependsOn": ["build"],
@@ -18,9 +29,11 @@
             "persistent": true
         },
         "lint": {
+            "dependsOn": ["^build"],
             "outputs": []
         },
         "typecheck": {
+            "dependsOn": ["^build"],
             "outputs": []
         },
         "test": {

@@ -1,36 +1,11 @@
 import { useEffect } from 'react';
-import { Socket } from 'socket.io-client';
-import type {
-    AppUser,
-    ChannelWithMessages,
-    ConnectedUser,
-    GuildMember,
-    GuildWithMembers,
-    Message,
-} from '@/types';
-import { SocketEvents } from '@/constants/socketEvents';
-type SocketEventHandlers = {
-    [SocketEvents.GUILD_CREATE]?: (guild: GuildWithMembers) => void;
-    [SocketEvents.CHANNEL_CREATE]?: (channel: ChannelWithMessages) => void;
-    [SocketEvents.MEMBER_ADD]?: (data: {
-        user: AppUser;
-        memberMetadata: GuildMember;
-    }) => void;
-    [SocketEvents.FORCE_SYNC]?: () => void;
-    [SocketEvents.MESSAGE_CREATE]?: (data: Message) => void;
-    [SocketEvents.MESSAGE_UPDATE]?: (data: {
-        id: string;
-        content: string;
-    }) => void;
-    [SocketEvents.MESSAGE_DELETE]?: (data: {
-        id: string;
-        channelId: string;
-    }) => void;
-    [SocketEvents.USER_STATUS_UPDATE]?: (data: ConnectedUser[]) => void;
-};
+import type { ServerToClientEvents } from '@fidechat/shared';
+import type { AppSocket } from '@/contexts/socketContext';
+
+type SocketEventHandlers = Partial<ServerToClientEvents>;
 
 export function useSocketEvents(
-    socket: React.RefObject<Socket | null>,
+    socket: React.RefObject<AppSocket | null>,
     connected: boolean,
     handlers: SocketEventHandlers,
 ) {
@@ -42,7 +17,13 @@ export function useSocketEvents(
             `Registering the following events: ${Object.keys(handlers).join(', ')}`,
         );
 
-        Object.entries(handlers).forEach(([event, handler]) => {
+        // Object.keys loses the key type; the handlers map is keyed by event name.
+        const events = Object.keys(handlers) as Array<
+            keyof ServerToClientEvents
+        >;
+
+        events.forEach((event) => {
+            const handler = handlers[event];
             if (handler) {
                 currentSocket.on(event, handler);
             }
@@ -51,7 +32,7 @@ export function useSocketEvents(
         return () => {
             if (currentSocket) {
                 // Remover solo los eventos que fueron registrados
-                Object.keys(handlers).forEach((event) => {
+                events.forEach((event) => {
                     currentSocket.off(event);
                 });
             }

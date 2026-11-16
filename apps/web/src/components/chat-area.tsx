@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import useSocket from '@/hooks/useSocket';
-import { SocketEvents } from '@/constants/socketEvents';
+import { SocketEvents } from '@fidechat/shared';
 import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
 import { UserAvatar } from '@/components/user-avatar';
 import { MobileMembersToggle } from '@/components/mobile-members-toggle';
@@ -14,8 +14,8 @@ import useAppContext from '@/hooks/useAppContext';
 import type {
     AppUser,
     ChannelWithMessages,
-    MessageCreationAttributes,
-} from '@/types';
+    MessagePayload,
+} from '@fidechat/shared';
 import { useApiMutation } from '@/lib/hooks/useApiQuery';
 import { useToast } from '@/hooks/useToast';
 import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
@@ -120,19 +120,19 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const { mutate: sendMessage } = useApiMutation<
-        void,
-        MessageCreationAttributes
-    >(`/guilds/${guild?.id}/channels/${channel?.id}/messages`, {
-        onError: (error) => {
-            toast({
-                variant: 'destructive',
-                title: 'Failed to create message',
-                description: parseAxiosError(error),
-            });
-            console.error(error);
+    const { mutate: sendMessage } = useApiMutation<void, MessagePayload>(
+        `/guilds/${guild?.id}/channels/${channel?.id}/messages`,
+        {
+            onError: (error) => {
+                toast({
+                    variant: 'destructive',
+                    title: 'Failed to create message',
+                    description: parseAxiosError(error),
+                });
+                console.error(error);
+            },
         },
-    });
+    );
 
     const { mutate: updateMessage } = useApiMutation<void, { content: string }>(
         `/guilds/${guild?.id}/channels/${channel?.id}/messages/${editingMessageId}`,
@@ -197,8 +197,6 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
         sendMessage(
             {
                 content: messageContent,
-                channelId: channel!.id,
-                authorId: currentUser!.id,
             },
             {
                 onSettled: () => {
@@ -350,7 +348,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                             u?.id ===
                             messages.find((m) => m.id === messageToDelete)
                                 ?.authorId,
-                    )?.avatarUrl
+                    )?.avatarUrl ?? undefined
                 }
             />
             <div className="message-area flex flex-col h-full flex-1 min-w-0">

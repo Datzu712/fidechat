@@ -2,10 +2,10 @@ import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundExcep
 import { eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
-import { AuditService } from '@/infrastructure/database/audit/audit.service';
-import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider';
-import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema';
-import { GuildDto } from './dto/guild.dto';
+import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
+import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
+import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
+import { GuildDto } from './dto/guild.dto.js';
 
 export type { Guild };
 
@@ -18,16 +18,11 @@ export class GuildRepository {
         private readonly audit: AuditService,
     ) {}
 
-    /**
-     * Reemplaza a `PKG_GUILD.CREATE_GUILD` mas el trigger `trg_guild_add_owner`:
-     * el alta del guild y el alta del dueno como miembro ocurren en la misma
-     * transaccion, igual que antes, pero ahora de forma explicita.
-     */
-    async createGuild(ownerId: string, dto: GuildDto): Promise<{ id: string; success: boolean }> {
+    async createGuild(ownerId: string, dto: GuildDto): Promise<Guild> {
         try {
             const guildId = v4();
 
-            await this.db.transaction(async (tx) => {
+            return await this.db.transaction(async (tx) => {
                 const [created] = await tx
                     .insert(guild)
                     .values({
@@ -60,9 +55,9 @@ export class GuildRepository {
                         actorId: ownerId,
                     });
                 }
-            });
 
-            return { id: guildId, success: true };
+                return created;
+            });
         } catch (error) {
             this.logger.error(error);
             throw new InternalServerErrorException('Failed to create guild', { cause: error });
@@ -85,11 +80,6 @@ export class GuildRepository {
         }
     }
 
-    /**
-     * Reemplaza a `PKG_GUILD.UPDATE_GUILD`, que armaba un `EXECUTE IMMEDIATE`
-     * concatenando los valores recibidos. Aqui el SET se construye por columna y
-     * los valores viajan como parametros.
-     */
     async updateGuild(id: string, dto: Partial<GuildDto>, actorId?: string): Promise<{ success: boolean }> {
         const changes: Partial<typeof guild.$inferInsert> = {};
         if (dto.name !== undefined) changes.name = dto.name;
