@@ -1,5 +1,6 @@
 import { BOTS, detectBot, detectNamedBots } from '@/modules/ai/bots.js';
 import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH } from '@/modules/ai/prompt.js';
+import { buildRouterPrompt, planSpeakers } from '@/modules/ai/router.js';
 import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
 
 describe('detectBot', () => {
@@ -31,9 +32,9 @@ describe('buildPromptMessages', () => {
 
     it('maps own messages to assistant and the rest to prefixed user messages, in order', () => {
         const history = [
-            { authorId: 'u1', authorName: 'juan', content: 'hola chayanne' },
-            { authorId: chayanne.user.id, authorName: 'chayanne', content: '¡Hola mi amor!' },
-            { authorId: BOTS[2].user.id, authorName: 'pedro_pascal', content: 'yo también' },
+            { id: 'm1', authorId: 'u1', authorName: 'juan', content: 'hola chayanne' },
+            { id: 'm2', authorId: chayanne.user.id, authorName: 'chayanne', content: '¡Hola mi amor!' },
+            { id: 'm3', authorId: BOTS[2].user.id, authorName: 'pedro_pascal', content: 'yo también' },
         ];
 
         expect(buildPromptMessages(chayanne, history)).toEqual([
@@ -45,9 +46,9 @@ describe('buildPromptMessages', () => {
 
     it('drops its own messages at the start and end, since Anthropic needs the prompt to start and end on a user turn', () => {
         const history = [
-            { authorId: chayanne.user.id, authorName: 'chayanne', content: 'old reply' },
-            { authorId: 'u1', authorName: 'juan', content: 'hola chayanne' },
-            { authorId: chayanne.user.id, authorName: 'chayanne', content: 'racing reply' },
+            { id: 'm4', authorId: chayanne.user.id, authorName: 'chayanne', content: 'old reply' },
+            { id: 'm5', authorId: 'u1', authorName: 'juan', content: 'hola chayanne' },
+            { id: 'm6', authorId: chayanne.user.id, authorName: 'chayanne', content: 'racing reply' },
         ];
 
         expect(buildPromptMessages(chayanne, history)).toEqual([{ role: 'user', content: 'juan: hola chayanne' }]);
@@ -96,4 +97,73 @@ describe('SpontaneousCaps', () => {
         expect(caps.canSpeak('c2', 'b1', 1)).toBe(true);
         expect(caps.canSpeak('c1', 'b2', 1)).toBe(true);
     });
+});
+
+describe('buildRouterPrompt', () => {
+    const h = (id: string, authorName: string, content: string) => ({ id, authorId: id, authorName, content });
+
+    it('keeps the last 20 messages and marks the new ones', () => {
+        const history = Array.from({ length: 25 }, (_, i) => h(`m${i}`, 'ana', `msg ${i}`));
+        const lines = buildRouterPrompt(history, new Set(['m24'])).split('\n');
+        expect(lines[0]).toBe('ana: msg 5');
+        expect(lines.at(-1)).toBe('[NUEVO] ana: msg 24');
+    });
+
+    it('names the excluded bots when asking for a reaction', () =>
+        expect(buildRouterPrompt([h('m1', 'ana', 'hola')], new Set(), [BOTS[1]])).toContain('chayanne'));
+});
+
+describe('planSpeakers', () => {
+    const [gpt, chayanne, pedro] = BOTS;
+    const yes = () => true;
+
+    it('falls back to named bots when the router failed', () =>
+        expect(planSpeakers(null, [chayanne], yes)).toEqual([{ bot: chayanne, kind: 'addressed' }]));
+
+    it('adds a named bot the router missed, after the router addressed ones', () =>
+        expect(planSpeakers([{ bot: pedro, kind: 'addressed' }], [chayanne], yes)).toEqual([
+            { bot: pedro, kind: 'addressed' },
+            { bot: chayanne, kind: 'addressed' },
+        ]));
+
+    it('treats a named bot as addressed even if the router called it spontaneous', () =>
+        expect(planSpeakers([{ bot: chayanne, kind: 'spontaneous' }], [chayanne], () => false)).toEqual([
+            { bot: chayanne, kind: 'addressed' },
+        ]));
+
+    it('drops spontaneous speakers over their cap', () =>
+        expect(planSpeakers([{ bot: pedro, kind: 'spontaneous' }], [], () => false)).toEqual([]));
+
+    it('keeps all three named bots', () => expect(planSpeakers([], [gpt, chayanne, pedro], yes)).toHaveLength(3));
+
+    it('limits unnamed router picks to 2, dropping spontaneous first', () =>
+        expect(
+            planSpeakers(
+                [
+                    { bot: gpt, kind: 'spontaneous' },
+                    { bot: chayanne, kind: 'addressed' },
+                    { bot: pedro, kind: 'addressed' },
+                ],
+                [],
+                yes,
+            ),
+        ).toEqual([
+            { bot: chayanne, kind: 'addressed' },
+            { bot: pedro, kind: 'addressed' },
+        ]));
+
+    it('drops a spontaneous pick when a named bot and an addressed pick fill the turn', () =>
+        expect(
+            planSpeakers(
+                [
+                    { bot: pedro, kind: 'addressed' },
+                    { bot: gpt, kind: 'spontaneous' },
+                ],
+                [chayanne],
+                yes,
+            ),
+        ).toEqual([
+            { bot: pedro, kind: 'addressed' },
+            { bot: chayanne, kind: 'addressed' },
+        ]));
 });

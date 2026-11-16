@@ -73,7 +73,12 @@ export class MessageRepository {
     async getRecentMessages(channelId: string, limit: number): Promise<ChannelHistoryEntry[]> {
         try {
             const rows = await this.db
-                .select({ authorId: message.authorId, authorName: appUser.username, content: message.content })
+                .select({
+                    id: message.id,
+                    authorId: message.authorId,
+                    authorName: appUser.username,
+                    content: message.content,
+                })
                 .from(message)
                 .innerJoin(appUser, eq(appUser.id, message.authorId))
                 .where(eq(message.channelId, channelId))

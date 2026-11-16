@@ -6,6 +6,7 @@ import type { AIBot } from './bots.js';
 export const MAX_MESSAGE_LENGTH = 2000;
 
 export interface ChannelHistoryEntry {
+    id: string;
     authorId: string;
     authorName: string;
     content: string;
