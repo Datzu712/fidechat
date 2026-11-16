@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { UserRepository } from './user.repository.js';
 import { SocketEvents } from '@fidechat/shared';
-import { GatewayService } from '../gateway/gateway.service.js';
+import { SocketEmitter } from '../gateway/socket-emitter.js';
 import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly userRepo: UserRepository,
-        private readonly gateway: GatewayService,
+        private readonly emitter: SocketEmitter,
     ) {}
 
     /**
@@ -55,7 +55,7 @@ export class UserService {
                 guildId: this.userRepo.DEFAULT_GUILD_ID,
             };
 
-            this.gateway.emitToUsers(guildMembers, SocketEvents.MEMBER_ADD, {
+            this.emitter.emitToUsers(guildMembers, SocketEvents.MEMBER_ADD, {
                 user: appUser,
                 memberMetadata,
             });

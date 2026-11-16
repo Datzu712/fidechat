@@ -5,7 +5,7 @@ import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provi
 import { appUser, channel, guild, guildUsers } from '@/infrastructure/database/schema/index.js';
 import type { SyncPayload } from '@fidechat/shared';
 
-import { GatewayService } from '@/modules/gateway/gateway.service.js';
+import { PresenceService } from '@/modules/gateway/presence.service.js';
 
 /**
  * Reemplaza al paquete `pkg_sync_data` de Oracle.
@@ -21,7 +21,7 @@ export class SyncRepository {
 
     constructor(
         @Inject(DRIZZLE) private readonly db: DrizzleDB,
-        private readonly gateway: GatewayService,
+        private readonly presence: PresenceService,
     ) {}
 
     async getCurrentUserData(userId: string): Promise<SyncPayload> {
@@ -51,7 +51,7 @@ export class SyncRepository {
                 .where(eq(guildUsers.userId, userId));
 
             const guildIds = memberships.map((m) => m.guildId);
-            const connectedUsers = this.gateway.activeUsers;
+            const connectedUsers = this.presence.activeUsers;
 
             if (!guildIds.length) {
                 return { guilds: [], channels: [], currentUser, users: [], connectedUsers };
