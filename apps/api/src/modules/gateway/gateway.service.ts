@@ -11,6 +11,7 @@ import { IAUserModels } from '../ai/ai-command.service.js';
 import { TokenVerifier } from '../auth/token-verifier.service.js';
 import { SessionService } from '../auth/session/session.service.js';
 import { readCookie, SESSION_COOKIE } from '../auth/session/cookie.util.js';
+import { parseStatusUpdate } from './status-update.util.js';
 
 const sessionRoom = (sid: string) => `session:${sid}`;
 /** setTimeout's upper bound (~24.8 days). */
@@ -39,8 +40,8 @@ export class GatewayService
      */
     get activeUsers(): ConnectedUser[] {
         return Array.from(this.#activeUsers.entries()).map(([userId, data]) => ({
-            userId,
             ...data,
+            userId,
         }));
     }
 
@@ -182,16 +183,22 @@ export class GatewayService
         this.logger.log('WebSocket server closed...');
     }
 
-    public handleUserStatusUpdate(socket: SocketClient, metadata: Partial<ConnectedUser>) {
-        if (!socket.data.user) {
+    public handleUserStatusUpdate(socket: SocketClient, data: unknown) {
+        const userId = socket.data.user?.sub;
+        if (!userId) {
             socket.disconnect();
             return;
         }
 
-        if (socket.data.user.sub && this.#activeUsers.has(socket.data.user.sub)) {
-            const currentData = this.#activeUsers.get(socket.data.user.sub)!;
-            this.#activeUsers.set(socket.data.user.sub, Object.assign(currentData, metadata));
+        const update = parseStatusUpdate(data);
+        if (!update) {
+            this.logger.warn(`Dropped an invalid status update from user ${userId}`);
+            return;
+        }
 
+        const current = this.#activeUsers.get(userId);
+        if (current) {
+            this.#activeUsers.set(userId, { ...current, ...update });
             this.server.emit(SocketEvents.USER_STATUS_UPDATE, this.activeUsers);
         }
     }

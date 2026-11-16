@@ -80,7 +80,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             user,
             memberMetadata,
         }: {
-            user: AppUser;
+            user: Omit<AppUser, 'email'>;
             memberMetadata: GuildMember;
         }) => {
             setServerMembers((prevMembers) => [...prevMembers, memberMetadata]);

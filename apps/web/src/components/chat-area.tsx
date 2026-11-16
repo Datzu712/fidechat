@@ -50,7 +50,6 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
         if (!isTyping) {
             setIsTyping(true);
             socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-                userId: currentUser.id,
                 isTyping: true,
                 typingInChannel: channel.id,
             });
@@ -65,7 +64,6 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
         typingTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
             socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-                userId: currentUser.id,
                 isTyping: false,
                 typingInChannel: undefined,
             });
@@ -207,7 +205,6 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                     }
                     setIsTyping(false);
                     socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-                        userId: currentUser!.id,
                         isTyping: false,
                         typingInChannel: undefined,
                         status: getUserStatus(currentUser!.id) || 'online',

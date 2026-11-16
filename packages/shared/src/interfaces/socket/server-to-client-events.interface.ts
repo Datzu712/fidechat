@@ -11,7 +11,7 @@ export interface ServerToClientEvents {
     [SocketEvents.MESSAGE_CREATE]: (message: Message) => void;
     [SocketEvents.MESSAGE_UPDATE]: (data: Pick<Message, 'id' | 'content'>) => void;
     [SocketEvents.MESSAGE_DELETE]: (data: Pick<Message, 'id' | 'channelId'>) => void;
-    [SocketEvents.MEMBER_ADD]: (data: { user: AppUser; memberMetadata: GuildMember }) => void;
+    [SocketEvents.MEMBER_ADD]: (data: { user: Omit<AppUser, 'email'>; memberMetadata: GuildMember }) => void;
     [SocketEvents.FORCE_SYNC]: () => void;
     [SocketEvents.USER_STATUS_UPDATE]: (users: ConnectedUser[]) => void;
     welcome: (message: string) => void;
