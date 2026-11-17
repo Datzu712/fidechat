@@ -28,8 +28,8 @@ import { parseAxiosError } from '@/lib/utils/resolveAxiosError';
 const formSchema = z.object({
     name: z.string().min(1, 'Channel name is required').max(100),
     description: z.string().max(1000).optional(),
-    // Sin .default(0): defaultValues ya lo inicializa, y con zod 4 el default
-    // hace que el tipo de entrada difiera del de salida en useForm.
+    // No .default(0): defaultValues already sets it, and with zod 4 a default
+    // makes the input type differ from the output type in useForm.
     position: z.number().min(0),
 });
 

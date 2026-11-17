@@ -27,11 +27,11 @@ export default function LoginPage() {
                     href={LOGIN_URL}
                     className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
                 >
-                    Intentar de nuevo
+                    Try again
                 </a>
             </div>
         );
     }
 
-    return <div>Redirigiendo...</div>;
+    return <div>Redirecting...</div>;
 }
