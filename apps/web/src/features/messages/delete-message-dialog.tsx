@@ -1,5 +1,6 @@
 import type { Message } from '@fidechat/shared';
 
+import type { PublicUser } from '@/features/members/use-users';
 import { UserAvatar } from '@/shared/components/user-avatar';
 import { Button } from '@/shared/ui/button';
 import {
@@ -56,26 +57,23 @@ function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
 }
 
 interface DeleteMessageDialogProps {
-    isOpen: boolean;
-    onClose: () => void;
+    /** The message to confirm; the dialog is open while it is set. */
+    message: Message | null;
+    author: PublicUser | undefined;
+    isPending: boolean;
     onConfirm: () => void;
-    isLoading?: boolean;
-    message?: Message;
-    username?: string;
-    avatarUrl?: string;
+    onOpenChange: (open: boolean) => void;
 }
 
 export function DeleteMessageDialog({
-    isOpen,
-    onClose,
-    onConfirm,
-    isLoading,
     message,
-    username = 'Unknown User',
-    avatarUrl,
+    author,
+    isPending,
+    onConfirm,
+    onOpenChange,
 }: DeleteMessageDialogProps) {
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={message !== null} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[440px]">
                 <DialogHeader>
                     <DialogTitle className="text-xl">
@@ -90,8 +88,8 @@ export function DeleteMessageDialog({
                 {message && (
                     <MessagePreview
                         message={message}
-                        username={username}
-                        avatarUrl={avatarUrl}
+                        username={author?.username ?? 'Unknown User'}
+                        avatarUrl={author?.avatarUrl ?? undefined}
                     />
                 )}
 
@@ -99,8 +97,8 @@ export function DeleteMessageDialog({
                     <Button
                         type="button"
                         variant="ghost"
-                        onClick={onClose}
-                        disabled={isLoading}
+                        onClick={() => onOpenChange(false)}
+                        disabled={isPending}
                         className="hover:bg-zinc-700/50"
                     >
                         Cancel
@@ -109,10 +107,10 @@ export function DeleteMessageDialog({
                         type="button"
                         variant="destructive"
                         onClick={onConfirm}
-                        disabled={isLoading}
+                        disabled={isPending}
                         className="bg-red-500 hover:bg-red-600"
                     >
-                        {isLoading ? 'Deleting...' : 'Delete'}
+                        {isPending ? 'Deleting...' : 'Delete'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

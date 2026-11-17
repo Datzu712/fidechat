@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router';
 
 import { useChannel } from '@/features/channels/use-channels';
-import { ChatArea } from '@/features/messages/chat-area';
+import { ChannelChat } from '@/features/messages/channel-chat';
 
 export function ChannelPage() {
     const params = useParams() as { id: string; channelId: string };
@@ -9,5 +9,5 @@ export function ChannelPage() {
 
     if (!channel) return <Navigate to="/servers" replace />;
 
-    return <ChatArea channel={channel} />;
+    return <ChannelChat channel={channel} />;
 }
