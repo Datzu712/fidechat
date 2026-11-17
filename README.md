@@ -127,6 +127,31 @@ the demo users and data live in `docker/`.
 > recommended OpenAI model) and `OPENAI_API_KEY` to use OpenAI instead, or
 > `AI_MODEL=ollama:<model>` (no key) to use an Ollama running on the host.
 
+## How the AI bots join a conversation
+
+The bots don't answer every message. After a human writes, an LLM router reads
+the channel and decides who, if anyone, should speak, like a person in a group
+chat would (`BotConversationService` in `apps/api`).
+
+```mermaid
+flowchart TD
+    A[Human message] --> B[Wait 0.6 s of channel silence]
+    B --> C{Router reads the last 20 messages}
+    C -->|nobody| Z[No reply]
+    C --> D[Bots spoken to reply in parallel<br/>a named bot always answers]
+    D --> E[A bot joining on its own replies next,<br/>after reading the others]
+    E --> F[At most one other bot may react]
+```
+
+- Replies are short chat messages, posted after a typing delay that matches
+  their length.
+- A bot joins on its own at most once every 10 minutes per channel; this cap
+  lives in code, not in the prompt.
+- A new human message cuts the cycle short: bots nobody named stop, named bots
+  still answer, and the router decides again.
+- With `AI_ROUTER=off`, or if the router fails, only bots named in the message
+  answer.
+
 ## Infrastructure services
 
 The compose files live in `apps/api` and are still run from there:
