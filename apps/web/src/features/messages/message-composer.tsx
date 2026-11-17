@@ -21,6 +21,7 @@ export function MessageComposer({ channel }: { channel: Channel }) {
 
         // Clear right away and keep typing; the socket echo adds the message.
         setContent('');
+        input.current?.focus();
         stopTyping();
         sendMessage.mutate(
             { content: text },

@@ -41,6 +41,8 @@ export function MessageList({ channel }: { channel: Channel }) {
         if (isFirstRun) {
             el.scrollTop = el.scrollHeight;
         } else if (isNearBottom.current || last?.authorId === currentUser?.id) {
+            // The smooth scroll's own events must not unpin the list.
+            isNearBottom.current = true;
             el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
         }
     }, [messages, currentUser?.id]);
@@ -84,7 +86,15 @@ export function MessageList({ channel }: { channel: Channel }) {
                                 onSaveEdit={(content) =>
                                     editMessage.mutate(
                                         { messageId: message.id, content },
-                                        { onSuccess: () => setEditingId(null) },
+                                        {
+                                            // Leave another message's editor open.
+                                            onSuccess: () =>
+                                                setEditingId((id) =>
+                                                    id === message.id
+                                                        ? null
+                                                        : id,
+                                                ),
+                                        },
                                     )
                                 }
                                 onDelete={() => setToDelete(message)}
@@ -101,9 +111,16 @@ export function MessageList({ channel }: { channel: Channel }) {
                 onOpenChange={(open) => !open && setToDelete(null)}
                 onConfirm={() => {
                     if (!toDelete) return;
+                    const target = toDelete;
                     deleteMessage.mutate(
-                        { messageId: toDelete.id },
-                        { onSuccess: () => setToDelete(null) },
+                        { messageId: target.id },
+                        {
+                            // Leave another message's dialog open.
+                            onSuccess: () =>
+                                setToDelete((current) =>
+                                    current === target ? null : current,
+                                ),
+                        },
                     );
                 }}
             />
