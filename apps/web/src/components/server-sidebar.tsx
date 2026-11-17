@@ -1,4 +1,4 @@
-import { PlusCircle } from 'lucide-react';
+import { Compass, Home, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
@@ -45,7 +45,7 @@ export function ServerSidebar() {
                                     className="h-12 w-12 rounded-full bg-primary/10 hover:bg-primary/20 transition-all"
                                     onClick={() => navigate('/servers')}
                                 >
-                                    <i className="fa-solid fa-home fa-lg" />
+                                    <Home className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="right">Home</TooltipContent>
@@ -123,7 +123,7 @@ export function ServerSidebar() {
                                     className="h-12 w-12 rounded-full bg-zinc-700 hover:bg-blue-500 text-blue-500 hover:text-white transition-all"
                                     onClick={() => setIsDiscoverModalOpen(true)}
                                 >
-                                    <i className="fa-solid fa-compass fa-lg" />
+                                    <Compass className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="right">

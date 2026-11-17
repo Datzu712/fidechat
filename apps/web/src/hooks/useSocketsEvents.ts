@@ -14,10 +14,6 @@ export function useSocketEvents(
         const currentSocket = socket.current;
         if (!connected || !currentSocket) return;
 
-        console.debug(
-            `Registering the following events: ${Object.keys(handlers).join(', ')}`,
-        );
-
         // Object.keys loses the key type; the handlers map is keyed by event name.
         const events = Object.keys(handlers) as Array<
             keyof ServerToClientEvents
@@ -32,7 +28,6 @@ export function useSocketEvents(
 
         return () => {
             if (currentSocket) {
-                // Remover solo los eventos que fueron registrados
                 events.forEach((event) => {
                     currentSocket.off(event);
                 });

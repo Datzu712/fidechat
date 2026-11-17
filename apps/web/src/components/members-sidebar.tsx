@@ -103,7 +103,6 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                 <div
                                     className={cn(
                                         'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-800',
-                                        //getStatusColor(member.user.status),
                                         getStatusColor(
                                             getUserStatus(member.id) ||
                                                 'offline',
@@ -126,7 +125,6 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                                     )}
                                 </div>
                                 <div className="text-xs text-zinc-500 truncate">
-                                    {/* {getStatusText(member.user.status)} */}
                                     {getStatusText(
                                         getUserStatus(member.id) || 'offline',
                                     )}
@@ -154,11 +152,6 @@ export function MembersSidebar({ serverId, className }: MembersSidebarProps) {
                 <div className="space-y-2">
                     {renderMemberGroup('Owner', [owner ?? unknownUser])}
                     {renderMemberGroup('Bots', bots)}
-                    {/* {renderStatusGroup(
-                        'online',
-                        adminsByStatus.online,
-                        membersByStatus.online,
-                    )} */}
                     {renderMemberGroup('Members', regularMembers)}
                 </div>
             </ScrollArea>

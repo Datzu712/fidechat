@@ -30,8 +30,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         onSuccess: (data) => {
             if (!data) return;
 
-            console.log(data);
-
             setConnectedUsers(data.connectedUsers || []);
             setUsers(() => {
                 const updatedUsers = data.users || [];
@@ -160,7 +158,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         (data: { id: string; channelId: string }) => {
             const { id: messageId, channelId } = data;
 
-            console.log(data);
             setChannels((prevChannels) => {
                 const targetChannel = prevChannels.find(
                     (channel) => channel.id === channelId,

@@ -40,17 +40,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             timeout: 10000,
         });
 
-        socket.current.onAny((event, ...args) => {
-            console.debug('[socket] Socket event received:', event, args);
-        });
-
-        socket.current.onAnyOutgoing((event, ...args) => {
-            console.debug('[socket] Socket event sent:', event, args);
-        });
+        if (import.meta.env.DEV) {
+            socket.current.onAny((event, ...args) => {
+                console.debug('[socket] received:', event, args);
+            });
+            socket.current.onAnyOutgoing((event, ...args) => {
+                console.debug('[socket] sent:', event, args);
+            });
+        }
 
         socket.current.on('connect', () => {
             setConnected(true);
-            console.debug('Connected to socket server');
         });
         // The server closes the socket when its session ends and refuses the handshake without a
         // valid session (sessions live in memory, so an API restart ends them). Reconnect while the
@@ -68,7 +68,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         };
         socket.current.on('disconnect', (reason) => {
             setConnected(false);
-            console.debug('Disconnected from socket server', reason);
             if (reason === 'io server disconnect') recheckSession();
         });
         socket.current.on('connect_error', (err: Error) => {

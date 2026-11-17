@@ -10,8 +10,6 @@ export default async function logout() {
         window.location.href = data.url;
     } catch (error) {
         console.error('Logout error:', error);
-        alert(
-            'Ha ocurrido un error durante el cierre de sesión. Por favor, inténtalo de nuevo.',
-        );
+        alert('Something went wrong while logging out. Please try again.');
     }
 }

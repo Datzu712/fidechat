@@ -268,7 +268,6 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     }, [showEmojiPicker]);
 
     const handleDeleteMessage = (messageId: string) => {
-        console.log(messageId);
         setMessageToDelete(messageId);
         setIsDeleteDialogOpen(true);
     };

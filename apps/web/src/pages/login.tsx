@@ -22,7 +22,7 @@ export default function LoginPage() {
     if (loginError) {
         return (
             <div className="flex flex-col items-center gap-4">
-                <p>No se pudo iniciar sesión ({loginError}).</p>
+                <p>Could not log in ({loginError}).</p>
                 <a
                     href={LOGIN_URL}
                     className="px-4 py-2 rounded-md bg-primary text-primary-foreground"

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import {
     useQuery,
     useMutation,
@@ -32,7 +30,7 @@ type UseApiDataOptions<K> = {
  * @example
  * const { data, isLoading } = useApiData<User[]>('/api/users');
  */
-export function useApiData<K = any>(
+export function useApiData<K = unknown>(
     url: string,
     options?: UseApiDataOptions<K>,
 ) {
@@ -65,7 +63,7 @@ export function useApiData<K = any>(
  * @remarks
  * This hook uses the `useApi` context to perform the request and handles errors by logging them to the console.
  */
-export function useApiMutation<R = any, D = any>(
+export function useApiMutation<R = unknown, D = unknown>(
     url: string,
     options?: UseMutationOptions<R, AxiosError, D> & {
         method?: 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'GET';
@@ -77,7 +75,7 @@ export function useApiMutation<R = any, D = any>(
         mutationFn: (data?: D) => {
             return apiRequest(url, {
                 data: data,
-                method: options?.method || 'POST', // Usa 'POST' como valor predeterminado
+                method: options?.method || 'POST',
             }) as Promise<R>;
         },
         ...options,

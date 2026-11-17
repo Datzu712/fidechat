@@ -40,9 +40,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     const channels = getServerChannels(serverId).sort(
         (a, b) => a.position - b.position,
     );
-    const isOwner =
-        currentUser.id ===
-        server?.ownerId; /*isUserServerAdmin(currentUser.id, serverId);*/
+    const isOwner = currentUser.id === server?.ownerId;
 
     const handleChannelClick = (channelId: string) => {
         navigate(`/servers/${serverId}/channels/${channelId}`);
@@ -120,14 +118,6 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-                            // onClick={() =>
-                            //     window.open(
-                            //         process.env.NEXT_PUBLIC_KEYCLOAK_URL
-                            //             ? `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}`
-                            //             : '#',
-                            //         '_blank',
-                            //     )
-                            // }
                         >
                             <Settings className="h-4 w-4" />
                         </Button>

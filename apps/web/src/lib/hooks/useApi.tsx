@@ -9,30 +9,8 @@ export interface ApiRequestOptions<T> extends AxiosRequestConfig<T> {
 }
 
 /**
- * Custom hook for making authenticated API requests.
- *
- * This hook provides a function to make HTTP requests to the backend API with
- * authentication headers automatically included. It also handles common error
- * scenarios like unauthorized access (401) by triggering logout.
- *
- * @remarks
- * The hook depends on session data from `useSession` to obtain the access token
- * for authentication and `useToast` for displaying error notifications.
- *
- * @returns An object containing:
- * - `apiRequest` - A function to make authenticated API requests
- * - `isAuthenticated` - A boolean indicating if the user is authenticated
- *
- * @example
- * ```tsx
- * const { apiRequest, isAuthenticated } = useApi();
- *
- * // Fetch data example
- * const fetchData = async () => {
- *   const data = await apiRequest<DataType>('/endpoint', { method: 'GET' });
- *   // Process data
- * };
- * ```
+ * Requests to the API through the same-origin client (the session cookie
+ * authenticates them). With `displayError`, a failure also shows a toast.
  */
 export function useApi<R>() {
     const axiosClient = apiClient;
@@ -44,7 +22,6 @@ export function useApi<R>() {
             options?: ApiRequestOptions<K>,
         ): Promise<K | undefined> => {
             try {
-                console.debug(`[API REQ] ${url}`, options);
                 const response = await axiosClient({
                     url,
                     ...options,
