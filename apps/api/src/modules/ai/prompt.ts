@@ -45,3 +45,13 @@ export function cleanReply(bot: AIBot, text: string): string {
 export function trimToLastSentence(text: string): string {
     return /^[\s\S]*[.!?…](?=\s|$)/.exec(text)?.[0] ?? '';
 }
+
+const spanishList = new Intl.ListFormat('es', { type: 'conjunction' });
+
+/** Appended to the persona when a bot reacts to other bots' replies, so it comments on them instead of answering again. */
+export function reactionInstructions(reactingTo: readonly AIBot[]): string {
+    const names = spanishList.format(reactingTo.map((bot) => bot.user.username));
+    return `
+
+Ahora mismo no respondes a la persona: reaccionas a lo que acaba de decir ${names}, como lo haría un amigo con confianza. Lo normal es picarlo, burlarte con cariño de su respuesta o llevarle la contraria con tu propio gusto; no lo felicites ni repitas lo que dijo. Habla con él directamente, sin volver a contestar la pregunta. Una frase, dos como mucho.`;
+}

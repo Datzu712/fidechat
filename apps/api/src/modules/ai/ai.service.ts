@@ -7,7 +7,13 @@ import { createProviderRegistry, generateText, Output } from 'ai';
 
 import { UserRepository } from '../user/user.repository.js';
 import { type AIBot, BOTS } from './bots.js';
-import { buildPromptMessages, type ChannelHistoryEntry, cleanReply, trimToLastSentence } from './prompt.js';
+import {
+    buildPromptMessages,
+    type ChannelHistoryEntry,
+    cleanReply,
+    reactionInstructions,
+    trimToLastSentence,
+} from './prompt.js';
 import { buildRouterPrompt, type PlannedSpeaker, ROUTER_INSTRUCTIONS, ROUTER_SCHEMA } from './router.js';
 
 // The SDK prints warnings with console.warn, outside pino; `reply` logs them through the Nest logger instead.
@@ -73,13 +79,16 @@ export class AIService implements OnModuleInit {
         }
     }
 
-    /** Returns `null` when the bots are disabled or the model produced no text; throws on provider errors. */
-    async reply(bot: AIBot, history: ChannelHistoryEntry[]): Promise<string | null> {
+    /**
+     * Returns `null` when the bots are disabled or the model produced no text; throws on provider errors. With
+     * `reactingTo`, the bot comments on those bots' replies instead of answering the conversation.
+     */
+    async reply(bot: AIBot, history: ChannelHistoryEntry[], reactingTo?: readonly AIBot[]): Promise<string | null> {
         if (!this.enabled) return null;
 
         const { text, finishReason, warnings } = await generateText({
             model: this.registry.languageModel(this.modelId as `${ProviderId}:${string}`),
-            instructions: bot.systemPrompt,
+            instructions: reactingTo ? bot.systemPrompt + reactionInstructions(reactingTo) : bot.systemPrompt,
             messages: buildPromptMessages(bot, history),
             temperature: bot.temperature,
             // Recent Claude models think by default, and thinking counts against maxOutputTokens.

@@ -44,8 +44,11 @@ function setup() {
     };
     const route = jest.fn<ReturnType<Route>, Parameters<Route>>().mockResolvedValue([]);
     const reply = jest.fn(
-        async (bot: PlannedSpeaker['bot'], _history: ChannelHistoryEntry[]): Promise<string | null> =>
-            `reply from ${bot.user.username}`,
+        async (
+            bot: PlannedSpeaker['bot'],
+            _history: ChannelHistoryEntry[],
+            _reactingTo?: ReadonlyArray<PlannedSpeaker['bot']>,
+        ): Promise<string | null> => `reply from ${bot.user.username}`,
     );
     const ai = { enabled: true, routerEnabled: true, route, reply };
     const presence = { startBotTyping: jest.fn(), stopBotTyping: jest.fn() };
@@ -172,6 +175,21 @@ describe('BotConversationService', () => {
         expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro]);
         expect(route).toHaveBeenCalledTimes(2);
         expect(route.mock.calls[1][2]).toContain(chayanne);
+    });
+
+    it('tells the reacting bot whose replies it reacts to, and only that bot', async () => {
+        const { say, route, reply } = setup();
+        route
+            .mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }])
+            .mockResolvedValueOnce([{ bot: pedro, kind: 'spontaneous' }]);
+
+        say('¿qué música ponemos?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
+
+        expect(reply.mock.calls.map(([bot, , reactingTo]) => [bot, reactingTo])).toEqual([
+            [chayanne, undefined],
+            [pedro, [chayanne]],
+        ]);
     });
 
     it('a human message during a reply skips the remaining turns and routes again', async () => {

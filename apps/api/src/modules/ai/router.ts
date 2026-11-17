@@ -63,7 +63,7 @@ export function buildRouterPrompt(
     if (exclude.length === 0) return lines.join('\n');
 
     const names = exclude.map((bot) => bot.user.username).join(', ');
-    return `${lines.join('\n')}\n\nAcaban de responder: ${names}. Solo puede reaccionar otro bot distinto de esos, y normalmente ninguno lo hace.`;
+    return `${lines.join('\n')}\n\nAcaban de responder: ${names}. ¿Algún otro bot tiene algo con gracia que decir sobre esas respuestas (discrepar, picarlo con cariño, rematar el chiste)? Si nada lo pide, ninguno. Solo bots distintos de ${names}.`;
 }
 
 /**

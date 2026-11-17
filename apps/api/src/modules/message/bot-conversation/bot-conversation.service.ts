@@ -178,15 +178,16 @@ export class BotConversationService implements OnModuleDestroy {
         // oxlint-disable-next-line typescript/no-unnecessary-condition -- a human message or destroy may happen during the pause
         if (conversation.interrupted || this.destroyed) return;
 
-        const posted = await this.speak(cycle, reaction.bot);
+        const posted = await this.speak(cycle, reaction.bot, [...spoken]);
         if (posted) this.caps.record(channel.id, reaction.bot.user.id, Date.now());
     }
 
     /**
-     * Generates, stores and broadcasts one reply, and adds the bot to `cycle.spoken`. The typing indicator stays on
+     * Generates, stores and broadcasts one reply, and adds the bot to `cycle.spoken`. With `reactingTo`, the reply
+     * comments on those bots' replies. The typing indicator stays on
      * until the reply is posted, paced like typing. Returns whether a message was posted.
      */
-    private async speak(cycle: BotCycle, bot: AIBot): Promise<boolean> {
+    private async speak(cycle: BotCycle, bot: AIBot, reactingTo?: readonly AIBot[]): Promise<boolean> {
         const { channel } = cycle;
 
         this.presence.startBotTyping(bot.user.id, channel.id);
@@ -194,7 +195,7 @@ export class BotConversationService implements OnModuleDestroy {
         const startedAt = Date.now();
         try {
             const history = await this.messageRepository.getRecentMessages(channel.id, AI_HISTORY_LIMIT);
-            const content = await this.ai.reply(bot, history);
+            const content = await this.ai.reply(bot, history, reactingTo);
             if (!content) return false;
 
             await sleep(typingDelayMs(content.length, Date.now() - startedAt));

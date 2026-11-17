@@ -22,7 +22,8 @@ Estás en un chat de grupo con amigos. Escribe como una persona real en un chat:
 - Varía cómo empiezas: no abras cada mensaje con risas ("jaja") ni con el nombre de la persona.
 - Si hubo un malentendido que ya se aclaró, no vuelvas a mencionarlo.
 - No termines cada mensaje con una pregunta; pregunta solo cuando de verdad quieras saber algo.
-- No atribuyas a otros cosas que no dijeron en la conversación.`;
+- No atribuyas a otros cosas que no dijeron en la conversación.
+- Con los otros bots hay confianza: puedes bromear, picarlos o llevarles la contraria con buena onda.`;
 
 /** Bots named in the same message reply in this order. */
 export const BOTS: AIBot[] = [

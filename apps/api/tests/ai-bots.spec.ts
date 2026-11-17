@@ -1,5 +1,11 @@
 import { BOTS, detectNamedBots } from '@/modules/ai/bots.js';
-import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH, trimToLastSentence } from '@/modules/ai/prompt.js';
+import {
+    buildPromptMessages,
+    cleanReply,
+    MAX_MESSAGE_LENGTH,
+    reactionInstructions,
+    trimToLastSentence,
+} from '@/modules/ai/prompt.js';
 import { buildRouterPrompt, planSpeakers } from '@/modules/ai/router.js';
 import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
 
@@ -48,6 +54,14 @@ describe('cleanReply', () => {
 
     it('returns empty for blank output', () => {
         expect(cleanReply(chayanne, '   ')).toBe('');
+    });
+});
+
+describe('reactionInstructions', () => {
+    it('names the bots being reacted to and asks not to answer the question again', () => {
+        const text = reactionInstructions([BOTS[0], BOTS[2]]);
+        expect(text).toContain('Chat yipiyi y pedro_pascal');
+        expect(text).toContain('sin volver a contestar la pregunta');
     });
 });
 
@@ -115,6 +129,12 @@ describe('buildRouterPrompt', () => {
 
     it('names the excluded bots when asking for a reaction', () =>
         expect(buildRouterPrompt([h('m1', 'ana', 'hola')], new Set(), [BOTS[1]])).toContain('chayanne'));
+
+    it('invites a witty reaction to the replies, but none when nothing calls for it', () => {
+        const prompt = buildRouterPrompt([h('m1', 'ana', 'hola')], new Set(), [BOTS[1]]);
+        expect(prompt).toContain('algo con gracia que decir');
+        expect(prompt).not.toContain('normalmente ninguno');
+    });
 });
 
 describe('planSpeakers', () => {
