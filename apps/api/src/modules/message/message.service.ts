@@ -4,7 +4,7 @@ import { HttpException, Injectable, InternalServerErrorException, NotFoundExcept
 import { ChannelRepository } from '../channel/channel.repository.js';
 import { SocketEmitter } from '../gateway/socket-emitter.js';
 import { UserRepository } from '../user/user.repository.js';
-import { BotConversationService } from './bot-conversation.service.js';
+import { BotConversationService } from './bot-conversation/bot-conversation.service.js';
 import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
 
 @Injectable()

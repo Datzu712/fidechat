@@ -1,46 +1,24 @@
 import { SocketEvents } from '@fidechat/shared';
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 
-import { AIService } from '../ai/ai.service.js';
-import { type AIBot, detectNamedBots } from '../ai/bots.js';
-import { type PlannedSpeaker, planSpeakers } from '../ai/router.js';
-import { SpontaneousCaps } from '../ai/spontaneous-caps.js';
-import type { Channel } from '../channel/channel.repository.js';
-import { PresenceService } from '../gateway/presence.service.js';
-import { SocketEmitter } from '../gateway/socket-emitter.js';
-import { UserRepository } from '../user/user.repository.js';
-import { MessageRepository } from './message.repository.js';
-
-/** Silence after the last human message before the bots decide whether to speak. */
-const DEBOUNCE_MS = 600;
-/** How many channel messages the router reads. */
-const ROUTER_HISTORY_LIMIT = 20;
-/** How many channel messages a bot reads before replying. */
-const AI_HISTORY_LIMIT = 30;
-/** Typing speed a bot reply is paced at, so it appears roughly when a person would have finished typing it. */
-const TYPING_CHARS_PER_SECOND = 40;
-const MAX_TYPING_MS = 3000;
-/** Pause before a spontaneous bot answers the replies before it, as if reading them. */
-const READ_PAUSE_MS = 1200;
-
-/** How much longer the typing indicator stays once generation took `generationMs`. */
-export function typingDelayMs(length: number, generationMs: number): number {
-    return Math.max(0, Math.min((length / TYPING_CHARS_PER_SECOND) * 1000, MAX_TYPING_MS) - generationMs);
-}
-
-async function sleep(ms: number): Promise<void> {
-    // oxlint-disable-next-line promise/avoid-new -- a plain setTimeout, so Jest fake timers control it
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-interface ChannelConversation {
-    timer?: NodeJS.Timeout;
-    pending: Array<{ id: string; content: string }>;
-    /** Set by every human message, so a running cycle skips the remaining turns of bots nobody named. */
-    interrupted: boolean;
-    /** Cycles run one after another, never overlapping. */
-    chain: Promise<void>;
-}
+import { AIService } from '../../ai/ai.service.js';
+import { type AIBot, detectNamedBots } from '../../ai/bots.js';
+import { type PlannedSpeaker, planSpeakers } from '../../ai/router.js';
+import { SpontaneousCaps } from '../../ai/spontaneous-caps.js';
+import type { Channel } from '../../channel/channel.repository.js';
+import { PresenceService } from '../../gateway/presence.service.js';
+import { SocketEmitter } from '../../gateway/socket-emitter.js';
+import { UserRepository } from '../../user/user.repository.js';
+import { MessageRepository } from '../message.repository.js';
+import {
+    AI_HISTORY_LIMIT,
+    type ChannelConversation,
+    DEBOUNCE_MS,
+    READ_PAUSE_MS,
+    ROUTER_HISTORY_LIMIT,
+    sleep,
+    typingDelayMs,
+} from './bot-conversation.util.js';
 
 /**
  * Decides which bots join a channel conversation. Human messages are debounced; then the router (or, without it,
@@ -62,7 +40,18 @@ export class BotConversationService implements OnModuleDestroy {
         private readonly emitter: SocketEmitter,
     ) {}
 
-    /** Only human messages reach this, so named-bot detection never runs over bot replies. */
+    onModuleDestroy(): void {
+        this.destroyed = true;
+        for (const conversation of this.conversations.values()) {
+            clearTimeout(conversation.timer);
+        }
+    }
+
+    /**
+     * Only human messages reach this, so named-bot detection never runs over bot replies.
+     *
+     * Note: this is channel scoped btw
+     */
     onHumanMessage(channel: Channel, messageId: string, content: string): void {
         if (!this.ai.enabled || this.destroyed) return;
 
@@ -75,18 +64,13 @@ export class BotConversationService implements OnModuleDestroy {
 
         conversation.pending.push({ id: messageId, content });
         conversation.interrupted = true;
+
         clearTimeout(conversation.timer);
+
         conversation.timer = setTimeout(() => {
             conversation.timer = undefined;
             conversation.chain = conversation.chain.then(async () => this.runCycle(channel, conversation));
         }, DEBOUNCE_MS);
-    }
-
-    onModuleDestroy(): void {
-        this.destroyed = true;
-        for (const conversation of this.conversations.values()) {
-            clearTimeout(conversation.timer);
-        }
     }
 
     private async runCycle(channel: Channel, conversation: ChannelConversation): Promise<void> {

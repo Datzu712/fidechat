@@ -7,7 +7,8 @@ import type { PlannedSpeaker } from '@/modules/ai/router.js';
 import type { Channel } from '@/modules/channel/channel.repository.js';
 import type { PresenceService } from '@/modules/gateway/presence.service.js';
 import type { SocketEmitter } from '@/modules/gateway/socket-emitter.js';
-import { BotConversationService, typingDelayMs } from '@/modules/message/bot-conversation.service.js';
+import { BotConversationService } from '@/modules/message/bot-conversation/bot-conversation.service.js';
+import { typingDelayMs } from '@/modules/message/bot-conversation/bot-conversation.util.js';
 import type { MessageCreationAttributes, MessageRepository } from '@/modules/message/message.repository.js';
 import type { UserRepository } from '@/modules/user/user.repository.js';
 

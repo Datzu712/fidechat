@@ -10,9 +10,7 @@ export interface AIBot {
     temperature: number;
 }
 
-/** Appended to every persona: the bots write like people in a group chat. */
 export const CHAT_STYLE = `
-
 Estás en un chat de grupo con amigos. Escribe como una persona real en un chat:
 - Normalmente 1 o 2 frases cortas. Solo te extiendes si te piden explicar algo.
 - Tono casual y natural; algún emoji si sale solo, sin abusar.
