@@ -27,11 +27,10 @@ export function useSocketEvents(
         });
 
         return () => {
-            if (currentSocket) {
-                events.forEach((event) => {
-                    currentSocket.off(event);
-                });
-            }
+            // Remove only these handlers: other listeners may share the event.
+            events.forEach((event) => {
+                currentSocket.off(event, handlers[event]);
+            });
         };
     }, [socket, connected, handlers]);
 }

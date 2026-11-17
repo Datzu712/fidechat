@@ -122,29 +122,26 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 **One origin.** The browser must see the web app and the API on the same origin, because auth is the API's HttpOnly session cookie: in dev Vite proxies `/api` and `/socket.io` to the API (`vite.config.ts`), and in the production image the API serves the built SPA. The web app has no env vars and never handles tokens.
 
-**Routes and providers.** `src/main.tsx` defines the React Router routes (pages in `src/pages/`). The root route (`src/root-layout.tsx`) wraps everything in `src/providers.tsx`: `QueryProvider` → `AuthProvider` → `SocketProvider` → `AppProvider`.
+**Layout: by feature.** `src/` reads as the product. `app/` holds the router (`app/router.tsx`), providers and layouts; `features/<name>/` (`auth`, `sync`, `guilds`, `channels`, `messages`, `members`, `presence`) holds each feature's pages, components and hooks; `shared/` holds what two or more features use (`ui/` shadcn components, `api/`, `socket/`, `components/`, `lib/`). A file lives in the feature that owns it and moves to `shared/` only once a second feature needs it. Files are kebab-case with named exports, and there are no barrel files.
 
-- `AuthProvider` asks `GET /api/v1/auth/me` once and exposes `status` through `useAuth`. Logging in is a navigation to `/api/v1/auth/login` (`src/pages/login.tsx`); `src/lib/logout.ts` posts `/api/v1/auth/logout` and follows the Keycloak end-session URL.
+**Providers.** The root route (`app/layouts/root-layout.tsx`) wraps everything in `app/providers.tsx`: `QueryProvider` → `AuthProvider` → `SocketProvider`, plus `useRealtimeSync`.
+
+- `AuthProvider` asks `GET /api/v1/auth/me` once and exposes `status` through `useAuth`. Logging in is a navigation to `/api/v1/auth/login` (`features/auth/login-page.tsx`); `features/auth/logout.ts` posts `/api/v1/auth/logout` and follows the Keycloak end-session URL.
 - `SocketProvider` opens the same-origin Socket.IO connection once the session is authenticated; the cookie authenticates the handshake.
+- `app/layouts/servers-layout.tsx` is the only auth and loading gate: below it the synced state is loaded. Unknown guild or channel URLs redirect to `/servers`.
 
-**State model (`src/contexts/providers/AppProvider.tsx`).**
+**State model (`features/sync/`).** The server state is one TanStack Query, `['sync']`, filled by `GET /users/@me/sync` (guilds with members, channels with messages, users, presence) once the socket connects, and refetched on reconnect and on `forceSync`. `useRealtimeSync` patches it with `setQueryData` on each socket event, through the pure updaters in `sync-updaters.ts`. Components never read the payload directly: each feature exposes hooks built on `useSyncQuery(select)` (`useGuild`, `useGuildChannels`, `useChannelMessages`, `useCurrentUser`, `useUserStatus`, ...), so a component re-renders only when its slice changes. Writes are mutations; the socket echo updates the cache.
 
-1. When the socket connects, `AppProvider` calls `GET /users/@me/sync` and loads the whole client state into React context: guilds with members, channels with messages, users and presence.
-2. Socket events are then applied as incremental updates to that state.
-3. A `forceSync` event triggers a full re-sync.
+**HTTP.** Requests go through the axios client (`shared/api/client.ts`, base URL `/api/v1`; a 401 sends the user to `/login`), directly or through `useApiData` / `useApiMutation` (`shared/api/`).
 
-Components read this state through `useAppContext`. `MockDataProvider` is a leftover from the prototype that some layouts still use, and real data comes from `AppProvider`.
-
-**HTTP.** Requests go through `useApi` / `useApiData` / `useApiMutation` (`src/lib/hooks/`), built on an axios client (`src/lib/api/client.ts`) with base URL `/api/v1`; a 401 sends the user to `/login`.
-
-**UI.** `src/components/ui/` contains generated shadcn components (see `components.json`).
+**UI.** `shared/ui/` contains generated shadcn components (see `components.json`); only the ones in use are kept.
 
 ## Cross-app contracts (`packages/shared`)
 
 Anything both apps need lives in `@fidechat/shared`, never as a copy in either app. Its `src/` is grouped by kind, one declaration per file, with the kind as the suffix: `enums/*.enum.ts`, `constants/*.constant.ts` (runtime values, e.g. for validation), `types/*.type.ts` (aliases and unions) and `interfaces/{entities,socket,responses,payloads}/*.interface.ts`. Apps import only from the package root (`@fidechat/shared`). It holds no runtime dependencies: Drizzle rows, DTO classes and validation stay in the api.
 
 - **It is compiled.** `tsc` emits ESM to `dist/`, which is what both apps load, so `dev`, `lint` and `typecheck` depend on `^build`. `pnpm dev` runs `turbo watch dev`: an edit in `shared` rebuilds it, restarts the api (`@fidechat/api#dev` is `interruptible`) and Vite hot-reloads the web. With `futureFlags.watchUsingTaskInputs`, that task's `inputs` are only `package.json`, so turbo restarts it for dependency changes and leaves api source edits to `nest --watch` (an empty `inputs` list means "default" and would restart it on every edit).
-- **Socket events.** `SocketEvents` plus the `ServerToClientEvents` / `ClientToServerEvents` maps. Adding an event means touching the enum, the map and the handler in `AppProvider`.
+- **Socket events.** `SocketEvents` plus the `ServerToClientEvents` / `ClientToServerEvents` maps. Adding an event means touching the enum, the map and the web handler in `features/sync/use-realtime-sync.ts`.
 - **Wire shapes.** Entities are the JSON the api sends: `T | null` for nullable columns and `createdAt` as an ISO string, not the Drizzle `Date`. Payload interfaces are implemented by the api DTOs (`class GuildDto implements GuildPayload`).
 
 <!-- BEGIN:turborepo-agent-rules -->

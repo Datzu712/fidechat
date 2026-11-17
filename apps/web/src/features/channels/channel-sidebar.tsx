@@ -5,8 +5,11 @@ import { useLocation, useNavigate } from 'react-router';
 
 import { logout } from '@/features/auth/logout';
 import { CreateChannelModal } from '@/features/channels/create-channel-modal';
+import { useGuildChannels } from '@/features/channels/use-channels';
+import { useGuild } from '@/features/guilds/use-guilds';
+import { useCurrentUser } from '@/features/members/use-users';
+import { useUserStatus } from '@/features/presence/use-presence';
 import { UserStatusMenu } from '@/features/presence/user-status-menu';
-import { useAppContext } from '@/features/sync/use-app-context';
 import { UserAvatar } from '@/shared/components/user-avatar';
 import { cn } from '@/shared/lib/utils';
 import { useSocket } from '@/shared/socket/use-socket';
@@ -19,12 +22,10 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     const { pathname } = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userStatus, setUserStatus] = useState<UserStatus>('online');
-    const {
-        currentUser,
-        guilds: servers,
-        getServerChannels,
-        getUserStatus,
-    } = useAppContext();
+    const currentUser = useCurrentUser();
+    const server = useGuild(serverId);
+    const channels = useGuildChannels(serverId);
+    const myStatus = useUserStatus(currentUser?.id ?? '');
 
     useEffect(() => {
         if (connected && currentUser) {
@@ -36,10 +37,6 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
 
     if (!currentUser) return null;
 
-    const server = servers.find((s) => s.id === serverId);
-    const channels = getServerChannels(serverId).sort(
-        (a, b) => a.position - b.position,
-    );
     const isOwner = currentUser.id === server?.ownerId;
 
     const handleChannelClick = (channelId: string) => {
@@ -108,7 +105,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                         </span>
                         <div className="flex items-center gap-2">
                             <UserStatusMenu
-                                status={getUserStatus(currentUser.id) || 'idle'}
+                                status={myStatus || 'idle'}
                                 onStatusChange={setUserStatus}
                             />
                         </div>

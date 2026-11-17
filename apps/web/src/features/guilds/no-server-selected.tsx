@@ -2,12 +2,12 @@ import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { CreateServerModal } from '@/features/guilds/create-server-modal';
-import { useAppContext } from '@/features/sync/use-app-context';
+import { useGuilds } from '@/features/guilds/use-guilds';
 import { Button } from '@/shared/ui/button';
 
 export function NoServerSelected() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { guilds } = useAppContext();
+    const guilds = useGuilds();
 
     const hasGuilds = guilds && guilds.length > 0;
 

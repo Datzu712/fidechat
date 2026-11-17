@@ -1,47 +1,13 @@
-import { useParams } from 'react-router';
+import { Navigate, useParams } from 'react-router';
 
-import { useAuth } from '@/features/auth/use-auth';
+import { useChannel } from '@/features/channels/use-channels';
 import { ChatArea } from '@/features/messages/chat-area';
-import { useAppContext } from '@/features/sync/use-app-context';
 
 export function ChannelPage() {
-    const params = useParams<{
-        id: string; // guildId
-        channelId: string;
-    }>();
+    const params = useParams() as { id: string; channelId: string };
+    const channel = useChannel(params.id, params.channelId);
 
-    const { status } = useAuth();
-    const { currentUser, channels, guilds } = useAppContext();
+    if (!channel) return <Navigate to="/servers" replace />;
 
-    if (status !== 'authenticated' || !currentUser) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
-    // Check if channel exists and belongs to the server
-    const channel = channels.find(
-        (c) => c.id === params.channelId && c.guildId === params.id,
-    );
-    const server = guilds.find((s) => s.id === params.id);
-
-    if (!channel || !server) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
-    const channelWithServer = {
-        ...channel,
-        server_id: channel.guildId, // Add this line
-        server: {
-            name: server.name,
-        },
-    };
-
-    return <ChatArea channel={channelWithServer} />;
+    return <ChatArea channel={channel} />;
 }

@@ -2,10 +2,9 @@ import { Compass, Home, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
-import { useAuth } from '@/features/auth/use-auth';
 import { CreateServerModal } from '@/features/guilds/create-server-modal';
 import { DiscoverServersModal } from '@/features/guilds/discover-servers-modal';
-import { useAppContext } from '@/features/sync/use-app-context';
+import { useGuilds } from '@/features/guilds/use-guilds';
 import { cn } from '@/shared/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
@@ -21,13 +20,10 @@ import {
 export function ServerSidebar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState(false);
-    const { status } = useAuth();
-    const { guilds } = useAppContext();
+    const guilds = useGuilds() ?? [];
 
     const navigate = useNavigate();
     const { pathname } = useLocation();
-
-    if (status !== 'authenticated') return null;
 
     const handleServerClick = (serverId: string) => {
         navigate(`/servers/${serverId}`);

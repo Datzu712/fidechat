@@ -2,21 +2,16 @@ import { Navigate, Outlet } from 'react-router';
 
 import { useAuth } from '@/features/auth/use-auth';
 import { ServerSidebar } from '@/features/guilds/server-sidebar';
-import { useAppContext } from '@/features/sync/use-app-context';
+import { useSyncStatus } from '@/features/sync/sync-query';
+import { FullScreenSpinner } from '@/shared/components/full-screen-spinner';
 
+/** The one auth and loading gate: every page below it has the synced state. */
 export function ServersLayout() {
     const { status } = useAuth();
-    const { currentUser } = useAppContext();
+    const { isLoaded } = useSyncStatus();
 
     if (status === 'unauthenticated') return <Navigate to="/login" replace />;
-
-    if (!currentUser) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
+    if (!isLoaded) return <FullScreenSpinner />;
 
     return (
         <div className="flex h-screen overflow-hidden">

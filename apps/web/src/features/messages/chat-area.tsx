@@ -1,19 +1,20 @@
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import { SocketEvents } from '@fidechat/shared';
-import type {
-    AppUser,
-    ChannelWithMessages,
-    MessagePayload,
-} from '@fidechat/shared';
+import type { Channel, MessagePayload } from '@fidechat/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Hash, Send, Pencil, Check, X, Trash2, Smile } from 'lucide-react';
 import React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { MobileMembersToggle } from '@/features/members/mobile-members-toggle';
+import { useCurrentUser, useUsersById } from '@/features/members/use-users';
 import { DeleteMessageDialog } from '@/features/messages/delete-message-dialog';
-import { useAppContext } from '@/features/sync/use-app-context';
+import { useChannelMessages } from '@/features/messages/use-channel-messages';
+import {
+    useTypingUsers,
+    useUserStatus,
+} from '@/features/presence/use-presence';
 import { parseAxiosError } from '@/shared/api/parse-axios-error';
 import { useApiMutation } from '@/shared/api/use-api-query';
 import { UserAvatar } from '@/shared/components/user-avatar';
@@ -24,22 +25,14 @@ import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useToast } from '@/shared/ui/use-toast';
 
 // todo: refactor this component in sub components D:
-export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
+export function ChatArea({ channel }: { channel: Channel }) {
     const { toast } = useToast();
-    const {
-        users,
-        guilds,
-        currentUser,
-        connectedUsers,
-        getUserById,
-        getUserStatus,
-    } = useAppContext();
+    const currentUser = useCurrentUser();
+    const usersById = useUsersById();
+    const myStatus = useUserStatus(currentUser?.id ?? '');
+    const typingUsers = useTypingUsers(channel.id);
+    const messages = useChannelMessages(channel.id);
     const { socket, connected } = useSocket();
-
-    const typingUsers = connectedUsers
-        .filter((user) => user.isTyping && user.typingInChannel === channel?.id)
-        .map((d) => getUserById(d.userId))
-        .filter((user): user is Omit<AppUser, 'email'> => user !== undefined);
 
     // Handle typing status
     const [isTyping, setIsTyping] = useState(false);
@@ -96,20 +89,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-    const guildMembers = [...users, currentUser];
-
-    const guild = guilds.find((g) => g.id === channel?.guildId);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const messages = useMemo(() => {
-        const messages = channel?.messages || [];
-
-        return messages.sort((a, b) => {
-            return (
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-            );
-        });
-    }, [channel]);
 
     useEffect(() => {
         scrollToBottom();
@@ -120,7 +100,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     };
 
     const { mutate: sendMessage } = useApiMutation<void, MessagePayload>(
-        `/guilds/${guild?.id}/channels/${channel?.id}/messages`,
+        `/guilds/${channel.guildId}/channels/${channel.id}/messages`,
         {
             onError: (error) => {
                 toast({
@@ -134,7 +114,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     );
 
     const { mutate: updateMessage } = useApiMutation<void, { content: string }>(
-        `/guilds/${guild?.id}/channels/${channel?.id}/messages/${editingMessageId}`,
+        `/guilds/${channel.guildId}/channels/${channel.id}/messages/${editingMessageId}`,
         {
             onError: (error) => {
                 toast({
@@ -149,7 +129,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
     );
 
     const { mutate: deleteMessage } = useApiMutation<void, void>(
-        `/guilds/${guild?.id}/channels/${channel?.id}/messages/${messageToDelete}`,
+        `/guilds/${channel.guildId}/channels/${channel.id}/messages/${messageToDelete}`,
         {
             onError: (error) => {
                 toast({
@@ -208,7 +188,7 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                     socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
                         isTyping: false,
                         typingInChannel: undefined,
-                        status: getUserStatus(currentUser!.id) || 'online',
+                        status: myStatus || 'online',
                     });
                 },
             },
@@ -332,19 +312,15 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                     messages.find((m) => m.id === messageToDelete) || undefined
                 }
                 username={
-                    guildMembers.find(
-                        (u) =>
-                            u?.id ===
-                            messages.find((m) => m.id === messageToDelete)
-                                ?.authorId,
+                    usersById.get(
+                        messages.find((m) => m.id === messageToDelete)
+                            ?.authorId ?? '',
                     )?.username
                 }
                 avatarUrl={
-                    guildMembers.find(
-                        (u) =>
-                            u?.id ===
-                            messages.find((m) => m.id === messageToDelete)
-                                ?.authorId,
+                    usersById.get(
+                        messages.find((m) => m.id === messageToDelete)
+                            ?.authorId ?? '',
                     )?.avatarUrl ?? undefined
                 }
             />
@@ -377,8 +353,8 @@ export function ChatArea({ channel }: { channel?: ChannelWithMessages }) {
                             </div>
                         ) : (
                             messages.map((message) => {
-                                const messageUser = guildMembers.find(
-                                    (u) => u?.id === message.authorId,
+                                const messageUser = usersById.get(
+                                    message.authorId,
                                 );
                                 return (
                                     <div

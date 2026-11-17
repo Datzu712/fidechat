@@ -1,20 +1,15 @@
-import { Outlet, useParams } from 'react-router';
+import { Navigate, Outlet, useParams } from 'react-router';
 
-import { useAuth } from '@/features/auth/use-auth';
 import { ChannelSidebar } from '@/features/channels/channel-sidebar';
+import { useGuild } from '@/features/guilds/use-guilds';
 import { MembersSidebar } from '@/features/members/members-sidebar';
 
 export function ServerLayout() {
-    const { status } = useAuth();
-    const params = useParams<{ id: string }>() as { id: string };
+    const params = useParams() as { id: string };
+    const guild = useGuild(params.id);
 
-    if (status !== 'authenticated') {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
+    // Unknown guild, or one the user is not a member of.
+    if (!guild) return <Navigate to="/servers" replace />;
 
     return (
         <>
