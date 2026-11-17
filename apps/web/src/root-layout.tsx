@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router';
 
-import { MockDataProvider } from '@/components/mock-data-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -16,10 +15,8 @@ export default function RootLayout() {
                 enableSystem
                 disableTransitionOnChange
             >
-                <MockDataProvider>
-                    <Outlet />
-                    <Toaster />
-                </MockDataProvider>
+                <Outlet />
+                <Toaster />
             </ThemeProvider>
         </Providers>
     );

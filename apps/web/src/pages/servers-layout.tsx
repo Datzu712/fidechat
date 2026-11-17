@@ -1,12 +1,12 @@
 import { Navigate, Outlet } from 'react-router';
 
-import { useMockData } from '@/components/mock-data-provider';
 import { ServerSidebar } from '@/components/server-sidebar';
+import useAppContext from '@/hooks/useAppContext';
 import useAuth from '@/hooks/useAuth';
 
 export default function ChannelsLayout() {
     const { status } = useAuth();
-    const { currentUser } = useMockData();
+    const { currentUser } = useAppContext();
 
     if (status === 'unauthenticated') return <Navigate to="/login" replace />;
 
