@@ -1,8 +1,8 @@
 import { Navigate, Outlet, useParams } from 'react-router';
 
-import { ChannelSidebar } from '@/features/channels/channel-sidebar';
-import { useGuild } from '@/features/guilds/use-guilds';
-import { MembersSidebar } from '@/features/members/members-sidebar';
+import { ChannelSidebar } from '@/features/channels/components/channel-sidebar';
+import { useGuild } from '@/features/guilds/hooks/use-guilds';
+import { MembersSidebar } from '@/features/members/components/members-sidebar';
 
 export function ServerLayout() {
     const params = useParams() as { id: string };

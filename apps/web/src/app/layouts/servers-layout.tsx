@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router';
 
-import { useAuth } from '@/features/auth/use-auth';
-import { ServerSidebar } from '@/features/guilds/server-sidebar';
-import { useSyncStatus } from '@/features/sync/sync-query';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { ServerSidebar } from '@/features/guilds/components/server-sidebar';
+import { useSyncStatus } from '@/features/sync/hooks/sync-query';
 import { FullScreenSpinner } from '@/shared/components/full-screen-spinner';
 
 /** The one auth and loading gate: every page below it has the synced state. */

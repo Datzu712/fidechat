@@ -9,10 +9,10 @@ import {
 import { RootLayout } from '@/app/layouts/root-layout';
 import { ServerLayout } from '@/app/layouts/server-layout';
 import { ServersLayout } from '@/app/layouts/servers-layout';
-import { AuthLayout } from '@/features/auth/auth-layout';
-import { LoginPage } from '@/features/auth/login-page';
-import { ChannelPage } from '@/features/channels/channel-page';
-import { ServerPage } from '@/features/channels/server-page';
+import { AuthLayout } from '@/features/auth/pages/auth-layout';
+import { LoginPage } from '@/features/auth/pages/login-page';
+import { ChannelPage } from '@/features/channels/pages/channel-page';
+import { ServerPage } from '@/features/channels/pages/server-page';
 import { ServersPage } from '@/features/guilds/servers-page';
 
 /** `/` goes through the login, keeping the query: a failed login comes back as `/?login_error=...`. */

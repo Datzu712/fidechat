@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
-import { useAuth } from '@/features/auth/use-auth';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ApiRequestOptions, useApi } from '@/shared/api/use-api';
 
 type UseApiDataOptions<K> = {

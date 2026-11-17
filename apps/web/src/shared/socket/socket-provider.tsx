@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
  * Todos:
  * - [ ] Manage reconnection sync issues. (the API refreshes the session token on each handshake)
  */
-import { useAuth } from '@/features/auth/use-auth';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 import { apiClient } from '@/shared/api/client';
 import { type AppSocket, SocketContext } from '@/shared/socket/socket-context';
 
