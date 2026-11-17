@@ -12,15 +12,15 @@ import { UserRepository } from '../user/user.repository.js';
 import { MessageRepository } from './message.repository.js';
 
 /** Silence after the last human message before the bots decide whether to speak. */
-const DEBOUNCE_MS = 1500;
+const DEBOUNCE_MS = 600;
 /** How many channel messages the router reads. */
 const ROUTER_HISTORY_LIMIT = 20;
 /** How many channel messages a bot reads before replying. */
 const AI_HISTORY_LIMIT = 30;
 /** Typing speed a bot reply is paced at, so it appears roughly when a person would have finished typing it. */
-const TYPING_CHARS_PER_SECOND = 27;
-const MAX_TYPING_MS = 5000;
-/** Pause before a bot answers another bot's reply, as if reading it. */
+const TYPING_CHARS_PER_SECOND = 40;
+const MAX_TYPING_MS = 3000;
+/** Pause before a spontaneous bot answers the replies before it, as if reading them. */
 const READ_PAUSE_MS = 1200;
 
 /** How much longer the typing indicator stays once generation took `generationMs`. */
@@ -44,7 +44,8 @@ interface ChannelConversation {
 
 /**
  * Decides which bots join a channel conversation. Human messages are debounced; then the router (or, without it,
- * the bots named in the new messages) picks the speakers, who reply in turns, and one other bot may react.
+ * the bots named in the new messages) picks the speakers: the addressed ones reply at once, the spontaneous ones in
+ * turns after them, and one other bot may react.
  */
 @Injectable()
 export class BotConversationService implements OnModuleDestroy {
@@ -119,8 +120,9 @@ export class BotConversationService implements OnModuleDestroy {
     }
 
     /**
-     * The planned speakers reply one after another. A human interrupt skips the remaining bots nobody named, but named
-     * bots still answer. Returns who posted a reply.
+     * The leading addressed speakers reply in parallel; the speakers after them reply one after another. A human
+     * interrupt skips the bots nobody named that have not started yet, but named bots still answer. Returns who posted
+     * a reply.
      */
     private async takeTurns(
         channel: Channel,
@@ -129,10 +131,14 @@ export class BotConversationService implements OnModuleDestroy {
         speakers: PlannedSpeaker[],
         named: readonly AIBot[],
     ): Promise<AIBot[]> {
-        const spoken: AIBot[] = [];
         // Destroy stops every remaining turn; a human interrupt only the turns of bots nobody named.
         const silenced = (bot: AIBot) => this.destroyed || (conversation.interrupted && !named.includes(bot));
-        for (const [index, { bot, kind }] of speakers.entries()) {
+        const firstTurn = speakers.findIndex(({ kind }) => kind !== 'addressed');
+        const together = firstTurn === -1 ? speakers.length : firstTurn;
+        const spoken = await this.replyTogether(channel, speakers.slice(0, together), silenced);
+
+        for (const [offset, { bot, kind }] of speakers.slice(together).entries()) {
+            const index = together + offset;
             if (silenced(bot)) continue;
             if (index > 0) {
                 await sleep(READ_PAUSE_MS);
@@ -145,6 +151,24 @@ export class BotConversationService implements OnModuleDestroy {
             }
             if (await this.speak(channel, bot)) spoken.push(bot);
         }
+        return spoken;
+    }
+
+    /**
+     * Every speaker starts at once, so none sees the others' replies, and each posts as soon as its own reply is typed.
+     * Returns who posted, in posting order.
+     */
+    private async replyTogether(
+        channel: Channel,
+        speakers: PlannedSpeaker[],
+        silenced: (bot: AIBot) => boolean,
+    ): Promise<AIBot[]> {
+        const spoken: AIBot[] = [];
+        await Promise.all(
+            speakers.map(async ({ bot }) => {
+                if (!silenced(bot) && (await this.speak(channel, bot))) spoken.push(bot);
+            }),
+        );
         return spoken;
     }
 
