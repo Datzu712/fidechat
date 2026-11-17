@@ -40,3 +40,8 @@ export function cleanReply(bot: AIBot, text: string): string {
     }
     return reply.slice(0, MAX_MESSAGE_LENGTH);
 }
+
+/** Cuts a reply that hit the token limit back to its last finished sentence; empty when none finished. */
+export function trimToLastSentence(text: string): string {
+    return /^[\s\S]*[.!?…](?=\s|$)/.exec(text)?.[0] ?? '';
+}

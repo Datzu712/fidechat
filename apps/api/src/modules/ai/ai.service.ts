@@ -7,7 +7,7 @@ import { createProviderRegistry, generateText, Output } from 'ai';
 
 import { UserRepository } from '../user/user.repository.js';
 import { type AIBot, BOTS } from './bots.js';
-import { buildPromptMessages, type ChannelHistoryEntry, cleanReply } from './prompt.js';
+import { buildPromptMessages, type ChannelHistoryEntry, cleanReply, trimToLastSentence } from './prompt.js';
 import { buildRouterPrompt, type PlannedSpeaker, ROUTER_INSTRUCTIONS, ROUTER_SCHEMA } from './router.js';
 
 // The SDK prints warnings with console.warn, outside pino; `reply` logs them through the Nest logger instead.
@@ -93,10 +93,12 @@ export class AIService implements OnModuleInit {
             this.logger.debug(`AI SDK warning: ${JSON.stringify(warning)}`);
         }
 
-        const reply = cleanReply(bot, text);
+        let reply = cleanReply(bot, text);
         if (!reply || finishReason === 'length') {
             this.logger.warn(`${bot.user.username} reply finished with ${finishReason} (${reply.length} chars)`);
         }
+        // A reply cut off by maxOutputTokens would end mid-sentence.
+        if (finishReason === 'length') reply = trimToLastSentence(reply);
         return reply || null;
     }
 

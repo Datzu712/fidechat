@@ -151,6 +151,9 @@ flowchart TD
   still answer, and the router decides again.
 - With `AI_ROUTER=off`, or if the router fails, only bots named in the message
   answer.
+- With the router on, every human message sends the last 20 messages of its
+  channel to the model provider, even when no bot is named. Fine for a demo; a
+  real deployment would want a per-guild opt-in.
 
 ## Infrastructure services
 

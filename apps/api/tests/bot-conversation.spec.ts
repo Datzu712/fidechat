@@ -401,6 +401,38 @@ describe('BotConversationService', () => {
         expect(reply.mock.calls[0][0]).toBe(pedro);
     });
 
+    it('does not use up the cap when a spontaneous reply fails', async () => {
+        const { say, route, reply } = setup();
+        route.mockImplementation(async (_history, _ids, exclude = []) =>
+            exclude.length > 0 ? [] : [{ bot: pedro, kind: 'spontaneous' }],
+        );
+        reply.mockResolvedValueOnce(null);
+
+        say('vi The Last of Us anoche');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
+        await jest.advanceTimersByTimeAsync(60_000);
+        say('qué buena serie');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([pedro, pedro]);
+    });
+
+    it('does not use up the cap when a reaction fails', async () => {
+        const { say, route, reply } = setup();
+        route.mockImplementation(async (_history, _ids, exclude = []) =>
+            exclude.length > 0 ? [{ bot: pedro, kind: 'spontaneous' }] : [{ bot: chayanne, kind: 'addressed' }],
+        );
+        reply.mockImplementation(async (bot) => (bot === pedro && reply.mock.calls.length === 2 ? null : replyOf(bot)));
+
+        say('chayanne, ¿qué cantas hoy?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
+        await jest.advanceTimersByTimeAsync(60_000);
+        say('chayanne, ¿y mañana?');
+        await jest.advanceTimersByTimeAsync(DEBOUNCE + typing(replyOf(chayanne)) + READ_PAUSE);
+
+        expect(reply.mock.calls.map(([bot]) => bot)).toEqual([chayanne, pedro, chayanne, pedro]);
+    });
+
     it('posts a reply only after its typing delay', async () => {
         const { say, route, reply, messageRepository } = setup();
         route.mockResolvedValueOnce([{ bot: chayanne, kind: 'addressed' }]);

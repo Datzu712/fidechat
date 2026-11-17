@@ -1,7 +1,8 @@
+import type { AIBot } from '../../ai/bots.js';
+import type { Channel } from '../../channel/channel.repository.js';
+
 /** Silence after the last human message before the bots decide whether to speak. */
 export const DEBOUNCE_MS = 600;
-/** How many channel messages the router reads. */
-export const ROUTER_HISTORY_LIMIT = 20;
 /** How many channel messages a bot reads before replying. */
 export const AI_HISTORY_LIMIT = 30;
 /** Typing speed a bot reply is paced at, so it appears roughly when a person would have finished typing it. */
@@ -27,4 +28,16 @@ export interface ChannelConversation {
     interrupted: boolean;
     /** Cycles run one after another, never overlapping. */
     chain: Promise<void>;
+}
+
+/** One run over a channel's pending human messages. */
+export interface BotCycle {
+    channel: Channel;
+    conversation: ChannelConversation;
+    /** The human messages this cycle answers. */
+    ids: ReadonlySet<string>;
+    /** Bots named in those messages: they answer even after a human interrupt. */
+    named: readonly AIBot[];
+    /** Bots that posted in this cycle, in posting order. */
+    spoken: AIBot[];
 }

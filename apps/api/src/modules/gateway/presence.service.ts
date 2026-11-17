@@ -13,6 +13,8 @@ import { parseStatusUpdate } from './status-update.util.js';
 export class PresenceService {
     private readonly logger = new Logger(PresenceService.name);
     readonly #activeUsers = new Map<string, Omit<ConnectedUser, 'userId'>>();
+    /** Channels each bot is typing in, oldest first; presence shows the latest one. */
+    readonly #botTyping = new Map<string, string[]>();
 
     constructor(private readonly emitter: SocketEmitter) {
         for (const { user } of BOTS) {
@@ -75,27 +77,31 @@ export class PresenceService {
             return;
         }
 
-        this.#activeUsers.set(user.id, {
-            status: 'online',
-            isTyping: true,
-            typingInChannel: channelId,
-        });
-        this.broadcast();
+        this.#botTyping.set(user.id, [...(this.#botTyping.get(user.id) ?? []), channelId]);
+        this.setBotTyping(user.id);
     }
 
-    /** Only clears the indicator if the bot is still typing in `channelId`, not already in another channel. */
+    /** A bot can type in several channels at once: the indicator moves to another one until all have finished. */
     public stopBotTyping(botId: string, channelId: string) {
         const user = BOTS.find((bot) => bot.user.id === botId)?.user;
         if (!user) {
             this.logger.error(`IA user with ID ${botId} not found`);
             return;
         }
-        if (this.#activeUsers.get(user.id)?.typingInChannel !== channelId) return;
+        const channels = this.#botTyping.get(user.id) ?? [];
+        const index = channels.indexOf(channelId);
+        if (index === -1) return;
 
-        this.#activeUsers.set(user.id, {
+        this.#botTyping.set(user.id, channels.toSpliced(index, 1));
+        this.setBotTyping(user.id);
+    }
+
+    private setBotTyping(botId: string) {
+        const channelId = this.#botTyping.get(botId)?.at(-1);
+        this.#activeUsers.set(botId, {
             status: 'online',
-            isTyping: false,
-            typingInChannel: undefined,
+            isTyping: channelId !== undefined,
+            typingInChannel: channelId,
         });
         this.broadcast();
     }

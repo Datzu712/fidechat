@@ -10,7 +10,8 @@ export interface PlannedSpeaker {
     kind: SpeakerKind;
 }
 
-const ROUTER_HISTORY_SIZE = 20;
+/** How many channel messages the router reads. */
+export const ROUTER_HISTORY_LIMIT = 20;
 const MAX_UNNAMED_SPEAKERS = 2;
 
 export const ROUTER_INSTRUCTIONS = `Eres el moderador invisible de un chat de grupo donde conviven personas y estos bots:
@@ -57,7 +58,7 @@ export function buildRouterPrompt(
     exclude: readonly AIBot[] = [],
 ): string {
     const lines = history
-        .slice(-ROUTER_HISTORY_SIZE)
+        .slice(-ROUTER_HISTORY_LIMIT)
         .map((entry) => `${newIds.has(entry.id) ? '[NUEVO] ' : ''}${entry.authorName}: ${entry.content}`);
     if (exclude.length === 0) return lines.join('\n');
 
@@ -71,7 +72,7 @@ export function buildRouterPrompt(
  */
 export function planSpeakers(
     decision: PlannedSpeaker[] | null,
-    named: AIBot[],
+    named: readonly AIBot[],
     canSpeakSpontaneously: (bot: AIBot) => boolean,
 ): PlannedSpeaker[] {
     const picks = decision ?? [];

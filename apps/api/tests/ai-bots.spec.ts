@@ -1,5 +1,5 @@
 import { BOTS, detectNamedBots } from '@/modules/ai/bots.js';
-import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH } from '@/modules/ai/prompt.js';
+import { buildPromptMessages, cleanReply, MAX_MESSAGE_LENGTH, trimToLastSentence } from '@/modules/ai/prompt.js';
 import { buildRouterPrompt, planSpeakers } from '@/modules/ai/router.js';
 import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
 
@@ -49,6 +49,15 @@ describe('cleanReply', () => {
     it('returns empty for blank output', () => {
         expect(cleanReply(chayanne, '   ')).toBe('');
     });
+});
+
+describe('trimToLastSentence', () => {
+    it('drops the unfinished sentence', () =>
+        expect(trimToLastSentence('Hola, mi amor. Te cuento que ayer fui')).toBe('Hola, mi amor.'));
+    it('keeps the last complete sentence of several', () =>
+        expect(trimToLastSentence('¡Qué bien! ¿Y tú? Yo estaba pensando en')).toBe('¡Qué bien! ¿Y tú?'));
+    it('does not cut at a decimal point', () => expect(trimToLastSentence('Sale la versión 2.5 mañana')).toBe(''));
+    it('returns empty when no sentence finished', () => expect(trimToLastSentence('sin ningún final')).toBe(''));
 });
 
 describe('detectNamedBots', () => {
