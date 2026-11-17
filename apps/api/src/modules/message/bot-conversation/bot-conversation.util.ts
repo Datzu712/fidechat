@@ -23,9 +23,8 @@ export async function sleep(ms: number): Promise<void> {
 
 export interface ChannelConversation {
     timer?: NodeJS.Timeout;
+    /** Human messages no cycle has taken yet. While a cycle runs, any message here means a human interrupted it. */
     pending: Array<{ id: string; content: string }>;
-    /** Set by every human message, so a running cycle skips the remaining turns of bots nobody named. */
-    interrupted: boolean;
     /** Cycles run one after another, never overlapping. */
     chain: Promise<void>;
 }

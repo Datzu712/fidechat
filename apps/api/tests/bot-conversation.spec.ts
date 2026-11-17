@@ -4,6 +4,7 @@ import type { AIService } from '@/modules/ai/ai.service.js';
 import { BOTS } from '@/modules/ai/bots.js';
 import type { ChannelHistoryEntry } from '@/modules/ai/prompt.js';
 import type { PlannedSpeaker } from '@/modules/ai/router.js';
+import { SpeakerSelector } from '@/modules/ai/speaker-selector.js';
 import type { Channel } from '@/modules/channel/channel.repository.js';
 import type { PresenceService } from '@/modules/gateway/presence.service.js';
 import type { SocketEmitter } from '@/modules/gateway/socket-emitter.js';
@@ -58,6 +59,7 @@ function setup() {
     const service = new BotConversationService(
         messageRepository as unknown as MessageRepository,
         ai as unknown as AIService,
+        new SpeakerSelector(ai as unknown as AIService),
         presence as unknown as PresenceService,
         userRepository as unknown as UserRepository,
         emitter as unknown as SocketEmitter,

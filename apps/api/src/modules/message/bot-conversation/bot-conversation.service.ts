@@ -3,8 +3,9 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 
 import { AIService } from '../../ai/ai.service.js';
 import { type AIBot, detectNamedBots } from '../../ai/bots.js';
-import { type PlannedSpeaker, planSpeakers, ROUTER_HISTORY_LIMIT } from '../../ai/router.js';
-import { SpontaneousCaps } from '../../ai/spontaneous-caps.js';
+import type { ChannelHistoryEntry } from '../../ai/prompt.js';
+import { ROUTER_HISTORY_LIMIT } from '../../ai/router.js';
+import { type SpeakerPlan, SpeakerSelector } from '../../ai/speaker-selector.js';
 import type { Channel } from '../../channel/channel.repository.js';
 import { PresenceService } from '../../gateway/presence.service.js';
 import { SocketEmitter } from '../../gateway/socket-emitter.js';
@@ -21,20 +22,20 @@ import {
 } from './bot-conversation.util.js';
 
 /**
- * Decides which bots join a channel conversation. Human messages are debounced; then the router (or, without it,
- * the bots named in the new messages) picks the speakers: the addressed ones reply at once, the spontaneous ones in
- * turns after them, and one other bot may react.
+ * Runs the bots' side of a channel conversation. Human messages are debounced into a cycle; `SpeakerSelector` decides
+ * who speaks in it, and this service does the pacing: the addressed bots reply at once, the spontaneous ones in turns
+ * after them, and one other bot may react.
  */
 @Injectable()
 export class BotConversationService implements OnModuleDestroy {
     private readonly logger = new Logger(BotConversationService.name);
     private readonly conversations = new Map<string, ChannelConversation>();
-    private readonly caps = new SpontaneousCaps();
     private destroyed = false;
 
     constructor(
         private readonly messageRepository: MessageRepository,
         private readonly ai: AIService,
+        private readonly selector: SpeakerSelector,
         private readonly presence: PresenceService,
         private readonly userRepository: UserRepository,
         private readonly emitter: SocketEmitter,
@@ -47,30 +48,27 @@ export class BotConversationService implements OnModuleDestroy {
         }
     }
 
-    /**
-     * Only human messages reach this, so named-bot detection never runs over bot replies.
-     *
-     * Note: this is channel scoped btw
-     */
+    /** Only human messages reach this, so named-bot detection never runs over bot replies. */
     onHumanMessage(channel: Channel, messageId: string, content: string): void {
         if (!this.ai.enabled || this.destroyed) return;
 
-        let state = this.conversations.get(channel.id);
-        if (!state) {
-            state = { pending: [], interrupted: false, chain: Promise.resolve() };
-            this.conversations.set(channel.id, state);
-        }
-        const conversation = state;
-
+        const conversation = this.conversationOf(channel.id);
         conversation.pending.push({ id: messageId, content });
-        conversation.interrupted = true;
 
         clearTimeout(conversation.timer);
-
         conversation.timer = setTimeout(() => {
             conversation.timer = undefined;
             conversation.chain = conversation.chain.then(async () => this.runCycle(channel, conversation));
         }, DEBOUNCE_MS);
+    }
+
+    private conversationOf(channelId: string): ChannelConversation {
+        let conversation = this.conversations.get(channelId);
+        if (!conversation) {
+            conversation = { pending: [], chain: Promise.resolve() };
+            this.conversations.set(channelId, conversation);
+        }
+        return conversation;
     }
 
     private async runCycle(channel: Channel, conversation: ChannelConversation): Promise<void> {
@@ -79,7 +77,6 @@ export class BotConversationService implements OnModuleDestroy {
 
         const pending = conversation.pending;
         conversation.pending = [];
-        conversation.interrupted = false;
 
         const cycle: BotCycle = {
             channel,
@@ -90,96 +87,84 @@ export class BotConversationService implements OnModuleDestroy {
         };
 
         try {
-            const history = await this.messageRepository.getRecentMessages(channel.id, ROUTER_HISTORY_LIMIT);
-            const decision = this.ai.routerEnabled ? await this.ai.route(history, cycle.ids) : null;
-            const speakers = planSpeakers(decision, cycle.named, (bot) =>
-                this.caps.canSpeak(channel.id, bot.user.id, Date.now()),
-            );
+            const plan = await this.selector.plan(channel.id, await this.routerHistory(cycle), cycle.ids, cycle.named);
 
-            await this.takeTurns(cycle, speakers);
-            if (decision !== null && cycle.spoken.length > 0) await this.react(cycle);
+            await this.answerAddressed(cycle, plan.addressed);
+            await this.speakInTurns(cycle, plan.spontaneous);
+            if (plan.routed && cycle.spoken.length > 0) await this.react(cycle);
 
-            const names = (bots: readonly AIBot[]) => bots.map((bot) => bot.user.username).join(', ') || 'none';
-            const picks =
-                decision === null
-                    ? 'unavailable'
-                    : decision.map(({ bot, kind }) => `${bot.user.username} (${kind})`).join(', ') || 'none';
-            this.logger.debug(
-                `Channel ${channel.id}: router ${picks}, named ${names(cycle.named)}, spoke ${names(cycle.spoken)}`,
-            );
+            this.logCycle(cycle, plan);
         } catch (error) {
             this.logger.error(new Error(`Bot conversation cycle failed in channel ${channel.id}`, { cause: error }));
         }
     }
 
-    /** Destroy stops every remaining turn; a human interrupt only the turns of bots nobody named. */
-    private isSilenced({ conversation, named }: BotCycle, bot: AIBot): boolean {
-        return this.destroyed || (conversation.interrupted && !named.includes(bot));
+    /** A human wrote after the cycle started: that message waits in `pending` for the next cycle. */
+    private interrupted({ conversation }: BotCycle): boolean {
+        return conversation.pending.length > 0;
     }
 
-    /**
-     * The leading addressed speakers reply in parallel; the speakers after them reply one after another. A human
-     * interrupt skips the bots nobody named that have not started yet, but named bots still answer.
-     */
-    private async takeTurns(cycle: BotCycle, speakers: PlannedSpeaker[]): Promise<void> {
-        const firstTurn = speakers.findIndex(({ kind }) => kind !== 'addressed');
-        const together = firstTurn === -1 ? speakers.length : firstTurn;
-
-        await Promise.all(
-            speakers.slice(0, together).map(async ({ bot }) => {
-                if (!this.isSilenced(cycle, bot)) await this.speak(cycle, bot);
-            }),
-        );
-
-        for (const speaker of speakers.slice(together)) {
-            await this.takeTurn(cycle, speaker);
-        }
+    /** Nothing new starts after a destroy or a human interrupt. Only the bots a human named are exempt from the latter. */
+    private stopped(cycle: BotCycle): boolean {
+        return this.destroyed || this.interrupted(cycle);
     }
 
-    /**
-     * One sequential turn. After other replies, the bot first pauses to read them and, if nobody addressed it, the
-     * router must still pick it.
-     */
-    private async takeTurn(cycle: BotCycle, { bot, kind }: PlannedSpeaker): Promise<void> {
-        if (this.isSilenced(cycle, bot)) return;
+    /** The addressed bots reply in parallel, each posting when ready, so they do not see each other. */
+    private async answerAddressed(cycle: BotCycle, bots: readonly AIBot[]): Promise<void> {
+        if (this.destroyed) return;
 
-        if (cycle.spoken.length > 0) {
-            await sleep(READ_PAUSE_MS);
+        // A human may have interrupted while the router decided: the bots that human named still answer.
+        const answering = this.interrupted(cycle) ? bots.filter((bot) => cycle.named.includes(bot)) : bots;
+        await Promise.all(answering.map(async (bot) => this.speak(cycle, bot)));
+    }
 
-            if (this.isSilenced(cycle, bot)) return;
+    /** The spontaneous bots reply one after another, after the addressed ones, so each sees the replies before it. */
+    private async speakInTurns(cycle: BotCycle, bots: readonly AIBot[]): Promise<void> {
+        for (const bot of bots) {
+            if (this.stopped(cycle)) return;
 
-            if (kind === 'spontaneous') {
-                // The replies may have changed things: the router must still pick it, with the latest history.
-                const history = await this.messageRepository.getRecentMessages(cycle.channel.id, ROUTER_HISTORY_LIMIT);
-                const decision = await this.ai.route(history, cycle.ids);
-                if (this.isSilenced(cycle, bot) || !decision?.some((pick) => pick.bot === bot)) return;
+            // After other replies, the bot pauses to read them. They may have changed things: the router must still
+            // pick it, with the latest history.
+            if (cycle.spoken.length > 0) {
+                await sleep(READ_PAUSE_MS);
+                if (this.stopped(cycle)) return;
+
+                const stillPicked = await this.selector.stillPicks(bot, await this.routerHistory(cycle), cycle.ids);
+                if (this.stopped(cycle)) return;
+                if (!stillPicked) continue;
             }
-        }
 
-        const posted = await this.speak(cycle, bot);
-        // Only a posted reply uses up the cap; cycles in a channel never overlap, so none can slip in meanwhile.
-        if (posted && kind === 'spontaneous') this.caps.record(cycle.channel.id, bot.user.id, Date.now());
+            // Cycles in a channel never overlap, so no other reply of this bot can slip in before the cap is recorded.
+            const posted = await this.speak(cycle, bot);
+            if (posted) this.selector.recordSpontaneous(cycle.channel.id, bot);
+        }
     }
 
     /** At most one bot that has not spoken yet reacts to the replies, under its spontaneous cap. */
     private async react(cycle: BotCycle): Promise<void> {
-        const { channel, conversation, ids, spoken } = cycle;
-        if (this.destroyed || conversation.interrupted) return;
+        if (this.stopped(cycle)) return;
 
-        const history = await this.messageRepository.getRecentMessages(channel.id, ROUTER_HISTORY_LIMIT);
-        const decision = (await this.ai.route(history, ids, spoken)) ?? [];
-        const reaction = decision.find(
-            ({ bot }) => !spoken.includes(bot) && this.caps.canSpeak(channel.id, bot.user.id, Date.now()),
-        );
-        // oxlint-disable-next-line typescript/no-unnecessary-condition -- a human message may arrive while `route` runs
-        if (!reaction || conversation.interrupted) return;
+        const history = await this.routerHistory(cycle);
+        const bot = await this.selector.pickReaction(cycle.channel.id, history, cycle.ids, cycle.spoken);
+        if (!bot || this.stopped(cycle)) return;
 
         await sleep(READ_PAUSE_MS);
-        // oxlint-disable-next-line typescript/no-unnecessary-condition -- a human message or destroy may happen during the pause
-        if (conversation.interrupted || this.destroyed) return;
+        if (this.stopped(cycle)) return;
 
-        const posted = await this.speak(cycle, reaction.bot, [...spoken]);
-        if (posted) this.caps.record(channel.id, reaction.bot.user.id, Date.now());
+        const posted = await this.speak(cycle, bot, [...cycle.spoken]);
+        if (posted) this.selector.recordSpontaneous(cycle.channel.id, bot);
+    }
+
+    private async routerHistory({ channel }: BotCycle): Promise<ChannelHistoryEntry[]> {
+        return this.messageRepository.getRecentMessages(channel.id, ROUTER_HISTORY_LIMIT);
+    }
+
+    private logCycle({ channel, named, spoken }: BotCycle, { addressed, spontaneous, routed }: SpeakerPlan): void {
+        const names = (bots: readonly AIBot[]) => bots.map((bot) => bot.user.username).join(', ') || 'none';
+        this.logger.debug(
+            `Channel ${channel.id}: router ${routed ? 'ok' : 'unavailable'}, named ${names(named)}, ` +
+                `addressed ${names(addressed)}, spontaneous ${names(spontaneous)}, spoke ${names(spoken)}`,
+        );
     }
 
     /**
