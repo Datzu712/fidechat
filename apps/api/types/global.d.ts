@@ -26,8 +26,12 @@ declare interface IEnvironmentVariables {
     AUTH_CALLBACK_URL: string; // Public URL of GET /api/v1/auth/callback, registered in the Keycloak client
     PUBLIC_WEB_URL: string; // Where the browser lands after login and logout
 
-    // chat yipiti
-    OPENAI_API_KEY: string;
+    // AI bots
+    AI_MODEL?: string; // provider:model, defaults to anthropic:claude-haiku-5-5
+    AI_ROUTER?: 'on' | 'off'; // defaults to on
+    ANTHROPIC_API_KEY?: string;
+    OPENAI_API_KEY?: string;
+    OLLAMA_BASE_URL?: string; // defaults to http://localhost:11434/v1
 }
 
 declare interface IReqUser {

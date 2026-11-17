@@ -120,12 +120,40 @@ The ports are fixed, because the Keycloak realm's redirect URIs use them, and
 the demo users and data live in `docker/`.
 
 > [!NOTE]
-> **AI bots and `OPENAI_API_KEY`.** The api needs the variable to boot, so
-> `compose.yaml` passes the placeholder `not-set` when it is missing; the bots
-> still show up online, but stay silent. To give them a real key, set
-> `OPENAI_API_KEY` in the shell or in a root `.env` (git-ignored, so it is the
-> right place for it). Even with a valid key the bots do not answer yet: v3
-> still asks for `gpt-3.5-turbo`, which OpenAI has retired. (ima changed it to the sdk from vercel in the next prs i hope)
+> **AI bots.** They are optional: without a key they show up online but stay
+> silent. To turn them on, set `ANTHROPIC_API_KEY` in the shell or in a root
+> `.env` (git-ignored, so it is the right place for it). The model defaults to
+> `anthropic:claude-haiku-5-5`; set `AI_MODEL=openai:gpt-6-luna` (the
+> recommended OpenAI model) and `OPENAI_API_KEY` to use OpenAI instead, or
+> `AI_MODEL=ollama:<model>` (no key) to use an Ollama running on the host.
+
+## How the AI bots join a conversation
+
+The bots don't answer every message. After a human writes, an LLM router reads
+the channel and decides who, if anyone, should speak, like a person in a group
+chat would (`BotConversationService` in `apps/api`).
+
+```mermaid
+flowchart TD
+    A[Human message] --> B[Wait 0.6 s of channel silence]
+    B --> C{Router reads the last 20 messages}
+    C -->|nobody| Z[No reply]
+    C --> D[Bots spoken to reply in parallel<br/>a named bot always answers]
+    D --> E[A bot joining on its own replies next,<br/>after reading the others]
+    E --> F[At most one other bot may react]
+```
+
+- Replies are short chat messages, posted after a typing delay that matches
+  their length.
+- A bot joins on its own at most once every 10 minutes per channel; this cap
+  lives in code, not in the prompt.
+- A new human message cuts the cycle short: bots nobody named stop, named bots
+  still answer, and the router decides again.
+- With `AI_ROUTER=off`, or if the router fails, only bots named in the message
+  answer.
+- With the router on, every human message sends the last 20 messages of its
+  channel to the model provider, even when no bot is named. Fine for a demo; a
+  real deployment would want a per-guild opt-in.
 
 ## Infrastructure services
 

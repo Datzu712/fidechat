@@ -28,6 +28,9 @@
         "typecheck": "tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {
+        "@ai-sdk/anthropic": "^4.0.105",
+        "@ai-sdk/openai": "^4.0.118",
+        "@ai-sdk/openai-compatible": "^3.0.92",
         "@fastify/compress": "^9.3.0",
         "@fastify/helmet": "^13.2.0",
         "@fastify/static": "^10.1.8",
@@ -41,6 +44,7 @@
         "@nestjs/throttler": "^6.7.1",
         "@nestjs/websockets": "^12.3.2",
         "@sentry/nestjs": "^11.10.0",
+        "ai": "^7.0.173",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.15.1",
         "dotenv": "^18.0.9",
@@ -49,7 +53,6 @@
         "jsonwebtoken": "^9.0.3",
         "jwks-rsa": "^4.1.0",
         "nestjs-pino": "^5.3.1",
-        "openai": "^7.47.0",
         "pg": "^8.23.1",
         "pino": "^10.4.0",
         "pino-http": "^11.0.0",

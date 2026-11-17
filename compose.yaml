@@ -105,10 +105,17 @@ services:
             PUBLIC_WEB_URL: http://localhost:4300/
             # Guild every user is added to on first login (seeded in docker/postgres/seed.sql).
             DEFAULT_GUILD_ID: 44444444-4444-4444-4444-444444444444
-            # Required by env validation; set a real key in the shell or a root .env.
-            # The bots stay silent anyway until v3 stops asking for the retired
-            # gpt-3.5-turbo (see the README's "Quick launch (v3)").
-            OPENAI_API_KEY: ${OPENAI_API_KEY:-not-set}
+            # AI bots: optional. Set the provider key in the shell or a root .env;
+            # without it the bots show up online but stay silent.
+            AI_MODEL: ${AI_MODEL:-anthropic:claude-haiku-5-5}
+            ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+            OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+            # on|off: off answers only bots named in a message (useful for small Ollama models).
+            AI_ROUTER: ${AI_ROUTER:-on}
+            # With AI_MODEL=ollama:<model>, reaches an Ollama running on the host.
+            OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         ports:
             - '4300:8080'
         depends_on:

@@ -1,10 +1,12 @@
 import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
 import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
 import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
-import { type Message, message } from '@/infrastructure/database/schema/index.js';
+import { appUser, type Message, message } from '@/infrastructure/database/schema/index.js';
+
+import type { ChannelHistoryEntry } from '../ai/prompt.js';
 
 export type { Message };
 
@@ -64,6 +66,28 @@ export class MessageRepository {
         } catch (error) {
             this.logger.error(error);
             throw new InternalServerErrorException('Failed to get message', { cause: error });
+        }
+    }
+
+    /** The last `limit` messages of a channel, oldest first, with each author's username. */
+    async getRecentMessages(channelId: string, limit: number): Promise<ChannelHistoryEntry[]> {
+        try {
+            const rows = await this.db
+                .select({
+                    id: message.id,
+                    authorId: message.authorId,
+                    authorName: appUser.username,
+                    content: message.content,
+                })
+                .from(message)
+                .innerJoin(appUser, eq(appUser.id, message.authorId))
+                .where(eq(message.channelId, channelId))
+                .orderBy(desc(message.createdAt))
+                .limit(limit);
+            return rows.reverse();
+        } catch (error) {
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to get recent messages', { cause: error });
         }
     }
 

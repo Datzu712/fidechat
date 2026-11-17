@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 
 import { UserModule } from '../user/user.module.js';
-import { AICommandService } from './ai-command.service.js';
+import { AIService } from './ai.service.js';
+import { SpeakerSelector } from './speaker-selector.js';
 
 @Module({
     imports: [UserModule],
-    providers: [AICommandService],
-    exports: [AICommandService],
+    providers: [AIService, SpeakerSelector],
+    exports: [AIService, SpeakerSelector],
 })
 export class AIModule {}
