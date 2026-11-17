@@ -78,7 +78,7 @@ export function EmojiPickerButton({
             </Button>
 
             {isOpen && (
-                <div className="absolute bottom-full right-0 mb-2 z-50 shadow-lg rounded-md overflow-hidden border border-zinc-800 emoji-picker-animation">
+                <div className="absolute bottom-full right-0 mb-2 z-50 shadow-lg rounded-md overflow-hidden border border-zinc-800">
                     <Picker
                         data={data}
                         onEmojiSelect={(emoji: { native: string }) => {

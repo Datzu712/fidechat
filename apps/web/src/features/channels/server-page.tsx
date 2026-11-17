@@ -1,5 +1,4 @@
-import '@/features/channels/server-page.css';
-import { Bot, PlusCircle, Lock } from 'lucide-react';
+import { Hash, Lock, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
@@ -7,247 +6,109 @@ import { CreateChannelModal } from '@/features/channels/create-channel-modal';
 import { useGuildChannels } from '@/features/channels/use-channels';
 import { useGuild } from '@/features/guilds/use-guilds';
 import { useCurrentUser } from '@/features/members/use-users';
+import { Button } from '@/shared/ui/button';
 
+/** How many channel shortcuts the welcome view shows. */
+const MAX_SHORTCUTS = 3;
+
+/** A guild with no channel selected: a welcome, or a prompt to create one. */
 export function ServerPage() {
     const navigate = useNavigate();
-    // `:id` is always set on this route.
     const params = useParams() as { id: string };
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const currentUser = useCurrentUser();
-    const currentGuild = useGuild(params.id);
-    const guildChannels = useGuildChannels(params.id);
+    const guild = useGuild(params.id);
+    const channels = useGuildChannels(params.id);
 
-    const isOwner = currentGuild?.ownerId === currentUser?.id;
-
-    if (guildChannels.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center w-full h-full bg-zinc-900">
-                <div className="max-w-md text-center p-8 relative animate-fade-in">
-                    {/* Decoración visual - círculos con gradientes */}
-                    <div className="absolute -top-20 -left-20 w-40 h-40 rounded-full bg-linear-to-br from-primary/30 to-transparent blur-xl"></div>
-                    <div className="absolute -bottom-20 -right-20 w-40 h-40 rounded-full bg-linear-to-br from-primary/20 to-transparent blur-xl"></div>
-
-                    {/* Icono animado */}
-                    <div className="mb-6 flex justify-center">
-                        <div className="h-20 w-20 relative animate-bounce-gentle">
-                            <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping"></div>
-                            {currentGuild?.iconUrl ? (
-                                <div className="w-full h-full p-2 relative">
-                                    <img
-                                        src={currentGuild.iconUrl}
-                                        alt={`${currentGuild.name} Icon`}
-                                        className="absolute inset-0 h-full w-full object-cover rounded-full animate-pulse"
-                                    />
-                                </div>
-                            ) : (
-                                <Bot
-                                    className="text-primary/60 w-full h-full p-2 animate-pulse"
-                                    strokeWidth={1.5}
-                                />
-                            )}
-                            <div className="absolute inset-0 rounded-full border border-primary/20 animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <h1 className="text-2xl font-bold mb-3 text-zinc-100 drop-shadow-md">
-                        No Channels Yet
-                    </h1>
-
-                    <p className="text-zinc-400 mb-6">
-                        {currentGuild?.name
-                            ? `"${currentGuild.name}" doesn't have any channels yet :(`
-                            : "This server doesn't have any channels yet."}
-                    </p>
-
-                    <div className="relative p-4 mb-6 border border-zinc-700/50 rounded-lg bg-zinc-800/30 group hover:bg-zinc-800/50 transition-all duration-300">
-                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-zinc-900 px-2 text-xs font-medium text-primary/70">
-                            TIP
-                        </div>
-                        <p className="text-zinc-500 text-sm italic group-hover:text-zinc-400 transition-colors">
-                            Channels are where you can talk with
-                        </p>
-                        <div className="h-0.5 w-0 bg-linear-to-r from-primary/0 via-primary/30 to-primary/0 group-hover:w-full transition-all duration-700 mt-2 mx-auto"></div>
-                    </div>
-
-                    {isOwner ? (
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="inline-flex items-center px-4 py-2 bg-primary/20 hover:bg-primary/30 transition-colors rounded-md text-primary text-sm border border-primary/30 cursor-pointer"
-                        >
-                            <PlusCircle className="w-4 h-4 mr-2" />
-                            Create a new channel
-                        </button>
-                    ) : (
-                        <div className="inline-flex items-center px-4 py-2 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-md text-zinc-300 text-sm border border-zinc-700 cursor-not-allowed opacity-70">
-                            <Lock className="w-4 h-4 mr-2" />
-                            Only admins can create channels
-                        </div>
-                    )}
-                </div>
-
-                <CreateChannelModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    serverId={params.id}
-                />
-            </div>
-        );
-    }
+    const isOwner = guild?.ownerId === currentUser?.id;
+    const hasChannels = channels.length > 0;
 
     return (
         <div className="message-area flex flex-col h-full flex-1 min-w-0">
             <div className="flex items-center px-4 py-3 border-b border-zinc-700">
-                <h1 className="font-semibold text-white">
-                    {currentGuild?.name || 'Server'}
-                </h1>
-                <div className="ml-4 text-sm text-zinc-400">
-                    {currentGuild?.description ||
-                        `Welcome to ${currentGuild?.name || 'this server'}!`}
-                </div>
+                <h1 className="font-semibold text-white">{guild?.name}</h1>
+                {guild?.description && (
+                    <div className="ml-4 text-sm text-zinc-400 truncate">
+                        {guild.description}
+                    </div>
+                )}
             </div>
 
-            <div className="flex-1 px-4 flex items-center justify-center">
-                <div className="flex flex-col items-center justify-center text-center">
-                    {/* Icono principal con múltiples efectos de animación */}
-                    {/*
-                          - rounded-full: crea un círculo perfecto
-                          - bg-primary/20: color primario con 20% de opacidad
-                          - animate-pulse: efecto de pulsación nativo de Tailwind
-                          - relative: permite posicionar elementos hijos de forma absoluta
-                        */}
-                    {/* Contenedor principal del icono con animaciones */}
-                    <div className="h-20 w-20 rounded-full flex items-center justify-center mb-5 animate-pulse relative">
-                        {/*
-                              Efectos decorativos alrededor del icono
-                              - Múltiples capas para crear profundidad visual
-                            */}
-                        <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping"></div>
-                        <div className="absolute inset-0 rounded-full bg-gradient-radial from-primary/20 to-transparent"></div>
-
-                        {/* Anillo exterior con brillo sutil */}
-                        <div className="absolute inset-[-4px] rounded-full border border-primary/30 animate-pulse"></div>
-
-                        {currentGuild?.iconUrl ? (
-                            /* Contenedor mejorado para iconos personalizados con proporción ajustada */
-                            <div className="relative h-14 w-14 rounded-full overflow-hidden shadow-xl shadow-primary/15 server-icon-container">
-                                {/* Resplandor exterior para enfatizar el icono */}
-                                <div className="absolute -inset-0.5 bg-linear-to-r from-primary/40 via-primary/10 to-primary/40 rounded-full animate-rotate-slow"></div>
-
-                                {/* Fondo con gradiente suave para asegurar buen contraste */}
-                                <div className="absolute inset-0 bg-zinc-900/80"></div>
-
-                                {/* Imagen con efectos visuales mejorados */}
-                                <img
-                                    src={currentGuild.iconUrl}
-                                    alt={`${currentGuild.name} Icon`}
-                                    className="absolute inset-0 h-full w-full object-cover scale-90 hover:scale-100 transition-all duration-500 ease-out rounded-full p-0.5"
-                                    style={{
-                                        filter: 'contrast(1.05) brightness(1.05)',
-                                    }}
-                                />
-                            </div>
+            <div className="flex-1 flex items-center justify-center p-4">
+                <div className="max-w-md text-center">
+                    <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden">
+                        {guild?.iconUrl ? (
+                            <img
+                                src={guild.iconUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                            />
                         ) : (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-primary animate-glow"
-                            >
-                                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-                            </svg>
+                            <Hash className="h-8 w-8 text-zinc-400" />
                         )}
                     </div>
 
-                    {/*
-                          Título con efecto de aparición suave (fade-in)
-                          - animate-fade-in: animación personalizada que cambia la opacidad de 0 a 1
-                        */}
-                    <h3 className="text-xl font-semibold text-zinc-300 mb-2 animate-fade-in">
-                        Welcome to {currentGuild?.name || 'this server'}!
-                    </h3>
+                    <h2 className="text-xl font-semibold text-zinc-100 mb-2">
+                        Welcome to {guild?.name}!
+                    </h2>
 
-                    {/*
-                          Texto descriptivo con efecto de deslizamiento hacia arriba
-                          - animate-slide-up: animación personalizada que combina movimiento y opacidad
-                          - opacity-0: comienza invisible
-                          - animationDelay: retrasa la animación 0.2s para crear efecto escalonado
-                          - animationFillMode: 'forwards': mantiene el estado final de la animación
-                        */}
-                    <p
-                        className="text-zinc-400 max-w-md animate-slide-up opacity-0"
-                        style={{
-                            animationDelay: '0.2s',
-                            animationFillMode: 'forwards',
-                        }}
-                    >
-                        Select a channel from the sidebar to start chatting.
-                    </p>
-
-                    {/*
-                          Contenedor de canales disponibles con efectos interactivos
-                          - hover:shadow-md: añade sombra al pasar el cursor
-                          - hover:shadow-primary/20: la sombra es del color primario con 20% opacidad
-                          - transition-all: suaviza todas las transiciones
-                          - duration-300: transiciones duran 300ms
-                        */}
-                    <div
-                        className="mt-4 text-sm border border-zinc-700 rounded-md px-4 py-2 bg-zinc-800/50 animate-slide-up opacity-0 hover:shadow-md hover:shadow-primary/20 transition-all duration-300"
-                        style={{
-                            animationDelay: '0.4s',
-                            animationFillMode: 'forwards',
-                        }}
-                    >
-                        <p className="text-zinc-300">
-                            Available channels:{' '}
-                            {/* El número de canales con efecto pulsante para llamar la atención */}
-                            <span className="text-primary font-medium animate-pulse">
-                                {guildChannels.length}
-                            </span>
-                        </p>
-                    </div>
-
-                    {/*
-                          Lista de botones de canales con animación retrasada
-                          - gap-2: espacio de 0.5rem entre elementos
-                          - El último retraso (0.6s) para que aparezca al final
-                        */}
-                    <div
-                        className="flex gap-2 mt-6 animate-slide-up opacity-0"
-                        style={{
-                            animationDelay: '0.6s',
-                            animationFillMode: 'forwards',
-                        }}
-                    >
-                        {/* Muestra solo los primeros 3 canales como botones interactivos */}
-                        {guildChannels.slice(0, 3).map((channel) => (
-                            <button
-                                key={channel.id}
-                                className="px-3 py-1 bg-primary/10 rounded-full text-primary text-xs hover:bg-primary/20 transition-colors cursor-pointer"
-                                onClick={() =>
-                                    navigate(
-                                        `/servers/${params.id}/channels/${channel.id}`,
-                                    )
-                                }
-                            >
-                                #{channel.name}
-                            </button>
-                        ))}
-                        {/* Muestra cuántos canales adicionales hay si son más de 3 */}
-                        {guildChannels.length > 3 && (
-                            <div className="px-3 py-1 bg-zinc-800 rounded-full text-zinc-400 text-xs">
-                                +{guildChannels.length - 3} more
+                    {hasChannels ? (
+                        <>
+                            <p className="text-zinc-400 mb-6">
+                                Pick a channel to start chatting.
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {channels
+                                    .slice(0, MAX_SHORTCUTS)
+                                    .map((channel) => (
+                                        <Button
+                                            key={channel.id}
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/servers/${params.id}/channels/${channel.id}`,
+                                                )
+                                            }
+                                        >
+                                            <Hash className="h-4 w-4" />
+                                            {channel.name}
+                                        </Button>
+                                    ))}
+                                {channels.length > MAX_SHORTCUTS && (
+                                    <span className="px-3 py-1 text-sm text-zinc-400">
+                                        +{channels.length - MAX_SHORTCUTS} more
+                                    </span>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-zinc-400 mb-6">
+                                This server has no channels yet. Channels are
+                                where members talk.
+                            </p>
+                            {isOwner ? (
+                                <Button onClick={() => setIsModalOpen(true)}>
+                                    <PlusCircle className="h-4 w-4" />
+                                    Create a channel
+                                </Button>
+                            ) : (
+                                <p className="inline-flex items-center gap-2 text-sm text-zinc-500">
+                                    <Lock className="h-4 w-4" />
+                                    Only the owner can create channels.
+                                </p>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
+
+            <CreateChannelModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                serverId={params.id}
+            />
         </div>
     );
 }
