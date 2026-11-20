@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
@@ -34,6 +32,11 @@
     --color-input: hsl(var(--input));
     --color-ring: hsl(var(--ring));
 
+    /* Discord surfaces, darkest to lightest. */
+    --color-discord-rail: #202225;
+    --color-discord-sidebar: #2f3136;
+    --color-discord-chat: #36393f;
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -64,30 +67,9 @@
 }
 
 @layer base {
+    /* The app only has a dark theme. */
     :root {
-        --background: 0 0% 100%;
-        --foreground: 240 10% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 240 10% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 240 10% 3.9%;
-        --primary: 235 85.6% 64.7%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 240 4.8% 95.9%;
-        --secondary-foreground: 240 5.9% 10%;
-        --muted: 240 4.8% 95.9%;
-        --muted-foreground: 240 3.8% 46.1%;
-        --accent: 240 4.8% 95.9%;
-        --accent-foreground: 240 5.9% 10%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 240 5.9% 90%;
-        --input: 240 5.9% 90%;
-        --ring: 235 85.6% 64.7%;
-        --radius: 0.5rem;
-    }
-
-    .dark {
+        color-scheme: dark;
         --background: 230 11% 19%;
         --foreground: 0 0% 98%;
         --card: 230 11% 19%;
@@ -107,6 +89,7 @@
         --border: 240 3.7% 15.9%;
         --input: 240 3.7% 15.9%;
         --ring: 235 85.6% 64.7%;
+        --radius: 0.5rem;
     }
 }
 
@@ -127,16 +110,4 @@
 .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
-}
-
-.channel-sidebar {
-    background-color: #2f3136;
-}
-
-.server-sidebar {
-    background-color: #202225;
-}
-
-.message-area {
-    background-color: #36393f;
 }

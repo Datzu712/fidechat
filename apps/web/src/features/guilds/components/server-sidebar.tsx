@@ -31,7 +31,7 @@ export function ServerSidebar() {
 
     return (
         <TooltipProvider>
-            <div className="server-sidebar w-[72px] h-full flex flex-col items-center py-3 overflow-y-auto">
+            <div className="bg-discord-rail w-[72px] h-full flex flex-col items-center py-3 overflow-y-auto">
                 <ScrollArea className="w-full">
                     <div className="flex flex-col items-center gap-2 px-3">
                         <Tooltip>

@@ -24,7 +24,7 @@ export function ServerPage() {
     const hasChannels = channels.length > 0;
 
     return (
-        <div className="message-area flex flex-col h-full flex-1 min-w-0">
+        <div className="bg-discord-chat flex flex-col h-full flex-1 min-w-0">
             <div className="flex items-center px-4 py-3 border-b border-zinc-700">
                 <h1 className="font-semibold text-white">{guild?.name}</h1>
                 {guild?.description && (

@@ -54,7 +54,7 @@ export function MessageItem({
                         {author?.username || 'Unknown User'}
                     </span>
                     {author?.isBot && (
-                        <span className="px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded">
+                        <span className="px-1 text-[10px] font-bold bg-primary text-white rounded">
                             BOT
                         </span>
                     )}

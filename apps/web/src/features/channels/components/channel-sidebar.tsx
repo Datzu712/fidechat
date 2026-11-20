@@ -47,7 +47,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     };
 
     return (
-        <div className="channel-sidebar w-60 h-full flex flex-col">
+        <div className="bg-discord-sidebar w-60 h-full flex flex-col">
             <div className="p-3 h-12 flex items-center shadow-xs">
                 <h2 className="font-semibold text-md truncate">
                     {server?.name || 'Server'}

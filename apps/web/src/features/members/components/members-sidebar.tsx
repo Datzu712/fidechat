@@ -119,7 +119,7 @@ function MemberRow({ user, isOwner }: { user: PublicUser; isOwner: boolean }) {
                         {user.username}
                     </span>
                     {!!user.isBot && (
-                        <span className="ml-1 px-1 text-[10px] font-bold bg-[#5865F2] text-white rounded">
+                        <span className="ml-1 px-1 text-[10px] font-bold bg-primary text-white rounded">
                             BOT
                         </span>
                     )}
