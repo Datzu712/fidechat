@@ -80,6 +80,11 @@ The repo uses **oxlint + oxfmt** (ESLint and Prettier were removed; any `eslint-
 
 tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` without `baseUrl`, and `jest.config.ts` anchors them with a `<rootDir>/` prefix. Do not reintroduce `baseUrl`.
 
+### Code style
+
+- A function with more than two parameters whose relation is not obvious at a glance takes one object: `createChannel({ guildId, userId, channel })`, not `createChannel(guildId, userId, dto)`.
+- No `await` inside a condition (`if (!(await ...))`) or an expression (`x && (await ...)`): await into a named const, or extract an assert helper that throws (`await this.assertGuildMember(guildId, userId)`).
+
 ## API architecture (`apps/api`)
 
 **Bootstrap (`src/main.ts`).** The app uses Fastify with a global prefix of `api` and URI versioning, so routes look like `/api/v1/guilds`. Swagger is served at `/api`. `src/instrumentation.ts` loads `dotenv` before anything else.
