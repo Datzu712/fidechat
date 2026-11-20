@@ -1,4 +1,4 @@
-import { IsEnum, IsIn, IsNumber, IsOptional, IsString, Matches, Min } from 'class-validator';
+import { IsEnum, IsIn, IsNumber, IsOptional, IsString, IsUUID, Matches, Min } from 'class-validator';
 
 export enum Environment {
     Development = 'development',
@@ -6,8 +6,18 @@ export enum Environment {
     Test = 'test',
 }
 export class EnvironmentVariables implements IEnvironmentVariables {
-    DEFAULT_GUILD_ID?: string | undefined;
+    // Every user is added to this guild on first login.
+    // Any hex UUID shape, as Postgres accepts (the demo seed uses 4444...).
+    @IsUUID('loose')
+    DEFAULT_GUILD_ID!: string;
+
+    // Only the e2e tests use the admin credentials (to create test users), so the app does not require them.
+    @IsString()
+    @IsOptional()
     KEYCLOAK_ADMIN!: string;
+
+    @IsString()
+    @IsOptional()
     KEYCLOAK_ADMIN_PASSWORD!: string;
 
     // Keycloak

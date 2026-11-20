@@ -9,8 +9,11 @@ import { KeycloakClient } from '@/infrastructure/keycloak/index.js';
 
 import { AppModule } from '../src/modules/app.module.js';
 
-/** Guild-scoped writes: only members post, only authors edit or delete, only owners create channels. */
-describe('Guild-scoped write authorization E2E', () => {
+/**
+ * Guild-scoped writes: only members post, only authors edit or delete, only owners create channels, and
+ * bodies are validated.
+ */
+describe('Guild-scoped writes E2E', () => {
     let app: NestFastifyApplication;
 
     const keycloakClient = new KeycloakClient({
@@ -176,6 +179,50 @@ describe('Guild-scoped write authorization E2E', () => {
         it('refuses a channel addressed through another guild', async () => {
             const res = await postMessage({ as: 'owner', content: 'wrong guild', guild: otherGuildId });
             expect(res.statusCode).toBe(404);
+        });
+    });
+
+    describe('body validation', () => {
+        it('refuses a channel without a name', async () => {
+            const res = await request({
+                as: 'owner',
+                method: 'POST',
+                url: `/guilds/${guildId}/channels`,
+                payload: { position: 1 },
+            });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('refuses a channel whose name is not a string', async () => {
+            const res = await request({
+                as: 'owner',
+                method: 'POST',
+                url: `/guilds/${guildId}/channels`,
+                payload: { name: 42 },
+            });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('refuses an edit whose content is not a string', async () => {
+            const messageId = (await postMessage({ as: 'owner', content: 'to edit' })).json<{ id: string }>().id;
+            const res = await request({
+                as: 'owner',
+                method: 'PATCH',
+                url: `/guilds/${guildId}/channels/${channelId}/messages/${messageId}`,
+                payload: { content: { evil: true } },
+            });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('refuses an edit without content', async () => {
+            const messageId = (await postMessage({ as: 'owner', content: 'to edit' })).json<{ id: string }>().id;
+            const res = await request({
+                as: 'owner',
+                method: 'PATCH',
+                url: `/guilds/${guildId}/channels/${channelId}/messages/${messageId}`,
+                payload: {},
+            });
+            expect(res.statusCode).toBe(400);
         });
     });
 

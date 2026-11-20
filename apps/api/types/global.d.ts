@@ -7,7 +7,7 @@ declare interface IEnvironmentVariables {
     TRUST_PROXY?: string; // Comma-separated proxy IPs/CIDRs trusted for X-Forwarded-For
 
     // fidechat config
-    DEFAULT_GUILD_ID?: string;
+    DEFAULT_GUILD_ID: string; // Guild every user is added to on first login
 
     // Postgres
     DATABASE_URL: string;
@@ -19,8 +19,8 @@ declare interface IEnvironmentVariables {
     KEYCLOAK_CLIENT_ID: string;
     KEYCLOAK_CLIENT_SECRET: string;
     PUBLIC_KEYCLOAK_URL: string; // Public URL for Keycloak
-    KEYCLOAK_ADMIN: string;
-    KEYCLOAK_ADMIN_PASSWORD: string;
+    KEYCLOAK_ADMIN: string; // e2e tests only (they create test users)
+    KEYCLOAK_ADMIN_PASSWORD: string; // e2e tests only
 
     // BFF login
     AUTH_CALLBACK_URL: string; // Public URL of GET /api/v1/auth/callback, registered in the Keycloak client
