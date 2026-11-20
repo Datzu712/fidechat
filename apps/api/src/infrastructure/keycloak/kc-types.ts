@@ -10,19 +10,6 @@ export interface KeycloakTokenResponse {
     scope: string;
 }
 
-export interface KeycloakCreateUserRequest {
-    username: string;
-    email: string;
-    enabled: boolean;
-    firstName?: string;
-    lastName?: string;
-    credentials: Array<{
-        type: string;
-        value: string;
-        temporary: boolean;
-    }>;
-}
-
 export interface KeycloakUser {
     id: string;
     username: string;
@@ -32,12 +19,6 @@ export interface KeycloakUser {
     enabled: boolean;
     emailVerified: boolean;
     createdTimestamp?: number;
-}
-
-export interface KeycloakPasswordReset {
-    type: string;
-    value: string;
-    temporary: boolean;
 }
 
 export interface CreateUserData {

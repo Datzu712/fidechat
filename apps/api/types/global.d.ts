@@ -61,9 +61,6 @@ declare interface IReqUser {
     [key: string]: any;
 }
 
-// just an alias for IReqUser
-declare type KeycloakJwtPayload = IReqUser;
-
 declare namespace NodeJS {
     export interface ProcessEnv extends IEnvironmentVariables {
         TZ?: string;

@@ -11,7 +11,6 @@ export class KeycloakSyncInterceptor implements NestInterceptor {
         const request = context.switchToHttp().getRequest<FastifyRequest>();
         // AuthGuard already rejects protected routes without a user; @Public() routes have none.
         if (request.user) {
-            // azure doesn't send a user profile photo URL bruh
             await this.userService.syncUsersFromKC(request.user);
         }
 

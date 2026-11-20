@@ -8,8 +8,6 @@ import { type Guild, guild, guildUsers } from '@/infrastructure/database/schema/
 
 import { GuildDto } from './dto/guild.dto.js';
 
-export type { Guild };
-
 @Injectable()
 export class GuildRepository {
     private readonly logger = new Logger(GuildRepository.name);
@@ -78,44 +76,6 @@ export class GuildRepository {
             if (error instanceof NotFoundException) throw error;
             this.logger.error(error);
             throw new InternalServerErrorException('Failed to get guild', { cause: error });
-        }
-    }
-
-    async updateGuild(id: string, dto: Partial<GuildDto>, actorId?: string): Promise<{ success: boolean }> {
-        const changes: Partial<typeof guild.$inferInsert> = {};
-        if (dto.name !== undefined) changes.name = dto.name;
-        if (dto.iconUrl !== undefined) changes.iconUrl = dto.iconUrl;
-        if (dto.isPublic !== undefined) changes.isPublic = dto.isPublic;
-
-        if (!Object.keys(changes).length) {
-            return { success: true };
-        }
-
-        try {
-            await this.db.transaction(async (tx) => {
-                const before = (await tx.select().from(guild).where(eq(guild.id, id)).limit(1)).at(0);
-
-                if (!before) {
-                    throw new NotFoundException(`Could not update guild. Guild not found for ID: ${id}`);
-                }
-
-                const [after] = await tx.update(guild).set(changes).where(eq(guild.id, id)).returning();
-
-                await this.audit.record(tx, {
-                    table: 'guild',
-                    operation: 'UPDATE',
-                    recordId: id,
-                    before,
-                    after,
-                    actorId,
-                });
-            });
-
-            return { success: true };
-        } catch (error) {
-            if (error instanceof NotFoundException) throw error;
-            this.logger.error(error);
-            throw new InternalServerErrorException('Failed to update guild', { cause: error });
         }
     }
 

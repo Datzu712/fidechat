@@ -113,13 +113,6 @@ export class UserRepository {
         }
     }
 
-    /**
-     * Todos los usuarios que pertenecen a un guild.
-     *
-     * Reemplaza al procedimiento `sp_get_guild_users`, que devolvia un
-     * SYS_REFCURSOR con las columnas en MAYUSCULAS. Ahora devuelve objetos ya en
-     * camelCase.
-     */
     async isGuildMember(guildId: string, userId: string): Promise<boolean> {
         try {
             const found = await this.db
@@ -134,6 +127,13 @@ export class UserRepository {
         }
     }
 
+    /**
+     * Todos los usuarios que pertenecen a un guild.
+     *
+     * Reemplaza al procedimiento `sp_get_guild_users`, que devolvia un
+     * SYS_REFCURSOR con las columnas en MAYUSCULAS. Ahora devuelve objetos ya en
+     * camelCase.
+     */
     async getGuildUsers(guildId: string): Promise<AppUser[]> {
         try {
             return await this.db

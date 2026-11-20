@@ -53,12 +53,7 @@ export class MessageRepository {
         }
     }
 
-    /**
-     * Reemplaza a `PKG_MESSAGES.GET_MESSAGE`.
-     *
-     * El cursor de Oracle devolvia las claves en MAYUSCULAS (`CHANNEL_ID`);
-     * ahora se devuelve la fila ya en camelCase.
-     */
+    /** Reemplaza a `PKG_MESSAGES.GET_MESSAGE`. */
     async getMessage(id: string): Promise<Message | null> {
         try {
             const found = (await this.db.select().from(message).where(eq(message.id, id)).limit(1)).at(0);

@@ -78,7 +78,7 @@ TypeScript is pinned to **6.x** on purpose: TS 7 ships no JS compiler API, which
 
 ### Lint / format
 
-The repo uses **oxlint + oxfmt** (ESLint and Prettier were removed; any `eslint-disable` comments left in the code are leftovers). The api lints with `--type-aware` (via `oxlint-tsgolint`). Formatting is 4-space indentation and single quotes, with `printWidth` set to **120 in api and 80 in web**.
+The repo uses **oxlint + oxfmt** (ESLint and Prettier were removed; oxlint still honors `eslint-disable` comments). The api lints with `--type-aware` (via `oxlint-tsgolint`). Formatting is 4-space indentation and single quotes, with `printWidth` set to **120 in api and 80 in web**.
 
 tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` without `baseUrl`, and `jest.config.ts` anchors them with a `<rootDir>/` prefix. Do not reintroduce `baseUrl`.
 
@@ -112,7 +112,7 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 - `DatabaseModule` is `@Global`. Inject the client with `@Inject(DRIZZLE) db: DrizzleDB`.
 - The schema lives in `schema/*.ts` and is re-exported from `schema/index.ts`, which is what `drizzle.config.ts` reads. Generated migrations in `drizzle/` are checked in.
 - **The database holds no logic**: no stored procedures, functions or triggers. Anything a trigger used to do is now explicit code inside a transaction. For example, `GuildRepository.createGuild` inserts the owner into `guild_users`.
-- **Auditing is manual.** A write to `app_user`, `guild`, `guild_users`, `channel` or `message` should call `AuditService.record(tx, {...})` inside the same `db.transaction`, so the audit row commits or rolls back together with the change. `recordSafe` is only for writes outside a transaction. Repository helpers accept `DrizzleExecutor` (`DrizzleDB | DrizzleTx`) so they can compose into a caller's transaction.
+- **Auditing is manual.** A write to `app_user`, `guild`, `guild_users`, `channel` or `message` should call `AuditService.record(tx, {...})` inside the same `db.transaction`, so the audit row commits or rolls back together with the change. Repository helpers accept `DrizzleExecutor` (`DrizzleDB | DrizzleTx`) so they can compose into a caller's transaction.
 - `sql/legacy-oracle/` is the old Oracle PL/SQL, kept for reference only. Its README maps each old package or trigger to the TypeScript that replaced it.
 
 **Realtime (`src/modules/gateway/`).**

@@ -73,16 +73,12 @@ export class MessageService {
         }
     }
 
-    async getMessage(id: string) {
-        return this.messageRepository.getMessage(id);
-    }
-
     /**
      * The message the route points to, if the user wrote it. A message outside the route's guild or
      * channel is not found; someone else's is forbidden.
      */
     private async getOwnMessage({ guildId, channelId, messageId, userId }: MessageAction): Promise<Message> {
-        const message = await this.getMessage(messageId);
+        const message = await this.messageRepository.getMessage(messageId);
         if (message?.channelId !== channelId) throw new NotFoundException('Message not found');
 
         const channel = await this.channelRepository.getChannel(channelId);

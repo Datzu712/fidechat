@@ -115,7 +115,7 @@ export class KeycloakClient {
     /**
      * Set password for a user
      */
-    public async setUserPassword(userId: string, password: string): Promise<void> {
+    private async setUserPassword(userId: string, password: string): Promise<void> {
         this.ensureAuthenticated();
 
         const response = await fetch(
@@ -183,45 +183,6 @@ export class KeycloakClient {
     }
 
     /**
-     * Verify user credentials (simulates what happens during federated login)
-     */
-    public async verifyUserCredentials(username: string, password: string): Promise<boolean> {
-        try {
-            await this.getUserToken(username, password);
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
-    /**
-     * Refresh an access token using a refresh token
-     */
-    public async refreshToken(refreshTokenValue: string): Promise<KeycloakTokenResponse> {
-        const params = new URLSearchParams({
-            grant_type: 'refresh_token',
-            client_id: this.config.clientId,
-            client_secret: this.config.clientSecret,
-            refresh_token: refreshTokenValue,
-        });
-
-        const response = await fetch(`${this.config.url}/realms/${this.config.realm}/protocol/openid-connect/token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: params.toString(),
-        });
-
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Failed to refresh token: ${response.statusText} - ${error}`);
-        }
-
-        return (await response.json()) as KeycloakTokenResponse;
-    }
-
-    /**
      * Ensure the client is authenticated before making admin API calls
      */
     private ensureAuthenticated(): void {
@@ -230,99 +191,3 @@ export class KeycloakClient {
         }
     }
 }
-
-// async function main() {
-//     const kcClient = new KeycloakClient({
-//         url: 'http://localhost:8080',
-//         realm: 'fidechat',
-//         clientId: 'fidechat',
-//         clientSecret: 'KxRu3hfJM4f9rDZXFhbOKQq4FenlrdIk',
-//         adminUsername: 'root',
-//         adminPassword: 'root',
-//     });
-
-//     try {
-//         console.log('🔐 Testing Keycloak Client Flow (Federated Login Simulation)...\n');
-
-//         // 1. Connect and authenticate
-//         console.log('1️⃣ Connecting to Keycloak Admin API...');
-//         await kcClient.connect();
-//         console.log('✅ Connected successfully\n');
-
-//         // 2. Create a test user
-//         const testUser: TestUser = {
-//             username: 'test_user_' + Date.now(),
-//             email: 'test@example.com',
-//             firstName: 'Test',
-//             lastName: 'User',
-//             password: 'TestPassword123!',
-//         };
-
-//         console.log('2️⃣ Creating test user:', testUser.username);
-//         const userId = await kcClient.createUser(testUser);
-//         console.log('✅ User created with ID:', userId, '\n');
-
-//         // 3. Find user by username
-//         console.log('3️⃣ Finding user by username...');
-//         const foundUser = await kcClient.findUserByUsername(testUser.username);
-//         console.log('✅ User found:', foundUser?.username, '\n');
-
-//         // 4. Verify user credentials (simulates federated login validation)
-//         console.log('4️⃣ Verifying user can authenticate (federated login simulation)...');
-//         console.log('   ℹ️  Note: In production, NextAuth handles this flow with Keycloak');
-//         const canAuthenticate = await kcClient.verifyUserCredentials(testUser.username, testUser.password);
-//         if (canAuthenticate) {
-//             console.log('✅ User authentication successful - user can login via federated auth\n');
-//         } else {
-//             console.log('❌ User authentication failed\n');
-//             throw new Error('User credentials verification failed');
-//         }
-
-//         // 5. Update user password
-//         console.log('5️⃣ Updating user password...');
-//         await kcClient.setUserPassword(userId, 'NewPassword123!');
-//         console.log('✅ Password updated\n');
-
-//         // 6. Verify new password works
-//         console.log('6️⃣ Verifying new password...');
-//         const canAuthenticateWithNewPassword = await kcClient.verifyUserCredentials(
-//             testUser.username,
-//             'NewPassword123!',
-//         );
-//         if (canAuthenticateWithNewPassword) {
-//             console.log('✅ New password verified - user can login with updated credentials\n');
-//         } else {
-//             throw new Error('New password verification failed');
-//         }
-
-//         // 7. Verify old password no longer works
-//         console.log('7️⃣ Verifying old password is invalidated...');
-//         const canAuthenticateWithOldPassword = await kcClient.verifyUserCredentials(
-//             testUser.username,
-//             testUser.password,
-//         );
-//         if (!canAuthenticateWithOldPassword) {
-//             console.log('✅ Old password correctly invalidated\n');
-//         } else {
-//             throw new Error('Old password still works - this should not happen');
-//         }
-
-//         // 8. Delete user
-//         console.log('8️⃣ Deleting test user...');
-//         await kcClient.deleteUser(userId);
-//         console.log('✅ User deleted\n');
-
-//         // 9. Verify user was deleted
-//         console.log('9️⃣ Verifying user deletion...');
-//         const deletedUser = await kcClient.findUserByUsername(testUser.username);
-//         console.log('✅ User not found:', deletedUser === null, '\n');
-
-//         console.log('🎉 All tests passed successfully!');
-//         console.log('📝 Summary: User lifecycle tested (create, auth, update, delete)');
-//     } catch (error) {
-//         console.error('❌ Test failed:', error);
-//         process.exit(1);
-//     }
-// }
-
-// void main();
