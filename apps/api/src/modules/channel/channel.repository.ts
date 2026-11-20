@@ -47,7 +47,7 @@ export class ChannelRepository {
             });
         } catch (error) {
             this.logger.error(error);
-            throw new InternalServerErrorException('Failed to create channel');
+            throw new InternalServerErrorException('Failed to create channel', { cause: error });
         }
     }
 
@@ -57,7 +57,7 @@ export class ChannelRepository {
             return found ?? null;
         } catch (error) {
             this.logger.error(new Error(`Failed to get channel with id ${id}`, { cause: error }));
-            throw new InternalServerErrorException('Failed to get channel');
+            throw new InternalServerErrorException('Failed to get channel', { cause: error });
         }
     }
 }

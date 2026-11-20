@@ -3,14 +3,14 @@ import { Injectable } from '@nestjs/common';
 
 import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
 
-import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { GuildEmitter } from './guild-emitter.js';
 import { UserRepository } from './user.repository.js';
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly userRepo: UserRepository,
-        private readonly emitter: SocketEmitter,
+        private readonly guildEmitter: GuildEmitter,
     ) {}
 
     /**
@@ -39,8 +39,6 @@ export class UserService {
             avatarUrl: pictureUrl,
         });
 
-        const guildMembers = (await this.userRepo.getGuildUsers(this.userRepo.DEFAULT_GUILD_ID)).map((user) => user.id);
-
         if (result.wasAddedToGuild) {
             // Every guild member receives this, so it must not carry the email.
             const appUser: Omit<AppUser, 'email'> = {
@@ -55,7 +53,7 @@ export class UserService {
                 guildId: this.userRepo.DEFAULT_GUILD_ID,
             };
 
-            this.emitter.emitToUsers(guildMembers, SocketEvents.MEMBER_ADD, {
+            await this.guildEmitter.emitToGuild(this.userRepo.DEFAULT_GUILD_ID, SocketEvents.MEMBER_ADD, {
                 user: appUser,
                 memberMetadata,
             });

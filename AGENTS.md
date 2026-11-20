@@ -119,7 +119,7 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 - `SocketGateway` is the single `@WebSocketGateway` and only handles the socket lifecycle. It shares the HTTP port, with an optional namespace set by `SOCKET_NAMESPACE`.
 - The handshake middleware, installed in `afterInit`, is `HandshakeAuthenticator`: it checks the `Origin` and verifies the token (the session cookie; outside production also `auth.token` or an `access-token` header for Postman), so a refused client gets `connect_error`. The server closes a socket when its token expires and when its session logs out; the client then reconnects if the session is still valid.
-- Each socket joins a room named after its user id (`sub`). Services fan out to users with `SocketEmitter.emitToUser`/`emitToUsers`. For guild-wide events they first look up member ids with `UserRepository.getGuildUsers`; there are no guild or channel rooms.
+- Each socket joins a room named after its user id (`sub`). Services fan out to users with `SocketEmitter.emitToUser`/`emitToUsers`, and to a whole guild with `GuildEmitter.emitToGuild` (user module), which looks up its member ids; there are no guild or channel rooms.
 - Presence is `PresenceService`, an in-memory map that broadcasts its own changes and assumes a single API instance.
 - Inbound events are manual `socket.on` listeners, not `@SubscribeMessage`, because the global guard and interceptor assume HTTP.
 

@@ -1,14 +1,8 @@
-import { type Message as WireMessage, SocketEvents } from '@fidechat/shared';
-import {
-    ForbiddenException,
-    HttpException,
-    Injectable,
-    InternalServerErrorException,
-    NotFoundException,
-} from '@nestjs/common';
+import { SocketEvents } from '@fidechat/shared';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChannelRepository } from '../channel/channel.repository.js';
-import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { GuildEmitter } from '../user/guild-emitter.js';
 import { UserRepository } from '../user/user.repository.js';
 import { BotConversationService } from './bot-conversation/bot-conversation.service.js';
 import { type Message, type MessageCreationAttributes, MessageRepository } from './message.repository.js';
@@ -25,52 +19,37 @@ export interface MessageAction {
 export class MessageService {
     constructor(
         private readonly messageRepository: MessageRepository,
-        private readonly emitter: SocketEmitter,
         private readonly channelRepository: ChannelRepository,
         private readonly userRepository: UserRepository,
+        private readonly guildEmitter: GuildEmitter,
         private readonly conversation: BotConversationService,
     ) {}
-
-    private async notifyMessageCreation(guildId: string, message: WireMessage): Promise<void> {
-        const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
-
-        this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, message);
-    }
 
     /** Members of the guild may post in its channels. */
     async createMessage(guildId: string, data: MessageCreationAttributes) {
         const channel = await this.channelRepository.getChannel(data.channelId);
         // A channel addressed through another guild does not exist there.
-        if (!channel || channel.guildId !== guildId) {
-            throw new NotFoundException('Channel not found');
-        }
+        if (channel?.guildId !== guildId) throw new NotFoundException('Channel not found');
+
         await this.assertGuildMember(guildId, data.authorId);
 
         const author = await this.userRepository.findById(data.authorId);
         if (!author) throw new NotFoundException('User not found');
 
-        try {
-            const createAt = new Date();
-            const createdAtStr = createAt.toISOString();
+        const createdAt = new Date();
+        const { id } = await this.messageRepository.createMessage({ ...data, createdAt });
 
-            const result = await this.messageRepository.createMessage({
-                ...data,
-                createdAt: createAt,
-            });
+        await this.guildEmitter.emitToGuild(guildId, SocketEvents.MESSAGE_CREATE, {
+            id,
+            ...data,
+            createdAt: createdAt.toISOString(),
+        });
 
-            await this.notifyMessageCreation(channel.guildId, { id: result.id, ...data, createdAt: createdAtStr });
-
-            if (!author.isBot) {
-                this.conversation.onHumanMessage(channel, result.id, data.content);
-            }
-
-            return result;
-        } catch (error) {
-            if (!(error instanceof HttpException)) {
-                throw new InternalServerErrorException('Failed to create message', { cause: error });
-            }
-            throw error;
+        if (!author.isBot) {
+            this.conversation.onHumanMessage(channel, id, data.content);
         }
+
+        return { id };
     }
 
     /**
@@ -90,48 +69,30 @@ export class MessageService {
     }
 
     async updateMessage({ content, ...action }: MessageAction & { content: string }) {
-        const { guildId, messageId: id } = action;
-        try {
-            await this.getOwnMessage(action);
+        await this.getOwnMessage(action);
 
-            const result = await this.messageRepository.updateMessage(id, content);
-
-            if (result.success) {
-                const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
-                this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_UPDATE, { id, content });
-            }
-
-            return result;
-        } catch (error) {
-            if (!(error instanceof HttpException)) {
-                throw new InternalServerErrorException('Failed to update message', { cause: error });
-            }
-            throw error;
+        const { messageId: id, guildId } = action;
+        const result = await this.messageRepository.updateMessage(id, content);
+        if (result.success) {
+            await this.guildEmitter.emitToGuild(guildId, SocketEvents.MESSAGE_UPDATE, { id, content });
         }
+
+        return result;
     }
 
     async deleteMessage(action: MessageAction) {
-        const { guildId, messageId: id } = action;
-        try {
-            const message = await this.getOwnMessage(action);
+        const message = await this.getOwnMessage(action);
 
-            const result = await this.messageRepository.deleteMessage(id);
-
-            if (result.success) {
-                const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
-                this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_DELETE, {
-                    id,
-                    channelId: message.channelId,
-                });
-            }
-
-            return result;
-        } catch (error) {
-            if (!(error instanceof HttpException)) {
-                throw new InternalServerErrorException('Failed to delete message', { cause: error });
-            }
-            throw error;
+        const { messageId: id, guildId } = action;
+        const result = await this.messageRepository.deleteMessage(id);
+        if (result.success) {
+            await this.guildEmitter.emitToGuild(guildId, SocketEvents.MESSAGE_DELETE, {
+                id,
+                channelId: message.channelId,
+            });
         }
+
+        return result;
     }
 
     private async assertGuildMember(guildId: string, userId: string): Promise<void> {

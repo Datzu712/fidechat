@@ -8,8 +8,7 @@ import { ROUTER_HISTORY_LIMIT } from '../../ai/router.js';
 import { type SpeakerPlan, SpeakerSelector } from '../../ai/speaker-selector.js';
 import type { Channel } from '../../channel/channel.repository.js';
 import { PresenceService } from '../../gateway/presence.service.js';
-import { SocketEmitter } from '../../gateway/socket-emitter.js';
-import { UserRepository } from '../../user/user.repository.js';
+import { GuildEmitter } from '../../user/guild-emitter.js';
 import { MessageRepository } from '../message.repository.js';
 import {
     AI_HISTORY_LIMIT,
@@ -37,8 +36,7 @@ export class BotConversationService implements OnModuleDestroy {
         private readonly ai: AIService,
         private readonly selector: SpeakerSelector,
         private readonly presence: PresenceService,
-        private readonly userRepository: UserRepository,
-        private readonly emitter: SocketEmitter,
+        private readonly guildEmitter: GuildEmitter,
     ) {}
 
     onModuleDestroy(): void {
@@ -190,8 +188,7 @@ export class BotConversationService implements OnModuleDestroy {
             const reply = { content, channelId: channel.id, authorId: bot.user.id };
             const { id } = await this.messageRepository.createMessage({ ...reply, createdAt });
 
-            const guildMembers = (await this.userRepository.getGuildUsers(channel.guildId)).map((user) => user.id);
-            this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, {
+            await this.guildEmitter.emitToGuild(channel.guildId, SocketEvents.MESSAGE_CREATE, {
                 id,
                 ...reply,
                 createdAt: createdAt.toISOString(),
