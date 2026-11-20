@@ -1,6 +1,6 @@
 import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
 import { DRIZZLE, type DrizzleDB } from '@/infrastructure/database/drizzle.provider.js';
@@ -120,6 +120,20 @@ export class UserRepository {
      * SYS_REFCURSOR con las columnas en MAYUSCULAS. Ahora devuelve objetos ya en
      * camelCase.
      */
+    async isGuildMember(guildId: string, userId: string): Promise<boolean> {
+        try {
+            const found = await this.db
+                .select({ userId: guildUsers.userId })
+                .from(guildUsers)
+                .where(and(eq(guildUsers.guildId, guildId), eq(guildUsers.userId, userId)))
+                .limit(1);
+            return found.length > 0;
+        } catch (error) {
+            this.logger.error(error);
+            throw new InternalServerErrorException('Failed to check guild membership', { cause: error });
+        }
+    }
+
     async getGuildUsers(guildId: string): Promise<AppUser[]> {
         try {
             return await this.db

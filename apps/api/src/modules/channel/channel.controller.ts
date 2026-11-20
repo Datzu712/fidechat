@@ -26,6 +26,6 @@ export class ChannelController {
         )
         body: Omit<ChannelDto, 'guildId'>,
     ) {
-        return this.channelService.createChannel(guildId, body);
+        return this.channelService.createChannel({ guildId, userId: user.sub, channel: body });
     }
 }
