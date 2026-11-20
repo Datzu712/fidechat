@@ -59,7 +59,7 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 ### Tests
 
-The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env`. The AI keys are optional: without them the bots stay off. `tests/ai-bots.spec.ts` is a plain unit test that needs no infrastructure.
+The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`): its `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env`. The AI keys are optional: without them the bots stay off. `tests/ai-bots.spec.ts` is a plain unit test that needs no infrastructure.
 
 The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js` extension. The tests, however, are compiled to CommonJS by ts-jest (Jest's ESM loader trips on a `require(esm)` cycle inside the Nest packages), and the scripts run Jest as `node --experimental-vm-modules .../jest.js` so it can `require()` the ESM-only Nest 12, uuid and jwks-rsa (jose). Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
 
@@ -67,6 +67,8 @@ The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js
 pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
 pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"   # single test by name
 ```
+
+The web app only unit-tests pure logic with Vitest (`*.test.ts` next to the code, e.g. `features/sync/lib/sync-updaters.test.ts`); it needs no infrastructure: `pnpm --filter @fidechat/web test`.
 
 ### Type checking
 
@@ -122,29 +124,26 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 **One origin.** The browser must see the web app and the API on the same origin, because auth is the API's HttpOnly session cookie: in dev Vite proxies `/api` and `/socket.io` to the API (`vite.config.ts`), and in the production image the API serves the built SPA. The web app has no env vars and never handles tokens.
 
-**Routes and providers.** `src/main.tsx` defines the React Router routes (pages in `src/pages/`). The root route (`src/root-layout.tsx`) wraps everything in `src/providers.tsx`: `QueryProvider` → `AuthProvider` → `SocketProvider` → `AppProvider`.
+**Layout: by feature.** `src/` reads as the product. `app/` holds the router (`app/router.tsx`), providers and layouts; `features/<name>/` (`auth`, `sync`, `guilds`, `channels`, `messages`, `members`, `presence`) holds each feature, split by role into only the subfolders it needs: `pages/` (route entrypoints, the only feature files `app/router.tsx` imports; a feature with a single page keeps it at its root as `<name>-page.tsx`), `components/`, `hooks/`, `providers/` (contexts and their providers) and `lib/` (pure functions); `shared/` holds what two or more features use (`ui/` shadcn components, `api/`, `socket/`, `components/`, `lib/`). A file lives in the feature that owns it and moves to `shared/` only once a second feature needs it. Files are kebab-case with named exports, and there are no barrel files.
 
-- `AuthProvider` asks `GET /api/v1/auth/me` once and exposes `status` through `useAuth`. Logging in is a navigation to `/api/v1/auth/login` (`src/pages/login.tsx`); `src/lib/logout.ts` posts `/api/v1/auth/logout` and follows the Keycloak end-session URL.
+**Providers.** The root route (`app/layouts/root-layout.tsx`) wraps everything in `app/providers.tsx`: `QueryProvider` → `AuthProvider` → `SocketProvider`, plus `useRealtimeSync`.
+
+- `AuthProvider` asks `GET /api/v1/auth/me` once and exposes `status` through `useAuth`. Logging in is a navigation to `/api/v1/auth/login` (`features/auth/pages/login-page.tsx`); `features/auth/lib/logout.ts` posts `/api/v1/auth/logout` and follows the Keycloak end-session URL.
 - `SocketProvider` opens the same-origin Socket.IO connection once the session is authenticated; the cookie authenticates the handshake.
+- `app/layouts/servers-layout.tsx` is the only auth and loading gate: below it the synced state is loaded. Unknown guild or channel URLs redirect to `/servers`.
 
-**State model (`src/contexts/providers/AppProvider.tsx`).**
+**State model (`features/sync/`).** The server state is one TanStack Query, `['sync']`, filled by `GET /users/@me/sync` (guilds with members, channels with messages, users, presence) once the socket connects, and refetched on reconnect and on `forceSync`. `useRealtimeSync` patches it with `setQueryData` on each socket event, through the pure updaters in `lib/sync-updaters.ts`. Components never read the payload directly: each feature exposes hooks built on `useSyncQuery(select)` (`useGuild`, `useGuildChannels`, `useChannelMessages`, `useCurrentUser`, `useUserStatus`, ...), so a component re-renders only when its slice changes. Writes are mutations; the socket echo updates the cache.
 
-1. When the socket connects, `AppProvider` calls `GET /users/@me/sync` and loads the whole client state into React context: guilds with members, channels with messages, users and presence.
-2. Socket events are then applied as incremental updates to that state.
-3. A `forceSync` event triggers a full re-sync.
+**HTTP.** Requests go through the axios client (`shared/api/client.ts`, base URL `/api/v1`; a 401 sends the user to `/login`), inside a TanStack `useQuery` / `useMutation` (writes toast their errors; the socket echo updates the cache).
 
-Components read this state through `useAppContext`. `MockDataProvider` is a leftover from the prototype that some layouts still use, and real data comes from `AppProvider`.
-
-**HTTP.** Requests go through `useApi` / `useApiData` / `useApiMutation` (`src/lib/hooks/`), built on an axios client (`src/lib/api/client.ts`) with base URL `/api/v1`; a 401 sends the user to `/login`.
-
-**UI.** `src/components/ui/` contains generated shadcn components (see `components.json`).
+**UI.** `shared/ui/` contains generated shadcn components (see `components.json`); only the ones in use are kept. The app is dark only; the Discord surfaces are the `discord-rail` / `discord-sidebar` / `discord-chat` color tokens in `app/globals.css`.
 
 ## Cross-app contracts (`packages/shared`)
 
 Anything both apps need lives in `@fidechat/shared`, never as a copy in either app. Its `src/` is grouped by kind, one declaration per file, with the kind as the suffix: `enums/*.enum.ts`, `constants/*.constant.ts` (runtime values, e.g. for validation), `types/*.type.ts` (aliases and unions) and `interfaces/{entities,socket,responses,payloads}/*.interface.ts`. Apps import only from the package root (`@fidechat/shared`). It holds no runtime dependencies: Drizzle rows, DTO classes and validation stay in the api.
 
 - **It is compiled.** `tsc` emits ESM to `dist/`, which is what both apps load, so `dev`, `lint` and `typecheck` depend on `^build`. `pnpm dev` runs `turbo watch dev`: an edit in `shared` rebuilds it, restarts the api (`@fidechat/api#dev` is `interruptible`) and Vite hot-reloads the web. With `futureFlags.watchUsingTaskInputs`, that task's `inputs` are only `package.json`, so turbo restarts it for dependency changes and leaves api source edits to `nest --watch` (an empty `inputs` list means "default" and would restart it on every edit).
-- **Socket events.** `SocketEvents` plus the `ServerToClientEvents` / `ClientToServerEvents` maps. Adding an event means touching the enum, the map and the handler in `AppProvider`.
+- **Socket events.** `SocketEvents` plus the `ServerToClientEvents` / `ClientToServerEvents` maps. Adding an event means touching the enum, the map and the web handler in `features/sync/hooks/use-realtime-sync.ts`.
 - **Wire shapes.** Entities are the JSON the api sends: `T | null` for nullable columns and `createdAt` as an ISO string, not the Drizzle `Date`. Payload interfaces are implemented by the api DTOs (`class GuildDto implements GuildPayload`).
 
 <!-- BEGIN:turborepo-agent-rules -->
