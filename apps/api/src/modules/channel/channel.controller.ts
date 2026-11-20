@@ -19,12 +19,11 @@ export class ChannelController {
         @Body(
             new ValidationPipe({
                 transform: true,
-                transformOptions: { enableImplicitConversion: true },
                 whitelist: true,
                 groups: ['create'],
             }),
         )
-        body: Omit<ChannelDto, 'guildId'>,
+        body: ChannelDto,
     ) {
         return this.channelService.createChannel({ guildId, userId: user.sub, channel: body });
     }

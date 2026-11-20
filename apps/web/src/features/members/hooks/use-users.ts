@@ -1,23 +1,12 @@
-import type { AppUser, SyncPayload } from '@fidechat/shared';
-import { useCallback, useMemo } from 'react';
+import type { AppUser, PublicUser, SyncPayload } from '@fidechat/shared';
+import { useMemo } from 'react';
 
 import { useSyncQuery } from '@/features/sync/hooks/sync-query';
-
-/** Other users never carry their email. */
-export type PublicUser = Omit<AppUser, 'email'>;
 
 const selectCurrentUser = (data: SyncPayload) => data.currentUser;
 
 export function useCurrentUser(): AppUser | undefined {
     return useSyncQuery(selectCurrentUser).data;
-}
-
-export function useUser(userId: string): PublicUser | undefined {
-    const select = useCallback(
-        (data: SyncPayload) => data.users.find((u) => u.id === userId),
-        [userId],
-    );
-    return useSyncQuery(select).data;
 }
 
 const selectUsers = (data: SyncPayload) => data.users;

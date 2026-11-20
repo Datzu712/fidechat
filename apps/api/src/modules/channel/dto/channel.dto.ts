@@ -1,16 +1,17 @@
 import type { ChannelPayload } from '@fidechat/shared';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-/** Contrato HTTP para crear un canal. `guildId` viaja en la URL. */
+/** HTTP body to create a channel; `guildId` comes from the URL. */
 export class ChannelDto implements ChannelPayload {
-    @IsString()
+    @IsString({ groups: ['create'] })
+    @IsNotEmpty({ groups: ['create'] })
     name!: string;
 
-    @IsString()
-    @IsOptional()
+    @IsString({ groups: ['create'] })
+    @IsOptional({ groups: ['create'] })
     description?: string;
 
-    @IsNumber()
-    @IsOptional()
+    @IsNumber({}, { groups: ['create'] })
+    @IsOptional({ groups: ['create'] })
     position?: number;
 }

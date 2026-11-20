@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { apiClient } from '@/shared/api/client';
-import { parseAxiosError } from '@/shared/api/parse-axios-error';
+import { useErrorToast } from '@/shared/api/use-error-toast';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -49,6 +49,7 @@ export function CreateChannelModal({
     serverId,
 }: CreateChannelModalProps) {
     const { toast } = useToast();
+    const onError = useErrorToast('Failed to create channel');
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -74,13 +75,7 @@ export function CreateChannelModal({
             form.reset();
             onClose();
         },
-        onError: (error) => {
-            toast({
-                variant: 'destructive',
-                title: 'Failed to create channel',
-                description: parseAxiosError(error),
-            });
-        },
+        onError,
     });
 
     const onSubmit = (values: FormValues) => {

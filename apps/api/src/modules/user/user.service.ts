@@ -1,26 +1,25 @@
-import { SocketEvents } from '@fidechat/shared';
+import { type PublicUser, SocketEvents } from '@fidechat/shared';
 import { Injectable } from '@nestjs/common';
 
-import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
+import type { GuildUser } from '@/infrastructure/database/schema/index.js';
 
-import { SocketEmitter } from '../gateway/socket-emitter.js';
+import { GuildEmitter } from './guild-emitter.js';
 import { UserRepository } from './user.repository.js';
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly userRepo: UserRepository,
-        private readonly emitter: SocketEmitter,
+        private readonly guildEmitter: GuildEmitter,
     ) {}
 
     /**
      * Synchronizes a user from Keycloak (KC) with the local Postgres database.
      *
-     * If the user already exists in the `APP_USER` table (matched by `kcUser.id`), updates their `username` and `email`.
+     * If the user already exists in the `app_user` table (matched by `kcUser.id`), updates their `username` and `email`.
      * Otherwise, inserts a new user record with the provided `id`, `username`, and `email`.
      *
      * @param kcUser - The user object received from Keycloak, containing user identification and profile information.
-     * @todo Validate the `kcUser` object to ensure it contains the necessary fields before proceeding with the database operations.
      */
     async syncUsersFromKC(kcUser: IReqUser) {
         let username = kcUser.email;
@@ -40,11 +39,9 @@ export class UserService {
             avatarUrl: pictureUrl,
         });
 
-        const guildMembers = (await this.userRepo.getGuildUsers(this.userRepo.DEFAULT_GUILD_ID)).map((user) => user.id);
-
         if (result.wasAddedToGuild) {
             // Every guild member receives this, so it must not carry the email.
-            const appUser: Omit<AppUser, 'email'> = {
+            const appUser: PublicUser = {
                 id: kcUser.sub,
                 username,
                 avatarUrl: pictureUrl,
@@ -56,7 +53,7 @@ export class UserService {
                 guildId: this.userRepo.DEFAULT_GUILD_ID,
             };
 
-            this.emitter.emitToUsers(guildMembers, SocketEvents.MEMBER_ADD, {
+            await this.guildEmitter.emitToGuild(this.userRepo.DEFAULT_GUILD_ID, SocketEvents.MEMBER_ADD, {
                 user: appUser,
                 memberMetadata,
             });

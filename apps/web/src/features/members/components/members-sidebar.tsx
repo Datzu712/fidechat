@@ -1,14 +1,11 @@
+import type { PublicUser } from '@fidechat/shared';
 import { Crown } from 'lucide-react';
 
 import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useGuildMembers } from '@/features/members/hooks/use-guild-members';
-import type { PublicUser } from '@/features/members/hooks/use-users';
 import { useUserStatus } from '@/features/presence/hooks/use-presence';
-import {
-    getStatusColor,
-    getStatusText,
-} from '@/features/presence/lib/user-status';
-import { UserAvatar } from '@/shared/components/user-avatar';
+import { getStatusDisplay } from '@/features/presence/lib/user-status';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { cn } from '@/shared/lib/utils';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 
@@ -96,20 +93,20 @@ function MemberGroup({
 }
 
 function MemberRow({ user, isOwner }: { user: PublicUser; isOwner: boolean }) {
-    const status = useUserStatus(user.id);
+    const status = getStatusDisplay(useUserStatus(user.id));
 
     return (
         <div className="flex items-center gap-3 px-2 py-1 rounded hover:bg-zinc-800/50 cursor-pointer group">
             <div className="relative">
-                <UserAvatar
-                    username={user.username}
-                    avatarUrl={user.avatarUrl}
+                <NameAvatar
+                    name={user.username}
+                    imageUrl={user.avatarUrl}
                     className="h-8 w-8"
                 />
                 <div
                     className={cn(
                         'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-800',
-                        getStatusColor(status),
+                        status.dotClass,
                     )}
                 />
             </div>
@@ -128,7 +125,7 @@ function MemberRow({ user, isOwner }: { user: PublicUser; isOwner: boolean }) {
                     )}
                 </div>
                 <div className="text-xs text-zinc-500 truncate">
-                    {getStatusText(status)}
+                    {status.label}
                 </div>
             </div>
         </div>

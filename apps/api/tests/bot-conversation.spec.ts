@@ -7,11 +7,10 @@ import type { PlannedSpeaker } from '@/modules/ai/router.js';
 import { SpeakerSelector } from '@/modules/ai/speaker-selector.js';
 import type { Channel } from '@/modules/channel/channel.repository.js';
 import type { PresenceService } from '@/modules/gateway/presence.service.js';
-import type { SocketEmitter } from '@/modules/gateway/socket-emitter.js';
 import { BotConversationService } from '@/modules/message/bot-conversation/bot-conversation.service.js';
 import { typingDelayMs } from '@/modules/message/bot-conversation/bot-conversation.util.js';
 import type { MessageCreationAttributes, MessageRepository } from '@/modules/message/message.repository.js';
-import type { UserRepository } from '@/modules/user/user.repository.js';
+import type { GuildEmitter } from '@/modules/user/guild-emitter.js';
 
 const [, chayanne, pedro] = BOTS;
 const DEBOUNCE = 600;
@@ -53,16 +52,14 @@ function setup() {
     );
     const ai = { enabled: true, routerEnabled: true, route, reply };
     const presence = { startBotTyping: jest.fn(), stopBotTyping: jest.fn() };
-    const userRepository = { getGuildUsers: jest.fn(async () => [{ id: 'u1' }]) };
-    const emitter = { emitToUsers: jest.fn() };
+    const guildEmitter = { emitToGuild: jest.fn().mockResolvedValue(undefined) };
 
     const service = new BotConversationService(
         messageRepository as unknown as MessageRepository,
         ai as unknown as AIService,
         new SpeakerSelector(ai as unknown as AIService),
         presence as unknown as PresenceService,
-        userRepository as unknown as UserRepository,
-        emitter as unknown as SocketEmitter,
+        guildEmitter as unknown as GuildEmitter,
     );
 
     const say = (content: string) => {

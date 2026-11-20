@@ -1,7 +1,6 @@
-import type { SyncPayload, UserStatus } from '@fidechat/shared';
+import type { PublicUser, SyncPayload, UserStatus } from '@fidechat/shared';
 import { useCallback } from 'react';
 
-import type { PublicUser } from '@/features/members/hooks/use-users';
 import { useSyncQuery } from '@/features/sync/hooks/sync-query';
 
 export function useUserStatus(userId: string): UserStatus | undefined {

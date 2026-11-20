@@ -18,7 +18,6 @@ export class GuildController {
         @Body(
             new ValidationPipe({
                 transform: true,
-                transformOptions: { enableImplicitConversion: true },
                 whitelist: true,
                 groups: ['create'],
             }),

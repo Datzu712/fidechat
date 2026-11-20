@@ -9,5 +9,6 @@ export function ChannelPage() {
 
     if (!channel) return <Navigate to="/servers" replace />;
 
-    return <ChannelChat channel={channel} />;
+    // Keyed by channel: switching channels starts a fresh chat (scroll, editor and draft).
+    return <ChannelChat key={channel.id} channel={channel} />;
 }

@@ -19,7 +19,6 @@ export class MessageController {
         @Body(
             new ValidationPipe({
                 transform: true,
-                transformOptions: { enableImplicitConversion: true },
                 whitelist: true,
                 groups: ['create'],
             }),
@@ -42,7 +41,6 @@ export class MessageController {
         @Body(
             new ValidationPipe({
                 transform: true,
-                transformOptions: { enableImplicitConversion: true },
                 whitelist: true,
                 groups: ['update'],
             }),

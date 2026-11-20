@@ -1,24 +1,12 @@
-import type { Message } from '@fidechat/shared';
+import type { Message, PublicUser } from '@fidechat/shared';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
-import type { PublicUser } from '@/features/members/hooks/use-users';
 import { EmojiPickerButton } from '@/features/messages/components/emoji-picker-button';
-import { UserAvatar } from '@/shared/components/user-avatar';
+import { formatMessageTime } from '@/features/messages/lib/format-message-time';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-
-/** Time for today's messages, short date for older ones. */
-function formatMessageTime(timestamp: string) {
-    const date = new Date(timestamp);
-    if (date.toDateString() === new Date().toDateString()) {
-        return date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-}
 
 interface MessageItemProps {
     message: Message;
@@ -43,9 +31,9 @@ export function MessageItem({
 }: MessageItemProps) {
     return (
         <div className="flex items-start gap-3 hover:bg-zinc-800/50 px-2 py-1 rounded group">
-            <UserAvatar
-                username={author?.username || 'Unknown'}
-                avatarUrl={author?.avatarUrl}
+            <NameAvatar
+                name={author?.username || 'Unknown'}
+                imageUrl={author?.avatarUrl}
                 className="h-10 w-10 mt-1"
             />
             <div className="flex-1 min-w-0">

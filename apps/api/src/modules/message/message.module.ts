@@ -13,6 +13,5 @@ import { MessageService } from './message.service.js';
     controllers: [MessageController],
     providers: [MessageService, MessageRepository, BotConversationService],
     imports: [GatewayModule, ChannelModule, UserModule, AIModule],
-    exports: [MessageService],
 })
 export class MessageModule {}

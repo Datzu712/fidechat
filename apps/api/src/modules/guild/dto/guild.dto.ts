@@ -2,24 +2,21 @@ import type { GuildPayload } from '@fidechat/shared';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 /**
- * Contrato HTTP para crear/actualizar un guild.
- *
- * No se deriva de la fila de la base de datos a proposito: el schema de Drizzle
- * usa `null` para las columnas opcionales, mientras que el payload usa campos
- * ausentes.
+ * HTTP body to create a guild. Not derived from the database row on purpose:
+ * the Drizzle schema uses `null` for optional columns, the payload absent fields.
  */
 export class GuildDto implements GuildPayload {
-    @IsString({ groups: ['create', 'update'] })
+    @IsString({ groups: ['create'] })
     @IsNotEmpty({ groups: ['create'] })
     name!: string;
 
-    @IsOptional({ groups: ['create', 'update'] })
-    @IsString({ groups: ['create', 'update'] })
-    @IsUrl({}, { groups: ['create', 'update'] })
+    @IsOptional({ groups: ['create'] })
+    @IsString({ groups: ['create'] })
+    @IsUrl({}, { groups: ['create'] })
     iconUrl?: string;
 
-    @IsBoolean({ groups: ['create', 'update'] })
-    @IsOptional({ groups: ['create', 'update'] })
+    @IsBoolean({ groups: ['create'] })
+    @IsOptional({ groups: ['create'] })
     isPublic?: boolean;
 
     // ownerId se toma del usuario autenticado, no del body.

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { DB_USER, type DrizzleExecutor } from '../drizzle.provider.js';
 import { auditLog } from '../schema/index.js';
@@ -28,8 +28,6 @@ export interface AuditEntry {
  */
 @Injectable()
 export class AuditService {
-    private readonly logger = new Logger(AuditService.name);
-
     constructor(@Inject(DB_USER) private readonly dbUser: string) {}
 
     async record(executor: DrizzleExecutor, entry: AuditEntry): Promise<void> {
@@ -42,20 +40,5 @@ export class AuditService {
             oldValue: entry.before ?? null,
             newValue: entry.after ?? null,
         });
-    }
-
-    /**
-     * Variante que no propaga el fallo. Solo para escrituras de auditoria fuera
-     * de una transaccion, donde perder el registro es preferible a tumbar la
-     * peticion que ya se completo.
-     */
-    async recordSafe(executor: DrizzleExecutor, entry: AuditEntry): Promise<void> {
-        try {
-            await this.record(executor, entry);
-        } catch (error) {
-            this.logger.error(
-                new Error(`Failed to write audit entry for ${entry.table}#${entry.recordId}`, { cause: error }),
-            );
-        }
     }
 }

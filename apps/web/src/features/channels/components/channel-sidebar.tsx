@@ -1,5 +1,5 @@
 import { SocketEvents, type UserStatus } from '@fidechat/shared';
-import { Hash, LogOut, Plus, Settings } from 'lucide-react';
+import { Hash, LogOut, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
@@ -10,7 +10,7 @@ import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useCurrentUser } from '@/features/members/hooks/use-users';
 import { UserStatusMenu } from '@/features/presence/components/user-status-menu';
 import { useUserStatus } from '@/features/presence/hooks/use-presence';
-import { UserAvatar } from '@/shared/components/user-avatar';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { cn } from '@/shared/lib/utils';
 import { useSocket } from '@/shared/socket/use-socket';
 import { Button } from '@/shared/ui/button';
@@ -42,7 +42,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     };
 
     return (
-        <div className="bg-discord-sidebar w-60 h-full flex flex-col">
+        <div className="bg-discord-sidebar w-60 shrink-0 h-full flex flex-col">
             <div className="p-3 h-12 flex items-center shadow-xs">
                 <h2 className="font-semibold text-md truncate">
                     {server?.name || 'Server'}
@@ -88,9 +88,9 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
 
             <div className="p-3 mt-auto bg-zinc-800">
                 <div className="flex items-center gap-2">
-                    <UserAvatar
-                        username={currentUser.username}
-                        avatarUrl={currentUser.avatarUrl}
+                    <NameAvatar
+                        name={currentUser.username}
+                        imageUrl={currentUser.avatarUrl}
                     />
                     <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium truncate">
@@ -106,13 +106,6 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                         </div>
                     </div>
                     <div className="ml-auto flex gap-1">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-                        >
-                            <Settings className="h-4 w-4" />
-                        </Button>
                         <Button
                             variant="ghost"
                             size="icon"

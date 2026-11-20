@@ -1,5 +1,5 @@
 import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { v4 } from 'uuid';
 
 import { AuditService } from '@/infrastructure/database/audit/audit.service.js';
@@ -47,7 +47,7 @@ export class ChannelRepository {
             });
         } catch (error) {
             this.logger.error(error);
-            throw new InternalServerErrorException('Failed to create channel');
+            throw new InternalServerErrorException('Failed to create channel', { cause: error });
         }
     }
 
@@ -57,20 +57,7 @@ export class ChannelRepository {
             return found ?? null;
         } catch (error) {
             this.logger.error(new Error(`Failed to get channel with id ${id}`, { cause: error }));
-            throw new InternalServerErrorException('Failed to get channel');
-        }
-    }
-
-    async getGuildChannels(guildId: string): Promise<Channel[]> {
-        try {
-            return await this.db
-                .select()
-                .from(channel)
-                .where(eq(channel.guildId, guildId))
-                .orderBy(asc(channel.position));
-        } catch (error) {
-            this.logger.error(error);
-            throw new InternalServerErrorException('Failed to get guild channels');
+            throw new InternalServerErrorException('Failed to get channel', { cause: error });
         }
     }
 }
