@@ -59,7 +59,7 @@ Default local ports: API and Socket.IO on 8080 (`API_PORT`), Keycloak on 8081, w
 
 ### Tests
 
-The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`), and the web app has none. `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env`. The AI keys are optional: without them the bots stay off. `tests/ai-bots.spec.ts` is a plain unit test that needs no infrastructure.
+The api only has **e2e tests** (`apps/api/tests/*.e2e-spec.ts`): its `test` and `test:e2e` both run the same Jest suite. The tests boot the full `AppModule` and create and delete real users through the Keycloak admin API, so they need Postgres, Keycloak and a complete `.env`. The AI keys are optional: without them the bots stay off. `tests/ai-bots.spec.ts` is a plain unit test that needs no infrastructure.
 
 The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js` extension. The tests, however, are compiled to CommonJS by ts-jest (Jest's ESM loader trips on a `require(esm)` cycle inside the Nest packages), and the scripts run Jest as `node --experimental-vm-modules .../jest.js` so it can `require()` the ESM-only Nest 12, uuid and jwks-rsa (jose). Use the `test` script rather than a bare `jest`. Node >= 26.13 (current LTS) is required.
 
@@ -67,6 +67,8 @@ The api is ESM (`"type": "module"`), so relative and `@/` imports carry the `.js
 pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
 pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"   # single test by name
 ```
+
+The web app only unit-tests pure logic with Vitest (`*.test.ts` next to the code, e.g. `features/sync/lib/sync-updaters.test.ts`); it needs no infrastructure: `pnpm --filter @fidechat/web test`.
 
 ### Type checking
 
@@ -132,9 +134,9 @@ tsgolint does not support `baseUrl`, so the api `tsconfig.json` has `paths` with
 
 **State model (`features/sync/`).** The server state is one TanStack Query, `['sync']`, filled by `GET /users/@me/sync` (guilds with members, channels with messages, users, presence) once the socket connects, and refetched on reconnect and on `forceSync`. `useRealtimeSync` patches it with `setQueryData` on each socket event, through the pure updaters in `lib/sync-updaters.ts`. Components never read the payload directly: each feature exposes hooks built on `useSyncQuery(select)` (`useGuild`, `useGuildChannels`, `useChannelMessages`, `useCurrentUser`, `useUserStatus`, ...), so a component re-renders only when its slice changes. Writes are mutations; the socket echo updates the cache.
 
-**HTTP.** Requests go through the axios client (`shared/api/client.ts`, base URL `/api/v1`; a 401 sends the user to `/login`), directly or through `useApiData` / `useApiMutation` (`shared/api/`).
+**HTTP.** Requests go through the axios client (`shared/api/client.ts`, base URL `/api/v1`; a 401 sends the user to `/login`), inside a TanStack `useQuery` / `useMutation` (writes toast their errors; the socket echo updates the cache).
 
-**UI.** `shared/ui/` contains generated shadcn components (see `components.json`); only the ones in use are kept.
+**UI.** `shared/ui/` contains generated shadcn components (see `components.json`); only the ones in use are kept. The app is dark only; the Discord surfaces are the `discord-rail` / `discord-sidebar` / `discord-chat` color tokens in `app/globals.css`.
 
 ## Cross-app contracts (`packages/shared`)
 
