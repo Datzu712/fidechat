@@ -1,11 +1,10 @@
-import type { SyncPayload } from '@fidechat/shared';
+import type { PublicUser, SyncPayload } from '@fidechat/shared';
 import { useCallback } from 'react';
 
-import type { PublicUser } from '@/features/members/hooks/use-users';
-import { getUserStatusPriority } from '@/features/presence/lib/user-status';
+import { getStatusDisplay } from '@/features/presence/lib/user-status';
 import { useSyncQuery } from '@/features/sync/hooks/sync-query';
 
-export interface GuildMemberGroups {
+interface GuildMemberGroups {
     owner?: PublicUser;
     bots: PublicUser[];
     /** Human members other than the owner, online first. */
@@ -37,8 +36,8 @@ export function useGuildMembers(
                     )
                     .sort(
                         (a, b) =>
-                            getUserStatusPriority(statusOf(a.id)) -
-                            getUserStatusPriority(statusOf(b.id)),
+                            getStatusDisplay(statusOf(a.id)).priority -
+                            getStatusDisplay(statusOf(b.id)).priority,
                     ),
             };
         },

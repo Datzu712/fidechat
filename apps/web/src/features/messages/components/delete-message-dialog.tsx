@@ -1,7 +1,7 @@
-import type { Message } from '@fidechat/shared';
+import type { Message, PublicUser } from '@fidechat/shared';
 
-import type { PublicUser } from '@/features/members/hooks/use-users';
-import { UserAvatar } from '@/shared/components/user-avatar';
+import { formatMessageTime } from '@/features/messages/lib/format-message-time';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -14,17 +14,11 @@ import {
 
 interface MessagePreviewProps {
     message: Message;
-    username: string;
-    avatarUrl?: string;
+    author: PublicUser | undefined;
 }
 
-function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
+function MessagePreview({ message, author }: MessagePreviewProps) {
+    const username = author?.username ?? 'Unknown User';
 
     return (
         <div className="relative mt-4 mb-6">
@@ -32,9 +26,9 @@ function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
             <div className="relative flex items-start gap-3 p-4 bg-zinc-800/30 rounded-md border border-zinc-700/50 shadow-lg backdrop-blur-xs">
                 <div className="relative">
                     <div className="absolute inset-0 bg-zinc-900/50 rounded-full blur-[2px]"></div>
-                    <UserAvatar
-                        username={username}
-                        avatarUrl={avatarUrl}
+                    <NameAvatar
+                        name={username}
+                        imageUrl={author?.avatarUrl}
                         className="h-10 w-10 mt-1 relative"
                     />
                 </div>
@@ -44,7 +38,7 @@ function MessagePreview({ message, username, avatarUrl }: MessagePreviewProps) {
                             {username}
                         </span>
                         <span className="text-xs text-zinc-400">
-                            {formatTime(new Date(message.createdAt))}
+                            {formatMessageTime(message.createdAt)}
                         </span>
                     </div>
                     <p className="text-zinc-200 wrap-break-word leading-relaxed">
@@ -86,11 +80,7 @@ export function DeleteMessageDialog({
                 </DialogHeader>
 
                 {message && (
-                    <MessagePreview
-                        message={message}
-                        username={author?.username ?? 'Unknown User'}
-                        avatarUrl={author?.avatarUrl ?? undefined}
-                    />
+                    <MessagePreview message={message} author={author} />
                 )}
 
                 <DialogFooter className="gap-2 sm:gap-0">

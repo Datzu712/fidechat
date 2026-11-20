@@ -1,7 +1,7 @@
-import { SocketEvents } from '@fidechat/shared';
+import { type PublicUser, SocketEvents } from '@fidechat/shared';
 import { Injectable } from '@nestjs/common';
 
-import type { AppUser, GuildUser } from '@/infrastructure/database/schema/index.js';
+import type { GuildUser } from '@/infrastructure/database/schema/index.js';
 
 import { GuildEmitter } from './guild-emitter.js';
 import { UserRepository } from './user.repository.js';
@@ -41,7 +41,7 @@ export class UserService {
 
         if (result.wasAddedToGuild) {
             // Every guild member receives this, so it must not carry the email.
-            const appUser: Omit<AppUser, 'email'> = {
+            const appUser: PublicUser = {
                 id: kcUser.sub,
                 username,
                 avatarUrl: pictureUrl,

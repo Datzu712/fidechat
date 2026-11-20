@@ -5,8 +5,8 @@ import { useLocation, useNavigate } from 'react-router';
 import { CreateServerModal } from '@/features/guilds/components/create-server-modal';
 import { DiscoverServersModal } from '@/features/guilds/components/discover-servers-modal';
 import { useGuilds } from '@/features/guilds/hooks/use-guilds';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { cn } from '@/shared/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Separator } from '@/shared/ui/separator';
@@ -79,21 +79,12 @@ export function ServerSidebar() {
                                                     handleServerClick(server.id)
                                                 }
                                             >
-                                                <Avatar className="h-12 w-12">
-                                                    {server.iconUrl ? (
-                                                        <AvatarImage
-                                                            src={server.iconUrl}
-                                                            alt={server.name}
-                                                            className="object-cover w-full h-full"
-                                                        />
-                                                    ) : (
-                                                        <AvatarFallback className="bg-primary/30 w-full h-full flex items-center justify-center text-sm font-semibold">
-                                                            {server.name
-                                                                .substring(0, 2)
-                                                                .toUpperCase()}
-                                                        </AvatarFallback>
-                                                    )}
-                                                </Avatar>
+                                                <NameAvatar
+                                                    name={server.name}
+                                                    imageUrl={server.iconUrl}
+                                                    className="h-12 w-12"
+                                                    fallbackClassName="text-sm font-semibold"
+                                                />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="right">

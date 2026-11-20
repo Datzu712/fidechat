@@ -5,7 +5,7 @@ import type React from 'react';
 import { useState } from 'react';
 
 import { apiClient } from '@/shared/api/client';
-import { parseAxiosError } from '@/shared/api/parse-axios-error';
+import { useErrorToast } from '@/shared/api/use-error-toast';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import {
@@ -30,6 +30,7 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
     const [serverIconUrl, setServerIconUrl] = useState<string>();
     const [isPublic, setIsPublic] = useState(false);
     const { toast } = useToast();
+    const onError = useErrorToast('Failed to create server');
 
     const { mutate, isPending: isLoading } = useMutation<
         void,
@@ -48,16 +49,7 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
             setServerName('');
             setServerIconUrl(undefined);
         },
-        onError: (error) => {
-            toast({
-                variant: 'destructive',
-                title: 'Failed to create server',
-                description: parseAxiosError(
-                    error,
-                    'Something went wrong. Please try again.',
-                ),
-            });
-        },
+        onError,
     });
 
     const handleSubmit = (e: React.FormEvent) => {

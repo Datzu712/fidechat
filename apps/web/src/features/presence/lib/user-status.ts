@@ -1,43 +1,52 @@
 import type { UserStatus } from '@fidechat/shared';
+import { Circle, type LucideIcon, Minus, Moon } from 'lucide-react';
 
-export const getUserStatusPriority = (status: UserStatus | undefined) => {
-    switch (status) {
-        case 'online':
-            return 0;
-        case 'idle':
-            return 1;
-        case 'dnd':
-            return 2;
-        case 'offline':
-        case undefined:
-            return 3;
-        default:
-            return 4;
-    }
+interface StatusDisplay {
+    label: string;
+    /** Sort order in member lists: online first. */
+    priority: number;
+    /** Background for the status dot on avatars. */
+    dotClass: string;
+    /** Text color for the status icon in menus. */
+    iconClass: string;
+    icon: LucideIcon;
+}
+
+const STATUS_DISPLAY: Record<UserStatus, StatusDisplay> = {
+    online: {
+        label: 'Online',
+        priority: 0,
+        dotClass: 'bg-green-500',
+        iconClass: 'text-green-500',
+        icon: Circle,
+    },
+    idle: {
+        label: 'Idle',
+        priority: 1,
+        dotClass: 'bg-yellow-500',
+        iconClass: 'text-yellow-500',
+        icon: Moon,
+    },
+    dnd: {
+        label: 'Do Not Disturb',
+        priority: 2,
+        dotClass: 'bg-red-500',
+        iconClass: 'text-red-500',
+        icon: Minus,
+    },
+    offline: {
+        label: 'Offline',
+        priority: 3,
+        dotClass: 'bg-gray-500',
+        iconClass: 'text-gray-500',
+        icon: Circle,
+    },
 };
 
-export function getStatusColor(status: UserStatus | undefined): string {
-    switch (status) {
-        case 'online':
-            return 'bg-green-500';
-        case 'idle':
-            return 'bg-yellow-500';
-        case 'dnd':
-            return 'bg-red-500';
-        default:
-            return 'bg-gray-500';
-    }
+/** How a status is shown; a user with no presence entry is offline. */
+export function getStatusDisplay(status: UserStatus | undefined) {
+    return STATUS_DISPLAY[status ?? 'offline'];
 }
 
-export function getStatusText(status: UserStatus | undefined): string {
-    switch (status) {
-        case 'online':
-            return 'Online';
-        case 'idle':
-            return 'Away';
-        case 'dnd':
-            return 'Do Not Disturb';
-        default:
-            return 'Offline';
-    }
-}
+/** The statuses users can pick for themselves. */
+export const SELECTABLE_STATUSES: UserStatus[] = ['online', 'idle', 'dnd'];

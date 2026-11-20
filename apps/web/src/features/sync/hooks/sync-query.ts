@@ -38,7 +38,7 @@ export function useSyncQuery<T>(select: (data: SyncPayload) => T) {
 
 const isLoadedSelect = () => true;
 
-export interface SyncStatus {
+interface SyncStatus {
     isLoaded: boolean;
     /** The first load failed (after the query's retries). */
     isError: boolean;
