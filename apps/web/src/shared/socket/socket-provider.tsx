@@ -32,9 +32,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Same origin as the page: the handshake carries the BFF session cookie.
         socket.current = io({
+            // Keep trying while the API is down (backoff from 1 s up to 5 s).
             reconnection: true,
-            reconnectionAttempts: 5,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
             transports: ['websocket', 'polling', 'webtransport'],
             timeout: 10000,
         });
