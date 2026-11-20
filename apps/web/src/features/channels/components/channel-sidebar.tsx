@@ -1,6 +1,6 @@
 import { SocketEvents, type UserStatus } from '@fidechat/shared';
 import { Hash, LogOut, Plus, Settings } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
 import { logout } from '@/features/auth/lib/logout';
@@ -17,23 +17,14 @@ import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
-    const { socket, connected } = useSocket();
+    const { socket } = useSocket();
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [userStatus, setUserStatus] = useState<UserStatus>('online');
     const currentUser = useCurrentUser();
     const server = useGuild(serverId);
     const channels = useGuildChannels(serverId);
     const myStatus = useUserStatus(currentUser?.id ?? '');
-
-    useEffect(() => {
-        if (connected && currentUser) {
-            socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-                status: userStatus,
-            });
-        }
-    }, [userStatus, connected, currentUser, socket]);
 
     if (!currentUser) return null;
 
@@ -41,6 +32,10 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
 
     const handleChannelClick = (channelId: string) => {
         navigate(`/servers/${serverId}/channels/${channelId}`);
+    };
+    // The server echoes the change back through the presence update.
+    const handleStatusChange = (status: UserStatus) => {
+        socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, { status });
     };
     const handleLogout = () => {
         void logout();
@@ -105,8 +100,8 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
                         </span>
                         <div className="flex items-center gap-2">
                             <UserStatusMenu
-                                status={myStatus || 'idle'}
-                                onStatusChange={setUserStatus}
+                                status={myStatus ?? 'online'}
+                                onStatusChange={handleStatusChange}
                             />
                         </div>
                     </div>

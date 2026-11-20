@@ -15,12 +15,17 @@ export function useUserStatus(userId: string): UserStatus | undefined {
 
 const EMPTY: PublicUser[] = [];
 
-/** Users typing in the channel right now. */
+/** Other users typing in the channel right now. */
 export function useTypingUsers(channelId: string): PublicUser[] {
     const select = useCallback(
         (data: SyncPayload) =>
             data.connectedUsers
-                .filter((u) => u.isTyping && u.typingInChannel === channelId)
+                .filter(
+                    (u) =>
+                        u.isTyping &&
+                        u.typingInChannel === channelId &&
+                        u.userId !== data.currentUser.id,
+                )
                 .map((u) => data.users.find((user) => user.id === u.userId))
                 .filter((user) => user !== undefined),
         [channelId],

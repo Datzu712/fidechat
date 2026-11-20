@@ -49,53 +49,60 @@ export function ServerSidebar() {
 
                         <Separator className="h-[2px] w-10 bg-zinc-700 rounded-md my-2" />
 
-                        {guilds.map((server) => (
-                            <Tooltip key={server.id}>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
+                        {guilds.map((server) => {
+                            const isActive = pathname.includes(server.id);
+                            return (
+                                <div
+                                    key={server.id}
+                                    className="group relative flex w-full justify-center"
+                                >
+                                    {/* Discord's selection pill, on the rail's left edge. */}
+                                    <span
                                         className={cn(
-                                            'h-12 w-12 rounded-full relative group p-0 overflow-hidden',
-                                            pathname?.includes(server.id)
-                                                ? 'bg-primary/30 text-white'
-                                                : 'hover:bg-primary/20 text-zinc-400 hover:text-white',
+                                            'absolute -left-3 top-1/2 w-1 -translate-y-1/2 rounded-r-full bg-white transition-[height] duration-150',
+                                            isActive
+                                                ? 'h-8'
+                                                : 'h-2 group-hover:h-5',
                                         )}
-                                        onClick={() =>
-                                            handleServerClick(server.id)
-                                        }
-                                    >
-                                        <div
-                                            className={cn(
-                                                'fixed left-0 bg-white rounded-r-full transition-all w-1 ',
-                                                pathname?.includes(server.id)
-                                                    ? 'h-8'
-                                                    : 'h-2 group-hover:h-5',
-                                            )}
-                                        />
-                                        <div className="w-full h-full rounded-full overflow-hidden">
-                                            <Avatar className="h-12 w-12">
-                                                {server.iconUrl ? (
-                                                    <AvatarImage
-                                                        src={server.iconUrl}
-                                                        alt={server.name}
-                                                        className="object-cover w-full h-full"
-                                                    />
-                                                ) : (
-                                                    <AvatarFallback className="bg-primary/30 w-full h-full flex items-center justify-center text-sm font-semibold">
-                                                        {server.name
-                                                            .substring(0, 2)
-                                                            .toUpperCase()}
-                                                    </AvatarFallback>
+                                    />
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className={cn(
+                                                    'h-12 w-12 rounded-full p-0 overflow-hidden',
+                                                    isActive
+                                                        ? 'bg-primary/30 text-white'
+                                                        : 'hover:bg-primary/20 text-zinc-400 hover:text-white',
                                                 )}
-                                            </Avatar>
-                                        </div>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    {server.name}
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
+                                                onClick={() =>
+                                                    handleServerClick(server.id)
+                                                }
+                                            >
+                                                <Avatar className="h-12 w-12">
+                                                    {server.iconUrl ? (
+                                                        <AvatarImage
+                                                            src={server.iconUrl}
+                                                            alt={server.name}
+                                                            className="object-cover w-full h-full"
+                                                        />
+                                                    ) : (
+                                                        <AvatarFallback className="bg-primary/30 w-full h-full flex items-center justify-center text-sm font-semibold">
+                                                            {server.name
+                                                                .substring(0, 2)
+                                                                .toUpperCase()}
+                                                        </AvatarFallback>
+                                                    )}
+                                                </Avatar>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                            {server.name}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            );
+                        })}
 
                         <Tooltip>
                             <TooltipTrigger asChild>
