@@ -1,8 +1,9 @@
 import type { Guild } from '@fidechat/shared';
+import { useQuery } from '@tanstack/react-query';
 import { Loader2, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { useApiData } from '@/shared/api/use-api-query';
+import { apiClient } from '@/shared/api/client';
 import { cn } from '@/shared/lib/utils';
 import {
     Dialog,
@@ -25,14 +26,12 @@ export function DiscoverServersModal({
 }: DiscoverServersModalProps) {
     const [searchQuery, setSearchQuery] = useState('');
 
-    const { data: publicServers, isLoading } = useApiData<Guild[]>(
-        '/guilds/public',
-        {
-            queryOptions: {
-                staleTime: 1000 * 60 * 5,
-            },
-        },
-    );
+    const { data: publicServers, isLoading } = useQuery({
+        queryKey: ['guilds', 'public'],
+        queryFn: async () =>
+            (await apiClient.get<Guild[]>('/guilds/public')).data,
+        enabled: isOpen,
+    });
 
     const filteredServers = publicServers?.filter((server) =>
         server.name?.toLowerCase().includes(searchQuery.toLowerCase()),

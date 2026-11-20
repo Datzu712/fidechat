@@ -1,10 +1,12 @@
 import type { ChannelPayload } from '@fidechat/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { apiClient } from '@/shared/api/client';
 import { parseAxiosError } from '@/shared/api/parse-axios-error';
-import { useApiMutation } from '@/shared/api/use-api-query';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -56,10 +58,14 @@ export function CreateChannelModal({
         },
     });
 
-    const { mutate, isPending: isLoading } = useApiMutation<
+    const { mutate, isPending: isLoading } = useMutation<
         void,
+        AxiosError,
         ChannelPayload
-    >(`/guilds/${serverId}/channels`, {
+    >({
+        mutationFn: async (payload) => {
+            await apiClient.post(`/guilds/${serverId}/channels`, payload);
+        },
         onSuccess: (_, variables) => {
             toast({
                 title: 'Channel created',
@@ -74,7 +80,6 @@ export function CreateChannelModal({
                 title: 'Failed to create channel',
                 description: parseAxiosError(error),
             });
-            console.error(error);
         },
     });
 
