@@ -13,6 +13,7 @@ export class MessageController {
 
     @Post()
     async createMessage(
+        @Param('guildId') guildId: string,
         @Param('channelId') channelId: string,
         @AuthenticatedUser() user: IReqUser,
         @Body(
@@ -25,7 +26,7 @@ export class MessageController {
         )
         body: MessageDto,
     ) {
-        return this.messageService.createMessage({
+        return this.messageService.createMessage(guildId, {
             content: body.content,
             channelId,
             authorId: user.sub,
@@ -35,7 +36,9 @@ export class MessageController {
     @Patch(':messageId')
     async updateMessage(
         @Param('messageId') messageId: string,
+        @Param('channelId') channelId: string,
         @Param('guildId') guildId: string,
+        @AuthenticatedUser() user: IReqUser,
         @Body(
             new ValidationPipe({
                 transform: true,
@@ -46,11 +49,22 @@ export class MessageController {
         )
         body: MessageDto,
     ) {
-        return this.messageService.updateMessage(messageId, body.content, guildId);
+        return this.messageService.updateMessage({
+            guildId,
+            channelId,
+            messageId,
+            userId: user.sub,
+            content: body.content,
+        });
     }
 
     @Delete(':messageId')
-    async deleteMessage(@Param('messageId') messageId: string, @Param('guildId') guildId: string) {
-        return this.messageService.deleteMessage(messageId, guildId);
+    async deleteMessage(
+        @Param('messageId') messageId: string,
+        @Param('channelId') channelId: string,
+        @Param('guildId') guildId: string,
+        @AuthenticatedUser() user: IReqUser,
+    ) {
+        return this.messageService.deleteMessage({ guildId, channelId, messageId, userId: user.sub });
     }
 }

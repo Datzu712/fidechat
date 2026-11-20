@@ -1,11 +1,25 @@
-import { SocketEvents } from '@fidechat/shared';
-import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { type Message as WireMessage, SocketEvents } from '@fidechat/shared';
+import {
+    ForbiddenException,
+    HttpException,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
 
 import { ChannelRepository } from '../channel/channel.repository.js';
 import { SocketEmitter } from '../gateway/socket-emitter.js';
 import { UserRepository } from '../user/user.repository.js';
 import { BotConversationService } from './bot-conversation/bot-conversation.service.js';
-import { type MessageCreationAttributes, MessageRepository } from './message.repository.js';
+import { type Message, type MessageCreationAttributes, MessageRepository } from './message.repository.js';
+
+/** A user acting on the message at `/guilds/:guildId/channels/:channelId/messages/:messageId`. */
+export interface MessageAction {
+    guildId: string;
+    channelId: string;
+    messageId: string;
+    userId: string;
+}
 
 @Injectable()
 export class MessageService {
@@ -17,26 +31,21 @@ export class MessageService {
         private readonly conversation: BotConversationService,
     ) {}
 
-    private async notifyMessageCreation(
-        messageData: MessageCreationAttributes,
-        messageId: string,
-        guildId: string,
-        createdAt: string,
-    ): Promise<void> {
+    private async notifyMessageCreation(guildId: string, message: WireMessage): Promise<void> {
         const guildMembers = (await this.userRepository.getGuildUsers(guildId)).map((user) => user.id);
 
-        this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, {
-            id: messageId,
-            ...messageData,
-            createdAt,
-        });
+        this.emitter.emitToUsers(guildMembers, SocketEvents.MESSAGE_CREATE, message);
     }
 
-    async createMessage(data: MessageCreationAttributes) {
+    /** Members of the guild may post in its channels. */
+    async createMessage(guildId: string, data: MessageCreationAttributes) {
         const channel = await this.channelRepository.getChannel(data.channelId);
-        if (!channel) {
+        // A channel addressed through another guild does not exist there.
+        if (!channel || channel.guildId !== guildId) {
             throw new NotFoundException('Channel not found');
         }
+        await this.assertGuildMember(guildId, data.authorId);
+
         const author = await this.userRepository.findById(data.authorId);
         if (!author) throw new NotFoundException('User not found');
 
@@ -49,7 +58,7 @@ export class MessageService {
                 createdAt: createAt,
             });
 
-            await this.notifyMessageCreation(data, result.id, channel.guildId, createdAtStr);
+            await this.notifyMessageCreation(channel.guildId, { id: result.id, ...data, createdAt: createdAtStr });
 
             if (!author.isBot) {
                 this.conversation.onHumanMessage(channel, result.id, data.content);
@@ -68,10 +77,26 @@ export class MessageService {
         return this.messageRepository.getMessage(id);
     }
 
-    async updateMessage(id: string, content: string, guildId: string) {
+    /**
+     * The message the route points to, if the user wrote it. A message outside the route's guild or
+     * channel is not found; someone else's is forbidden.
+     */
+    private async getOwnMessage({ guildId, channelId, messageId, userId }: MessageAction): Promise<Message> {
+        const message = await this.getMessage(messageId);
+        if (message?.channelId !== channelId) throw new NotFoundException('Message not found');
+
+        const channel = await this.channelRepository.getChannel(channelId);
+        if (channel?.guildId !== guildId) throw new NotFoundException('Message not found');
+
+        if (message.authorId !== userId) throw new ForbiddenException('Only the author can change this message');
+
+        return message;
+    }
+
+    async updateMessage({ content, ...action }: MessageAction & { content: string }) {
+        const { guildId, messageId: id } = action;
         try {
-            const message = await this.getMessage(id);
-            if (!message) throw new NotFoundException('Message not found');
+            await this.getOwnMessage(action);
 
             const result = await this.messageRepository.updateMessage(id, content);
 
@@ -89,10 +114,10 @@ export class MessageService {
         }
     }
 
-    async deleteMessage(id: string, guildId: string) {
+    async deleteMessage(action: MessageAction) {
+        const { guildId, messageId: id } = action;
         try {
-            const message = await this.getMessage(id);
-            if (!message) throw new NotFoundException('Message not found');
+            const message = await this.getOwnMessage(action);
 
             const result = await this.messageRepository.deleteMessage(id);
 
@@ -111,5 +136,10 @@ export class MessageService {
             }
             throw error;
         }
+    }
+
+    private async assertGuildMember(guildId: string, userId: string): Promise<void> {
+        const isMember = await this.userRepository.isGuildMember(guildId, userId);
+        if (!isMember) throw new ForbiddenException('Not a member of this guild');
     }
 }
