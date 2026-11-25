@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { BOTS, detectNamedBots } from '@/modules/ai/bots.js';
 import {
     buildPromptMessages,
@@ -72,6 +74,15 @@ describe('trimToLastSentence', () => {
         expect(trimToLastSentence('¡Qué bien! ¿Y tú? Yo estaba pensando en')).toBe('¡Qué bien! ¿Y tú?'));
     it('does not cut at a decimal point', () => expect(trimToLastSentence('Sale la versión 2.5 mañana')).toBe(''));
     it('returns empty when no sentence finished', () => expect(trimToLastSentence('sin ningún final')).toBe(''));
+});
+
+describe('BOTS', () => {
+    it('keeps every system prompt byte for byte', () => {
+        const digest = createHash('sha256')
+            .update(BOTS.map((bot) => bot.systemPrompt).join('\n---\n'))
+            .digest('hex');
+        expect(digest).toBe('af9228d086b915c1bc23b406e5107d7d417efe125b8a377f9bc3abc20e05d374');
+    });
 });
 
 describe('detectNamedBots', () => {
