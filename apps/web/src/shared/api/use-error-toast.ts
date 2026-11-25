@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { parseAxiosError } from '@/shared/api/parse-axios-error';
+import { errorMessage } from '@/shared/api/error-message';
 import { useToast } from '@/shared/ui/use-toast';
 
 /** An `onError` for mutations: a destructive toast with the API's message. */
@@ -11,7 +11,7 @@ export function useErrorToast(title: string) {
             toast({
                 variant: 'destructive',
                 title,
-                description: parseAxiosError(error),
+                description: errorMessage(error),
             }),
         [toast, title],
     );

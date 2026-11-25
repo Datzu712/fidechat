@@ -5,6 +5,7 @@ import {
     AuthContext,
     type AuthStatus,
 } from '@/features/auth/providers/auth-context';
+import { backend } from '@/shared/backend/implementation';
 
 /**
  * The API runs the login and keeps the tokens (BFF); the browser only has an HttpOnly session
@@ -15,17 +16,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<AuthMe | null>(null);
 
     useEffect(() => {
-        const controller = new AbortController();
-        fetch('/api/v1/auth/me', { signal: controller.signal })
-            .then(async (response) => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                setUser((await response.json()) as AuthMe);
-                setStatus('authenticated');
-            })
-            .catch(() => {
-                if (!controller.signal.aborted) setStatus('unauthenticated');
-            });
-        return () => controller.abort();
+        let unmounted = false;
+        void backend.getSession().then((session) => {
+            if (unmounted) return;
+            setUser(session);
+            setStatus(session ? 'authenticated' : 'unauthenticated');
+        });
+        return () => {
+            unmounted = true;
+        };
     }, []);
 
     return (

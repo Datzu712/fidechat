@@ -1,7 +1,7 @@
 import type { SyncPayload } from '@fidechat/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { apiClient } from '@/shared/api/client';
+import { backend } from '@/shared/backend/implementation';
 import { useSocket } from '@/shared/socket/use-socket';
 
 /**
@@ -11,7 +11,7 @@ import { useSocket } from '@/shared/socket/use-socket';
 export const syncQueryKey = ['sync'] as const;
 
 async function fetchSync(): Promise<SyncPayload> {
-    const { data } = await apiClient.get<SyncPayload>('/users/@me/sync');
+    const data = await backend.sync();
     // The current user is not always in `users`; message authors need it there.
     if (!data.users.some((user) => user.id === data.currentUser.id)) {
         data.users.push(data.currentUser);

@@ -1,25 +1,20 @@
 import type { MessagePayload } from '@fidechat/shared';
 import { useMutation } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
 
-import { apiClient } from '@/shared/api/client';
 import { useErrorToast } from '@/shared/api/use-error-toast';
+import type { BackendError } from '@/shared/backend/backend';
+import { backend } from '@/shared/backend/implementation';
 
 /*
  * Message writes. The cache is updated by the socket echo of each write, so
  * these only report failures.
  */
 
-function messagesUrl(guildId: string, channelId: string) {
-    return `/guilds/${guildId}/channels/${channelId}/messages`;
-}
-
 export function useSendMessage(guildId: string, channelId: string) {
     const onError = useErrorToast('Failed to send message');
-    return useMutation<void, AxiosError, MessagePayload>({
-        mutationFn: async (payload) => {
-            await apiClient.post(messagesUrl(guildId, channelId), payload);
-        },
+    return useMutation<void, BackendError, MessagePayload>({
+        mutationFn: (payload) =>
+            backend.createMessage({ guildId, channelId }, payload),
         onError,
     });
 }
@@ -28,27 +23,23 @@ export function useEditMessage(guildId: string, channelId: string) {
     const onError = useErrorToast('Failed to update message');
     return useMutation<
         void,
-        AxiosError,
+        BackendError,
         { messageId: string; content: string }
     >({
-        mutationFn: async ({ messageId, content }) => {
-            await apiClient.patch(
-                `${messagesUrl(guildId, channelId)}/${messageId}`,
+        mutationFn: ({ messageId, content }) =>
+            backend.updateMessage(
+                { guildId, channelId, messageId },
                 { content },
-            );
-        },
+            ),
         onError,
     });
 }
 
 export function useDeleteMessage(guildId: string, channelId: string) {
     const onError = useErrorToast('Failed to delete message');
-    return useMutation<void, AxiosError, { messageId: string }>({
-        mutationFn: async ({ messageId }) => {
-            await apiClient.delete(
-                `${messagesUrl(guildId, channelId)}/${messageId}`,
-            );
-        },
+    return useMutation<void, BackendError, { messageId: string }>({
+        mutationFn: ({ messageId }) =>
+            backend.deleteMessage({ guildId, channelId, messageId }),
         onError,
     });
 }

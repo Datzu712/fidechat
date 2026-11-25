@@ -1,6 +1,6 @@
-import { SocketEvents } from '@fidechat/shared';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { backend } from '@/shared/backend/implementation';
 import { useSocket } from '@/shared/socket/use-socket';
 
 /** Typing stops being shown this long after the last keystroke. */
@@ -8,7 +8,7 @@ const TYPING_TIMEOUT_MS = 2000;
 
 /** Tells the other users when the current user is typing in a channel. */
 export function useTypingEmitter(channelId: string) {
-    const { socket, connected } = useSocket();
+    const { connected } = useSocket();
     const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(
         undefined,
     );
@@ -17,16 +17,13 @@ export function useTypingEmitter(channelId: string) {
         if (timeout.current === undefined) return;
         clearTimeout(timeout.current);
         timeout.current = undefined;
-        socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
-            isTyping: false,
-            typingInChannel: undefined,
-        });
-    }, [socket]);
+        backend.updateStatus({ isTyping: false, typingInChannel: undefined });
+    }, []);
 
     const notifyTyping = useCallback(() => {
         if (!connected) return;
         if (timeout.current === undefined) {
-            socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, {
+            backend.updateStatus({
                 isTyping: true,
                 typingInChannel: channelId,
             });
@@ -34,7 +31,7 @@ export function useTypingEmitter(channelId: string) {
             clearTimeout(timeout.current);
         }
         timeout.current = setTimeout(stopTyping, TYPING_TIMEOUT_MS);
-    }, [connected, socket, channelId, stopTyping]);
+    }, [connected, channelId, stopTyping]);
 
     // Leaving the channel (or the page) ends the typing status.
     useEffect(() => stopTyping, [channelId, stopTyping]);

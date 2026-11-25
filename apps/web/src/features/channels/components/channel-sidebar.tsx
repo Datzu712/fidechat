@@ -1,4 +1,4 @@
-import { SocketEvents, type UserStatus } from '@fidechat/shared';
+import type { UserStatus } from '@fidechat/shared';
 import { Hash, LogOut, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
@@ -10,14 +10,13 @@ import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useCurrentUser } from '@/features/members/hooks/use-users';
 import { UserStatusMenu } from '@/features/presence/components/user-status-menu';
 import { useUserStatus } from '@/features/presence/hooks/use-presence';
+import { backend } from '@/shared/backend/implementation';
 import { NameAvatar } from '@/shared/components/name-avatar';
 import { cn } from '@/shared/lib/utils';
-import { useSocket } from '@/shared/socket/use-socket';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 
 export function ChannelSidebar({ serverId }: { serverId: string }) {
-    const { socket } = useSocket();
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,7 +34,7 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
     };
     // The server echoes the change back through the presence update.
     const handleStatusChange = (status: UserStatus) => {
-        socket.current?.emit(SocketEvents.UPDATE_CURRENT_STATUS, { status });
+        backend.updateStatus({ status });
     };
     const handleLogout = () => {
         void logout();
