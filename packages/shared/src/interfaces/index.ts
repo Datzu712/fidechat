@@ -1,4 +1,5 @@
 export type * from './entities/app-user.interface.js';
+export type * from './entities/bot-definition.interface.js';
 export type * from './entities/channel.interface.js';
 export type * from './entities/guild.interface.js';
 export type * from './entities/message.interface.js';

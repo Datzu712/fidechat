@@ -1,13 +1,9 @@
 import { createHash } from 'node:crypto';
 
+import { MAX_MESSAGE_LENGTH } from '@fidechat/shared';
+
 import { BOTS, detectNamedBots } from '@/modules/ai/bots.js';
-import {
-    buildPromptMessages,
-    cleanReply,
-    MAX_MESSAGE_LENGTH,
-    reactionInstructions,
-    trimToLastSentence,
-} from '@/modules/ai/prompt.js';
+import { buildPromptMessages, cleanReply, reactionInstructions, trimToLastSentence } from '@/modules/ai/prompt.js';
 import { buildRouterPrompt, planSpeakers } from '@/modules/ai/router.js';
 import { SpontaneousCaps } from '@/modules/ai/spontaneous-caps.js';
 

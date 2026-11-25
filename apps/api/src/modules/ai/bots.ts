@@ -1,3 +1,5 @@
+import { BOT_DEFINITIONS } from '@fidechat/shared';
+
 import type { AppUser } from '@/infrastructure/database/schema/index.js';
 
 export interface AIBot {
@@ -25,53 +27,30 @@ Estás en un chat de grupo con amigos. Escribe como una persona real en un chat:
 - No atribuyas a otros cosas que no dijeron en la conversación.
 - Con los otros bots hay confianza: puedes bromear, picarlos o llevarles la contraria con buena onda.`;
 
-/** Bots named in the same message reply in this order. */
-export const BOTS: AIBot[] = [
-    {
-        user: {
-            id: '25d23d6a-b162-4e4b-a674-d4c41934728d',
-            username: 'Chat yipiyi',
-            email: 'chatgpt@openai.com',
-            isBot: true,
-            avatarUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMdM9MEQ0ExL1PmInT3U5I8v63YXBEdoIT0Q&s',
-        },
-        trigger: /\b(?:chat\s*gpt|gpt|yipiyi)\b/i,
+/** What only the api adds to each shared bot definition, by user id. */
+const BOT_SETTINGS: Record<string, Pick<AIBot, 'routerDescription' | 'temperature'>> = {
+    '25d23d6a-b162-4e4b-a674-d4c41934728d': {
         routerDescription: 'asistente útil, responde dudas técnicas y preguntas generales.',
-        systemPrompt: 'Eres un asistente útil en un chat. Responde de manera concisa y clara.' + CHAT_STYLE,
         temperature: 0.7,
     },
-    {
-        user: {
-            id: '42951c8d-51ba-453b-9758-b632020475a9',
-            username: 'chayanne',
-            email: 'chayanne@fidechat.com',
-            isBot: true,
-            avatarUrl: 'https://i.pinimg.com/474x/06/90/b5/0690b5003ba0760a39b9f88e8066dab5.jpg',
-        },
-        trigger: /\bchayann?e\b/i,
+    '42951c8d-51ba-453b-9758-b632020475a9': {
         routerDescription: 'el cantante puertorriqueño, cariñoso, habla de música, baile y familia.',
-        systemPrompt:
-            'Eres Chayanne, el cantante puertorriqueño: cariñoso, galante, alegre, con expresiones caribeñas de vez en cuando.' +
-            CHAT_STYLE,
         temperature: 0.8,
     },
-    {
-        user: {
-            id: '61e3b006-c1db-4e86-8ee2-434a86674040',
-            username: 'pedro_pascal',
-            email: 'pedro.pascal@fidechat.com',
-            isBot: true,
-            avatarUrl: 'https://media.themoviedb.org/t/p/w500/9VYK7oxcqhjd5LAH6ZFJ3XzOlID.jpg',
-        },
-        trigger: /\b(?:pedro|pascal)\b/i,
+    '61e3b006-c1db-4e86-8ee2-434a86674040': {
         routerDescription:
             'el actor chileno, cálido y ansioso, habla de actuación, sus series (The Mandalorian, The Last of Us, Game of Thrones).',
-        systemPrompt:
-            "Eres Pedro Pascal, el actor chileno-estadounidense: cálido, humilde, con humor y algo ansioso ('internet's daddy')." +
-            CHAT_STYLE,
         temperature: 0.8,
     },
-];
+};
+
+/** Bots named in the same message reply in this order (the order of `BOT_DEFINITIONS`). */
+export const BOTS: AIBot[] = BOT_DEFINITIONS.map(({ user, trigger, persona }) => ({
+    user,
+    trigger,
+    ...BOT_SETTINGS[user.id],
+    systemPrompt: persona + CHAT_STYLE,
+}));
 
 export function detectNamedBots(content: string): AIBot[] {
     return BOTS.filter((bot) => bot.trigger.test(content));
