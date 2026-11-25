@@ -2,14 +2,7 @@ import { Outlet } from 'react-router';
 
 export function AuthLayout() {
     return (
-        <div
-            className="u-flex u-flex-column u-vertically-center u-horizontally-center"
-            style={{
-                minHeight: '100vh',
-                background: 'var(--color-light)',
-                padding: '1rem',
-            }}
-        >
+        <div className="flex min-h-screen flex-col items-center justify-center bg-discord-rail p-4 text-foreground">
             <Outlet />
         </div>
     );

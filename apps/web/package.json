@@ -5,7 +5,9 @@
     "description": "Fidechat web client (Vite SPA + React 19 + Tailwind)",
     "scripts": {
         "build": "vite build",
+        "build:local": "vite build --mode backendless --outDir dist-local",
         "dev": "vite",
+        "dev:local": "vite --mode backendless",
         "lint": "oxlint",
         "preview": "vite preview",
         "lint:fix": "oxlint --fix",
