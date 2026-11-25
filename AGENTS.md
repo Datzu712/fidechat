@@ -68,7 +68,7 @@ pnpm --filter @fidechat/api test -- tests/guild.e2e-spec.ts        # single file
 pnpm --filter @fidechat/api test -- -t "should allow creating a private guild"   # single test by name
 ```
 
-The web app only unit-tests pure logic with Vitest (`*.test.ts` next to the code, e.g. `features/sync/lib/sync-updaters.test.ts`); it needs no infrastructure: `pnpm --filter @fidechat/web test`.
+The web app only unit-tests pure logic with Vitest (`*.test.ts` under `apps/web/test/`, mirroring `src/`: `test/features/sync/lib/sync-updaters.test.ts` tests `src/features/sync/lib/sync-updaters.ts`); it needs no infrastructure: `pnpm --filter @fidechat/web test`.
 
 ### Type checking
 
