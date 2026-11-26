@@ -20,13 +20,14 @@ export function LocalExtras() {
 
     return (
         <div className="flex flex-wrap items-center justify-center gap-2 bg-discord-rail text-muted-foreground text-xs py-1">
-            <span>Demo with no server</span>
             {isMaster && (
-                <span className="rounded-sm bg-primary/30 px-1.5 py-0.5 text-foreground">
-                    This tab hosts the server
-                </span>
+                <>
+                    <span className="rounded-sm bg-primary/30 px-1.5 py-0.5 text-foreground">
+                        This tab hosts the server
+                    </span>
+                    <span aria-hidden>·</span>
+                </>
             )}
-            <span aria-hidden>·</span>
             <span
                 className={
                     modelState.status === 'ready' ? 'text-foreground' : ''
