@@ -1,12 +1,12 @@
 import type { ChannelPayload } from '@fidechat/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import { apiClient } from '@/shared/api/client';
 import { useErrorToast } from '@/shared/api/use-error-toast';
+import type { BackendError } from '@/shared/backend/backend';
+import { backend } from '@/shared/backend/implementation';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -61,11 +61,11 @@ export function CreateChannelModal({
 
     const { mutate, isPending: isLoading } = useMutation<
         void,
-        AxiosError,
+        BackendError,
         ChannelPayload
     >({
         mutationFn: async (payload) => {
-            await apiClient.post(`/guilds/${serverId}/channels`, payload);
+            await backend.createChannel(serverId, payload);
         },
         onSuccess: (_, variables) => {
             toast({

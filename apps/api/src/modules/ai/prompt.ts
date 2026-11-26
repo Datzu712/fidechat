@@ -1,9 +1,7 @@
+import { MAX_MESSAGE_LENGTH } from '@fidechat/shared';
 import type { ModelMessage } from 'ai';
 
 import type { AIBot } from './bots.js';
-
-/** `message.content` is a `varchar(2000)`. */
-export const MAX_MESSAGE_LENGTH = 2000;
 
 export interface ChannelHistoryEntry {
     id: string;

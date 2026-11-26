@@ -6,6 +6,7 @@ node_modules/
 
 # builds
 dist/
+dist-local/
 build/
 .next/
 out/

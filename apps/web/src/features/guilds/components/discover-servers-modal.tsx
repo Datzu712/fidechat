@@ -1,9 +1,8 @@
-import type { Guild } from '@fidechat/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { apiClient } from '@/shared/api/client';
+import { backend } from '@/shared/backend/implementation';
 import { cn } from '@/shared/lib/utils';
 import {
     Dialog,
@@ -28,8 +27,7 @@ export function DiscoverServersModal({
 
     const { data: publicServers, isLoading } = useQuery({
         queryKey: ['guilds', 'public'],
-        queryFn: async () =>
-            (await apiClient.get<Guild[]>('/guilds/public')).data,
+        queryFn: () => backend.getPublicGuilds(),
         enabled: isOpen,
     });
 

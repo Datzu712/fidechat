@@ -127,6 +127,26 @@ the demo users and data live in `docker/`.
 > recommended OpenAI model) and `OPENAI_API_KEY` to use OpenAI instead, or
 > `AI_MODEL=ollama:<model>` (no key) to use an Ollama running on the host.
 
+## Local mode (no server)
+
+The web app also builds as a demo that needs no api, database or Keycloak:
+every browser tab is a user, and one tab hosts the server in a worker, with
+the data kept in IndexedDB. It is for trying the app, not for real use.
+
+```bash
+pnpm --filter @fidechat/web dev:local     # -> http://localhost:3000
+pnpm --filter @fidechat/web build:local   # static build in apps/web/dist-local
+```
+
+Open several tabs and enter as a different user in each.
+
+The gear in the bar at the top opens the demo settings: the bots' model, how
+they answer, and resetting the demo. The bots are off until you click "Download
+model" there: the model (255 MB by default) runs in your browser and needs
+WebGPU with 16-bit float support (`shader-f16`); there is no CPU fallback yet.
+Its files come from Hugging Face and its runtime from jsDelivr. Only bots named
+in a message answer ("chayanne, hi"), with short replies.
+
 ## How the AI bots join a conversation
 
 The bots don't answer every message. After a human writes, an LLM router reads

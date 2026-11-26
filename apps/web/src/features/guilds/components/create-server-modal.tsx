@@ -1,11 +1,11 @@
 import type { GuildPayload } from '@fidechat/shared';
 import { useMutation } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
 import type React from 'react';
 import { useState } from 'react';
 
-import { apiClient } from '@/shared/api/client';
 import { useErrorToast } from '@/shared/api/use-error-toast';
+import type { BackendError } from '@/shared/backend/backend';
+import { backend } from '@/shared/backend/implementation';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import {
@@ -34,11 +34,11 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
 
     const { mutate, isPending: isLoading } = useMutation<
         void,
-        AxiosError,
+        BackendError,
         GuildPayload
     >({
         mutationFn: async (payload) => {
-            await apiClient.post('/guilds', payload);
+            await backend.createGuild(payload);
         },
         onSuccess: () => {
             toast({

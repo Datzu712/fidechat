@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { ServerSidebar } from '@/features/guilds/components/server-sidebar';
 import { useSyncStatus } from '@/features/sync/hooks/sync-query';
+import { BackendExtras } from '@/shared/backend/implementation';
 import { FullScreenSpinner } from '@/shared/components/full-screen-spinner';
 import { useSocket } from '@/shared/socket/use-socket';
 import { Button } from '@/shared/ui/button';
@@ -19,6 +20,7 @@ export function ServersLayout() {
 
     return (
         <div className="flex flex-col h-screen overflow-hidden">
+            <BackendExtras />
             {!connected && (
                 <div
                     role="status"

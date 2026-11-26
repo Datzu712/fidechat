@@ -19,7 +19,7 @@ import { useSocketEvents } from '@/shared/socket/use-socket-events';
 /** Keeps the `['sync']` query up to date with the socket events. */
 export function useRealtimeSync(): void {
     const queryClient = useQueryClient();
-    const { socket, connected } = useSocket();
+    const { connected } = useSocket();
 
     const handlers = useMemo<Partial<ServerToClientEvents>>(() => {
         const patch =
@@ -42,7 +42,7 @@ export function useRealtimeSync(): void {
         };
     }, [queryClient]);
 
-    useSocketEvents(socket, connected, handlers);
+    useSocketEvents(connected, handlers);
 
     // The first connection enables the query; later ones (reconnects) may
     // have missed events, so they refetch it.

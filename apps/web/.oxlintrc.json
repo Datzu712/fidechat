@@ -11,7 +11,7 @@
         "node": true,
         "es2024": true
     },
-    "ignorePatterns": ["node_modules/**", "dist/**"],
+    "ignorePatterns": ["node_modules/**", "dist/**", "dist-local/**"],
     "rules": {
         "constructor-super": "error",
         "for-direction": "error",

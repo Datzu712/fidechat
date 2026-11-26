@@ -6,5 +6,12 @@
     "tabWidth": 4,
     "semi": true,
     "sortImports": true,
-    "ignorePatterns": [".next/**", "out/**", "**/*.md", "**/*.yaml", "**/*.yml"]
+    "ignorePatterns": [
+        ".next/**",
+        "out/**",
+        "dist-local/**",
+        "**/*.md",
+        "**/*.yaml",
+        "**/*.yml"
+    ]
 }
