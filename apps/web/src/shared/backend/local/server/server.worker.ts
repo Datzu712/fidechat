@@ -11,6 +11,7 @@ import {
     tabLockName,
 } from '@/shared/backend/local/protocol';
 import { snapshotStore } from '@/shared/backend/local/server/data/store';
+import { createServerLogs } from '@/shared/backend/local/server/logs/logs';
 import { createServer } from '@/shared/backend/local/server/server';
 
 const channel = new BroadcastChannel(CHANNEL_NAME);
@@ -45,7 +46,17 @@ function generate(input: GenerateInput): Promise<Generated | null> {
     });
 }
 
-const server = await createServer({
+const logs = createServerLogs({
+    print: console.log,
+    now: () => new Date(),
+    clock: () => performance.now(),
+    pid: 1000 + Math.floor(Math.random() * 64536),
+    origin: self.location.origin,
+    userAgent: navigator.userAgent,
+});
+logs.boot();
+
+const deps = logs.wrapDeps({
     post: (message) => channel.postMessage(message),
     store: snapshotStore,
     watchTab(tabId, onGone) {
@@ -56,6 +67,7 @@ const server = await createServer({
     now: () => new Date(),
     generate,
 });
+const server = logs.wrapServer(await createServer(deps));
 
 // Messages that arrive while the state loads are dropped, not queued: on
 // `ready` every tab resends its hello and pending requests, so queueing them
