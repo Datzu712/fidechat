@@ -1,8 +1,8 @@
 # Fidechat
 
 [![Live demo](https://img.shields.io/badge/live_demo-fidechat.pages.dev-5865F2?logo=cloudflarepages&logoColor=white)](https://fidechat.pages.dev/login)
-[![Backendless](https://img.shields.io/badge/backendless-runs_in_the_browser-2ea44f)](#local-mode-no-server)
-[![In-browser LLM](https://img.shields.io/badge/AI_bots-in--browser_LLM_%28WebGPU%29-8A2BE2)](#local-mode-no-server)
+[![Backendless](https://img.shields.io/badge/backendless-can_run_in_the_browser-2ea44f)](#local-mode-no-server)
+[![In-browser LLM](https://img.shields.io/badge/AI_bots-in--browser_LLM_%28WebGPU%29_or_via_API-8A2BE2)](#how-the-ai-bots-join-a-conversation)
 
 Fidechat monorepo: a Discord clone with real-time messaging. It was created by
 merging two independent repositories (now archived), keeping the full commit
