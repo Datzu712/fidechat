@@ -1,45 +1,33 @@
 import type { UserStatus } from '@fidechat/shared';
-import { Circle, type LucideIcon, Minus, Moon } from 'lucide-react';
 
 interface StatusDisplay {
     label: string;
     /** Sort order in member lists: online first. */
     priority: number;
-    /** Background for the status dot on avatars. */
-    dotClass: string;
-    /** Text color for the status icon in menus. */
-    iconClass: string;
-    icon: LucideIcon;
+    /** Text color for the status icon. */
+    colorClass: string;
 }
 
 const STATUS_DISPLAY: Record<UserStatus, StatusDisplay> = {
     online: {
         label: 'Online',
         priority: 0,
-        dotClass: 'bg-green-500',
-        iconClass: 'text-green-500',
-        icon: Circle,
+        colorClass: 'text-green-500',
     },
     idle: {
         label: 'Idle',
         priority: 1,
-        dotClass: 'bg-yellow-500',
-        iconClass: 'text-yellow-500',
-        icon: Moon,
+        colorClass: 'text-yellow-500',
     },
     dnd: {
         label: 'Do Not Disturb',
         priority: 2,
-        dotClass: 'bg-red-500',
-        iconClass: 'text-red-500',
-        icon: Minus,
+        colorClass: 'text-red-500',
     },
     offline: {
         label: 'Offline',
         priority: 3,
-        dotClass: 'bg-gray-500',
-        iconClass: 'text-gray-500',
-        icon: Circle,
+        colorClass: 'text-gray-500',
     },
 };
 

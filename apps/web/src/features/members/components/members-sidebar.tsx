@@ -3,6 +3,7 @@ import { Crown } from 'lucide-react';
 
 import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useGuildMembers } from '@/features/members/hooks/use-guild-members';
+import { StatusIcon } from '@/features/presence/components/status-icon';
 import { useUserStatus } from '@/features/presence/hooks/use-presence';
 import { getStatusDisplay } from '@/features/presence/lib/user-status';
 import { NameAvatar } from '@/shared/components/name-avatar';
@@ -93,7 +94,8 @@ function MemberGroup({
 }
 
 function MemberRow({ user, isOwner }: { user: PublicUser; isOwner: boolean }) {
-    const status = getStatusDisplay(useUserStatus(user.id));
+    const userStatus = useUserStatus(user.id);
+    const status = getStatusDisplay(userStatus);
 
     return (
         <div className="flex items-center gap-3 px-2 py-1 rounded hover:bg-zinc-800/50 cursor-pointer group">
@@ -103,11 +105,9 @@ function MemberRow({ user, isOwner }: { user: PublicUser; isOwner: boolean }) {
                     imageUrl={user.avatarUrl}
                     className="h-8 w-8"
                 />
-                <div
-                    className={cn(
-                        'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-800',
-                        status.dotClass,
-                    )}
+                <StatusIcon
+                    status={userStatus}
+                    className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[3px] border-zinc-800 bg-zinc-800"
                 />
             </div>
             <div className="flex-1 min-w-0">

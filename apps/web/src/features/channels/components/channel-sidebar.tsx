@@ -8,6 +8,7 @@ import { CreateChannelModal } from '@/features/channels/components/create-channe
 import { useGuildChannels } from '@/features/channels/hooks/use-channels';
 import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useCurrentUser } from '@/features/members/hooks/use-users';
+import { StatusIcon } from '@/features/presence/components/status-icon';
 import { UserStatusMenu } from '@/features/presence/components/user-status-menu';
 import { useUserStatus } from '@/features/presence/hooks/use-presence';
 import { backend } from '@/shared/backend/implementation';
@@ -87,10 +88,16 @@ export function ChannelSidebar({ serverId }: { serverId: string }) {
 
             <div className="p-3 mt-auto bg-zinc-800">
                 <div className="flex items-center gap-2">
-                    <NameAvatar
-                        name={currentUser.username}
-                        imageUrl={currentUser.avatarUrl}
-                    />
+                    <div className="relative">
+                        <NameAvatar
+                            name={currentUser.username}
+                            imageUrl={currentUser.avatarUrl}
+                        />
+                        <StatusIcon
+                            status={myStatus ?? 'online'}
+                            className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-[3px] border-zinc-800 bg-zinc-800"
+                        />
+                    </div>
                     <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium truncate">
                             {currentUser.username.length > 12
