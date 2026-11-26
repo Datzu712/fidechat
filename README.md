@@ -1,6 +1,8 @@
 # Fidechat
 
 [![Live demo](https://img.shields.io/badge/live_demo-fidechat.pages.dev-5865F2?logo=cloudflarepages&logoColor=white)](https://fidechat.pages.dev/login)
+[![Backendless](https://img.shields.io/badge/backendless-runs_in_the_browser-2ea44f)](#local-mode-no-server)
+[![In-browser LLM](https://img.shields.io/badge/AI_bots-in--browser_LLM_%28WebGPU%29-8A2BE2)](#local-mode-no-server)
 
 Fidechat monorepo: a Discord clone with real-time messaging. It was created by
 merging two independent repositories (now archived), keeping the full commit
@@ -10,6 +12,12 @@ history of both:
 | ---------- | ---------------- | ------------------------------------------------------------------- | -------------------------------------------- |
 | `apps/api` | `@fidechat/api`  | [Datzu712/Fidechat-backend](https://github.com/Datzu712/Fidechat-backend) | NestJS 12 · Fastify · PostgreSQL + Drizzle · Keycloak · Socket.IO |
 | `apps/web` | `@fidechat/web`  | [Datzu712/fidechat-web](https://github.com/Datzu712/fidechat-web)         | Vite · React 19 · Tailwind v4 · Radix UI         |
+
+**Try it in your browser, no server needed:** the [live demo](https://fidechat.pages.dev/login)
+is the web app in local mode. It runs fully backendless: one tab hosts the
+server in a worker and keeps the data in IndexedDB, and the AI bots run on an
+LLM inside your browser (WebGPU), so the chat never leaves it. See
+[Local mode](#local-mode-no-server).
 
 ## Project history
 
