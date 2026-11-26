@@ -1,5 +1,7 @@
 # Fidechat
 
+[![Live demo](https://img.shields.io/badge/live_demo-fidechat.pages.dev-5865F2?logo=cloudflarepages&logoColor=white)](https://fidechat.pages.dev/login)
+
 Fidechat monorepo: a Discord clone with real-time messaging. It was created by
 merging two independent repositories (now archived), keeping the full commit
 history of both:
@@ -131,7 +133,8 @@ the demo users and data live in `docker/`.
 
 The web app also builds as a demo that needs no api, database or Keycloak:
 every browser tab is a user, and one tab hosts the server in a worker, with
-the data kept in IndexedDB. It is for trying the app, not for real use.
+the data kept in IndexedDB. It is for trying the app, not for real use. It is
+deployed at [fidechat.pages.dev](https://fidechat.pages.dev/login).
 
 ```bash
 pnpm --filter @fidechat/web dev:local     # -> http://localhost:3000
