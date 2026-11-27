@@ -12,7 +12,7 @@ export function NoServerSelected() {
     const hasGuilds = guilds && guilds.length > 0;
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full bg-muted">
+        <div className="flex flex-col items-center justify-center w-full h-full bg-discord-chat">
             <div className="max-w-md text-center p-6">
                 {hasGuilds ? (
                     <>

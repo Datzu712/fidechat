@@ -21,30 +21,24 @@ function MessagePreview({ message, author }: MessagePreviewProps) {
     const username = author?.username ?? 'Unknown User';
 
     return (
-        <div className="relative mt-4 mb-6">
-            <div className="absolute inset-0 bg-linear-to-b from-zinc-800/80 to-zinc-900/80 blur-xs"></div>
-            <div className="relative flex items-start gap-3 p-4 bg-zinc-800/30 rounded-md border border-zinc-700/50 shadow-lg backdrop-blur-xs">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-zinc-900/50 rounded-full blur-[2px]"></div>
-                    <NameAvatar
-                        name={username}
-                        imageUrl={author?.avatarUrl}
-                        className="h-10 w-10 mt-1 relative"
-                    />
+        <div className="flex items-start gap-3 rounded-md border border-border bg-discord-chat p-3 shadow-md">
+            <NameAvatar
+                name={username}
+                imageUrl={author?.avatarUrl}
+                className="mt-0.5 h-10 w-10"
+            />
+            <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                    <span className="font-medium text-foreground">
+                        {username}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                        {formatMessageTime(message.createdAt)}
+                    </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-medium text-white drop-shadow-xs">
-                            {username}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                            {formatMessageTime(message.createdAt)}
-                        </span>
-                    </div>
-                    <p className="text-zinc-200 wrap-break-word leading-relaxed">
-                        {message.content}
-                    </p>
-                </div>
+                <p className="wrap-break-word text-foreground/90">
+                    {message.content}
+                </p>
             </div>
         </div>
     );
@@ -70,10 +64,8 @@ export function DeleteMessageDialog({
         <Dialog open={message !== null} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[440px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl">
-                        Delete Message
-                    </DialogTitle>
-                    <DialogDescription className="text-zinc-400 pt-2">
+                    <DialogTitle>Delete Message</DialogTitle>
+                    <DialogDescription>
                         Are you sure you want to delete this message? This
                         cannot be undone.
                     </DialogDescription>
@@ -83,13 +75,12 @@ export function DeleteMessageDialog({
                     <MessagePreview message={message} author={author} />
                 )}
 
-                <DialogFooter className="gap-2 sm:gap-0">
+                <DialogFooter className="mt-2">
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="link"
                         onClick={() => onOpenChange(false)}
                         disabled={isPending}
-                        className="hover:bg-zinc-700/50"
                     >
                         Cancel
                     </Button>
@@ -98,7 +89,6 @@ export function DeleteMessageDialog({
                         variant="destructive"
                         onClick={onConfirm}
                         disabled={isPending}
-                        className="bg-red-500 hover:bg-red-600"
                     >
                         {isPending ? 'Deleting...' : 'Delete'}
                     </Button>

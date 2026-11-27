@@ -39,11 +39,9 @@ export function DiscoverServersModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[550px] max-h-[85vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">
-                        Discover Servers
-                    </DialogTitle>
+                    <DialogTitle>Discover Servers</DialogTitle>
                     <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             className="pl-9 pr-4"
                             placeholder="Search servers"
@@ -70,17 +68,22 @@ export function DiscoverServersModal({
                                 <button
                                     key={server.id}
                                     onClick={() => onServerSelect(server.id)}
-                                    className="group relative overflow-hidden rounded-lg border bg-card transition-colors hover:bg-accent flex flex-col items-start text-left p-4 space-y-3"
+                                    className="group relative flex flex-col items-start space-y-3 overflow-hidden rounded-lg bg-discord-footer p-4 text-left shadow-md transition hover:-translate-y-0.5 hover:bg-popover hover:shadow-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                                 >
-                                    <div className="w-full aspect-video relative rounded-md overflow-hidden bg-muted">
-                                        <img
-                                            src={
-                                                server.iconUrl ||
-                                                '/placeholder.jpg'
-                                            }
-                                            alt={server.name}
-                                            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
-                                        />
+                                    <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-input">
+                                        {server.iconUrl ? (
+                                            <img
+                                                src={server.iconUrl}
+                                                alt={server.name}
+                                                className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <span className="text-3xl font-bold text-muted-foreground">
+                                                {server.name
+                                                    .substring(0, 2)
+                                                    .toUpperCase()}
+                                            </span>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-lg truncate max-w-full">

@@ -36,6 +36,8 @@
     --color-discord-rail: #202225;
     --color-discord-sidebar: #2f3136;
     --color-discord-chat: #36393f;
+    /* The band under a dialog's content, holding its actions. */
+    --color-discord-footer: #2b2d31;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -70,25 +72,25 @@
     /* The app only has a dark theme. */
     :root {
         color-scheme: dark;
-        --background: 230 11% 19%;
-        --foreground: 0 0% 98%;
-        --card: 230 11% 19%;
-        --card-foreground: 0 0% 98%;
-        --popover: 230 11% 19%;
-        --popover-foreground: 0 0% 98%;
+        --background: 223 7% 21%;
+        --foreground: 220 13% 95%;
+        --card: 223 7% 21%;
+        --card-foreground: 220 13% 95%;
+        --popover: 220 8% 7%;
+        --popover-foreground: 220 13% 95%;
         --primary: 235 85.6% 64.7%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 240 3.7% 15.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 240 3.7% 15.9%;
-        --muted-foreground: 240 5% 64.9%;
-        --accent: 240 3.7% 15.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 240 3.7% 15.9%;
-        --input: 240 3.7% 15.9%;
-        --ring: 235 85.6% 64.7%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 228 6% 33%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 225 6% 26%;
+        --muted-foreground: 215 9% 73%;
+        --accent: 225 6% 26%;
+        --accent-foreground: 220 13% 95%;
+        --destructive: 358 69% 54%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 225 6% 26%;
+        --input: 220 7% 18%;
+        --ring: 197 100% 49%;
         --radius: 0.5rem;
     }
 }

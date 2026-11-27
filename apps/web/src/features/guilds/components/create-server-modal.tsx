@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useErrorToast } from '@/shared/api/use-error-toast';
 import type { BackendError } from '@/shared/backend/backend';
 import { backend } from '@/shared/backend/implementation';
+import { NameAvatar } from '@/shared/components/name-avatar';
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import {
@@ -63,22 +64,31 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Create a new server</DialogTitle>
+            <DialogContent className="sm:max-w-[440px]">
+                <DialogHeader className="text-center sm:text-center">
+                    <DialogTitle>Customize Your Server</DialogTitle>
                     <DialogDescription>
-                        Your server is where you and your friends hang out. Make
-                        yours and start talking.
+                        Give your new server a personality with a name and an
+                        icon. You can always change it later.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-6">
-                        <div>
-                            <Label
-                                htmlFor="name"
-                                className="text-sm font-medium"
-                            >
-                                Server Name
+                        <div className="flex justify-center">
+                            <div className="rounded-full border-2 border-dashed border-muted-foreground p-1">
+                                <NameAvatar
+                                    name={serverName.trim() || '?'}
+                                    imageUrl={serverIconUrl}
+                                    className="h-20 w-20"
+                                    fallbackClassName="bg-muted text-2xl font-semibold text-muted-foreground"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="name">
+                                Server Name{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="name"
@@ -87,30 +97,23 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                                 placeholder="Enter server name"
                                 disabled={isLoading}
                                 required
-                                className="mt-2"
                             />
                         </div>
 
-                        <div>
-                            <Label
-                                htmlFor="iconUrl"
-                                className="text-sm font-medium"
-                            >
-                                Server Icon URL
-                            </Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="iconUrl">Server Icon URL</Label>
                             <Input
                                 id="iconUrl"
                                 value={serverIconUrl ?? ''}
                                 onChange={(e) =>
                                     setServerIconUrl(e.target.value)
                                 }
-                                placeholder="Paste your server icon URL here"
+                                placeholder="https://example.com/icon.png"
                                 disabled={isLoading}
-                                className="mt-2"
                             />
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2">
                             <Checkbox
                                 id="isPublic"
                                 checked={isPublic}
@@ -119,15 +122,15 @@ export function CreateServerModal({ isOpen, onClose }: CreateServerModalProps) {
                                 }
                                 disabled={isLoading}
                             />
-                            <Label htmlFor="isPublic" className="text-sm">
+                            <Label htmlFor="isPublic" className="font-normal">
                                 Make server public
                             </Label>
                         </div>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="mt-6 sm:justify-between">
                         <Button
                             type="button"
-                            variant="outline"
+                            variant="link"
                             onClick={onClose}
                             disabled={isLoading}
                         >
