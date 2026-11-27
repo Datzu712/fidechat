@@ -1,9 +1,11 @@
 import type { ChannelPayload } from '@fidechat/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { Hash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { useGuild } from '@/features/guilds/hooks/use-guilds';
 import { useErrorToast } from '@/shared/api/use-error-toast';
 import type { BackendError } from '@/shared/backend/backend';
 import { backend } from '@/shared/backend/implementation';
@@ -48,6 +50,7 @@ export function CreateChannelModal({
     onClose,
     serverId,
 }: CreateChannelModalProps) {
+    const guild = useGuild(serverId);
     const { toast } = useToast();
     const onError = useErrorToast('Failed to create channel');
     const form = useForm<FormValues>({
@@ -88,11 +91,11 @@ export function CreateChannelModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[460px]">
                 <DialogHeader>
-                    <DialogTitle>Create a new channel</DialogTitle>
-                    <DialogDescription>
-                        Create a new channel in your server to start chatting.
+                    <DialogTitle>Create Channel</DialogTitle>
+                    <DialogDescription className="truncate text-sm">
+                        in {guild?.name}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -105,14 +108,23 @@ export function CreateChannelModal({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Channel name</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="new-channel"
-                                            disabled={isLoading}
-                                            {...field}
-                                        />
-                                    </FormControl>
+                                    <FormLabel>
+                                        Channel Name{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </FormLabel>
+                                    <div className="relative">
+                                        <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <FormControl>
+                                            <Input
+                                                placeholder="new-channel"
+                                                disabled={isLoading}
+                                                className="pl-9"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -123,7 +135,7 @@ export function CreateChannelModal({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Channel description</FormLabel>
+                                    <FormLabel>Channel Description</FormLabel>
                                     <FormControl>
                                         <Input
                                             placeholder="Enter channel description"
@@ -160,17 +172,17 @@ export function CreateChannelModal({
                             )}
                         />
 
-                        <DialogFooter>
+                        <DialogFooter className="mt-6 sm:justify-between">
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="link"
                                 onClick={onClose}
                                 disabled={isLoading}
                             >
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading ? 'Creating...' : 'Create'}
+                                {isLoading ? 'Creating...' : 'Create Channel'}
                             </Button>
                         </DialogFooter>
                     </form>

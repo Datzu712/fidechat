@@ -71,45 +71,62 @@ export function LoginPage() {
     );
 
     return (
-        <div className="flex w-full max-w-sm flex-col gap-6 rounded-lg bg-discord-sidebar p-6 text-foreground">
-            <h1 className="text-xl font-semibold">
-                Fidechat · demo with no server
-            </h1>
+        <div className="flex max-h-full w-full max-w-md flex-col gap-6 rounded-lg bg-background p-8 text-foreground shadow-2xl">
+            <header className="text-center">
+                <h1 className="text-2xl font-bold">Welcome to Fidechat</h1>
+                <p className="mt-1 text-muted-foreground">
+                    A demo with no server. Pick who you are.
+                </p>
+            </header>
 
-            <section className="flex flex-col gap-2">
-                <h2 className="text-sm text-muted-foreground">Enter as:</h2>
+            <p className="rounded-lg bg-discord-footer p-3 text-sm text-muted-foreground">
+                <span className="font-bold text-green-400">Protip: </span>
+                each tab is a different user. Open this page in a few tabs,
+                enter as someone else in each one, and chat between them.
+            </p>
+
+            <section className="flex min-h-0 flex-col gap-2">
+                <h2 className="text-xs font-bold uppercase text-muted-foreground">
+                    Enter as
+                </h2>
                 {users.isError && (
                     <p role="alert" className="text-sm text-destructive">
                         {errorMessage(users.error)}
                     </p>
                 )}
-                {users.data?.users.map((user) => (
-                    <Button
-                        key={user.id}
-                        variant="ghost"
-                        className="justify-start bg-discord-chat"
-                        onClick={() => enterAs(user.id)}
-                    >
-                        <NameAvatar
-                            name={user.username}
-                            imageUrl={user.avatarUrl}
-                            className="size-6"
-                        />
-                        <span className="flex-1 text-left">
-                            {user.username}
-                        </span>
-                        {online.has(user.id) && (
-                            <span
-                                aria-label="online"
-                                className="size-2 rounded-full bg-green-500"
-                            />
-                        )}
-                    </Button>
-                ))}
+                <div className="flex min-h-0 flex-col gap-0.5 overflow-y-auto rounded-lg bg-discord-footer p-1.5">
+                    {users.data?.users.map((user) => (
+                        <Button
+                            key={user.id}
+                            variant="ghost"
+                            className="h-12 justify-start gap-3 px-2 text-base"
+                            onClick={() => enterAs(user.id)}
+                        >
+                            <span className="relative">
+                                <NameAvatar
+                                    name={user.username}
+                                    imageUrl={user.avatarUrl}
+                                    className="size-8"
+                                />
+                                {online.has(user.id) && (
+                                    <span
+                                        aria-label="online"
+                                        className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-discord-footer bg-green-500"
+                                    />
+                                )}
+                            </span>
+                            <span className="flex-1 text-left">
+                                {user.username}
+                            </span>
+                        </Button>
+                    ))}
+                </div>
             </section>
 
             <form onSubmit={handleCreate} className="flex flex-col gap-2">
-                <h2 className="text-sm text-muted-foreground">Create user</h2>
+                <h2 className="text-xs font-bold uppercase text-muted-foreground">
+                    Create user
+                </h2>
                 <div className="flex gap-2">
                     <Input
                         aria-label="Name"
@@ -131,11 +148,11 @@ export function LoginPage() {
                 )}
             </form>
 
-            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-                <span>Open another tab to enter as someone else.</span>
+            <div className="flex justify-end border-t border-border pt-4">
                 <Button
-                    variant="outline"
+                    variant="link"
                     size="sm"
+                    className="text-muted-foreground hover:text-foreground"
                     disabled={reset.isPending}
                     onClick={() => reset.mutate()}
                 >
